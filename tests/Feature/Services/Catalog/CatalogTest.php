@@ -106,8 +106,8 @@ class CatalogTest extends TestCase
         $only = $this->savedConnection($settings);
         $all = $this->savedConnection($settings->withDatabase(null));
 
-        $this->assertSame(['phpdbadmin_test'], app(Catalog::class)->schemas($only));
-        $this->assertContains('phpdbadmin_test', app(Catalog::class)->schemas($all));
+        $this->assertSame([$this->targetTestDatabase()], app(Catalog::class)->schemas($only));
+        $this->assertContains($this->targetTestDatabase(), app(Catalog::class)->schemas($all));
         $this->assertGreaterThan(1, count(app(Catalog::class)->schemas($all)));
     }
 
@@ -118,10 +118,10 @@ class CatalogTest extends TestCase
         $all = $this->savedConnection($settings->withDatabase(null));
         $catalog = app(Catalog::class);
 
-        $this->assertContains('phpdbadmin_test', $catalog->databases($all) ?? []);
+        $this->assertContains($this->targetTestDatabase(), $catalog->databases($all) ?? []);
         $this->assertNull($catalog->databases($this->savedConnection($settings)));
 
-        $tables = array_column($catalog->groups($all, 'public', 'phpdbadmin_test'), null, 'key')['tables']['items'];
+        $tables = array_column($catalog->groups($all, 'public', $this->targetTestDatabase()), null, 'key')['tables']['items'];
         $this->assertSame(['customers', 'orders'], array_column($tables, 'name'));
     }
 }

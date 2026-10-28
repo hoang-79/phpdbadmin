@@ -148,7 +148,7 @@ class WorkspaceControllerTest extends TestCase
             ->assertRedirect(route('workspace', $connection));
 
         $this->get(route('workspace', $connection))
-            ->assertRedirect(route('workspace.schema', [$connection, 'phpdbadmin_test']));
+            ->assertRedirect(route('workspace.schema', [$connection, $this->targetTestDatabase()]));
         $this->assertNull($connection->fresh()?->password);
     }
 
@@ -160,11 +160,11 @@ class WorkspaceControllerTest extends TestCase
         $this->actingAs($this->user)->get(route('workspace', $connection))
             ->assertRedirect(route('workspace.schema', [$connection, 'public', 'db' => 'postgres']));
 
-        $this->get(route('workspace.schema', [$connection, 'public', 'db' => 'phpdbadmin_test']))
+        $this->get(route('workspace.schema', [$connection, 'public', 'db' => $this->targetTestDatabase()]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->where('workspace.database', 'phpdbadmin_test')
-                ->where('workspace.databaseLabel', 'phpdbadmin_test')
+                ->where('workspace.database', $this->targetTestDatabase())
+                ->where('workspace.databaseLabel', $this->targetTestDatabase())
                 ->has('workspace.databases'));
 
         $this->get(route('workspace.schema', [$connection, 'public', 'db' => 'gibt_es_nicht']))->assertNotFound();

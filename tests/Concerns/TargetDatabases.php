@@ -54,7 +54,7 @@ trait TargetDatabases
     }
 
     /**
-     * Leere Test-Datenbank «phpdbadmin_test» auf dem Server (bzw. eine leere SQLite-Datei im Ordner $folder) —
+     * Leere Test-Datenbank (targetTestDatabase) auf dem Server (bzw. eine leere SQLite-Datei im Ordner $folder) —
      * wird bei Bedarf angelegt und vor jedem Test geleert.
      */
     protected function scratchSettings(DatabaseDriver $driver, string $folder): ConnectionSettings
@@ -71,19 +71,28 @@ trait TargetDatabases
         $root = app(ConnectionFactory::class)->make($server);
 
         if ($driver === DatabaseDriver::Postgres) {
-            if ($root->selectOne('select 1 as found from pg_database where datname = ?', ['phpdbadmin_test']) === null) {
-                $root->statement('create database phpdbadmin_test');
+            if ($root->selectOne('select 1 as found from pg_database where datname = ?', [$this->targetTestDatabase()]) === null) {
+                $root->statement('create database '.$this->targetTestDatabase());
             }
         } else {
-            $root->statement('create database if not exists phpdbadmin_test character set utf8mb4 collate utf8mb4_unicode_ci');
+            $root->statement('create database if not exists '.$this->targetTestDatabase().' character set utf8mb4 collate utf8mb4_unicode_ci');
         }
 
         app(ConnectionFactory::class)->release($root);
 
-        $settings = new ConnectionSettings($driver, $server->host, $server->port, 'phpdbadmin_test', $server->username, $server->password);
+        $settings = new ConnectionSettings($driver, $server->host, $server->port, $this->targetTestDatabase(), $server->username, $server->password);
         $this->emptyDatabase(app(ConnectionFactory::class)->make($settings), $driver);
 
         return $settings;
+    }
+
+    /**
+     * Name der Test-Datenbank auf den Servern; parallele Arbeitskopien setzen PHPDBADMIN_TEST_DATABASE, damit sich
+     * ihre Läufe nicht gegenseitig die Tabellen löschen.
+     */
+    protected function targetTestDatabase(): string
+    {
+        return getenv('PHPDBADMIN_TEST_DATABASE') ?: 'phpdbadmin_test';
     }
 
     protected function emptyDatabase(Connection $connection, DatabaseDriver $driver): void
@@ -139,7 +148,7 @@ trait TargetDatabases
     protected function sampleSchemaName(DatabaseDriver $driver): string
     {
         return match ($driver) {
-            DatabaseDriver::MySql, DatabaseDriver::MariaDb => 'phpdbadmin_test',
+            DatabaseDriver::MySql, DatabaseDriver::MariaDb => $this->targetTestDatabase(),
             DatabaseDriver::Postgres => 'public',
             DatabaseDriver::Sqlite => 'main',
         };
@@ -156,18 +165,18 @@ trait TargetDatabases
             if ($root->selectOne("select 1 as found from pg_roles where rolname = 'phpdbadmin_lesen'") === null) {
                 $root->statement("create role phpdbadmin_lesen login password '".$password."'");
             }
-            $root->statement('grant connect on database phpdbadmin_test to phpdbadmin_lesen');
+            $root->statement('grant connect on database '.$this->targetTestDatabase().' to phpdbadmin_lesen');
             $root->statement('grant usage on schema public to phpdbadmin_lesen');
         } else {
             foreach (['localhost', '127.0.0.1', '%'] as $host) {
                 $root->statement("create user if not exists 'phpdbadmin_lesen'@'".$host."' identified by '".$password."'");
-                $root->statement("grant select on phpdbadmin_test.* to 'phpdbadmin_lesen'@'".$host."'");
+                $root->statement('grant select on '.$this->targetTestDatabase().".* to 'phpdbadmin_lesen'@'".$host."'");
             }
         }
 
         $server = $this->serverSettings($driver);
 
-        return new ConnectionSettings($driver, $server->host, $server->port, 'phpdbadmin_test', 'phpdbadmin_lesen', $password);
+        return new ConnectionSettings($driver, $server->host, $server->port, $this->targetTestDatabase(), 'phpdbadmin_lesen', $password);
     }
 
     /**

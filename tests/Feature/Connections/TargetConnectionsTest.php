@@ -155,7 +155,7 @@ class TargetConnectionsTest extends TestCase
         $targets = app(TargetConnections::class);
 
         $this->assertSame($targets->open($connection), $targets->open($connection, 'postgres'));
-        $this->assertNotSame($targets->open($connection), $targets->open($connection, 'phpdbadmin_test'));
+        $this->assertNotSame($targets->open($connection), $targets->open($connection, $this->targetTestDatabase()));
     }
 
     #[DataProvider('serverDrivers')]
