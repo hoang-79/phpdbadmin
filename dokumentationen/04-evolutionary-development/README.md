@@ -2,13 +2,14 @@
 
 > **PDF der Phase:** [evolutionary-development.pdf](evolutionary-development.pdf) — bei jeder Änderung neu gebaut (`python3 dokumentationen/werkzeuge/pdf-bauen.py --nur 04`).
 
-📋 **Platzhalter** — Timebox-Protokolle (`timebox-nn-titel.md`) und Architekturentscheide (`adr/ADR-nnn-titel.md`: Kontext → Optionen → Entscheid → Konsequenzen).
+Timebox-Protokolle (`timebox-nn-titel.md`) und Architekturentscheide (`adr/ADR-nnn-titel.md`: Kontext → Optionen → Entscheid → Konsequenzen).
 
-## Geplante erste Timebox
+## Timeboxes
 
-| TB | Inhalt | Anforderungen |
-|---|---|---|
-| **00 Fundament** — Scheiben im [Timebox-Plan § 2](../03-foundation/timebox-plan.md#2-tb-00-in-scheiben) | Starter-Kit bereinigen: Passwort-Anmeldung, Registrierung, Passwort-Reset und -Bestätigung, Zwei-Faktor, E-Mail-Bestätigung, **Dashboard** und **Profil** entfernen; Anmeldung mit Code per Mail und Passkey; Einladung und Erst-Setup per Konsole; App-Datenbank; Verbindungen mit Test und Verschlüsselung; Dialekt-Schicht mit Vertragstest; MySQL in Herd; Tests auf vier Datenbanken; Workflow sparsam | A-01 bis A-06, A-09, V-01 bis V-03, V-05, B-01 bis B-03, B-06, B-08 |
+| TB | Inhalt | Anforderungen | Stand |
+|---|---|---|---|
+| [**00 Fundament**](timebox-00-fundament.md) | Starter-Kit bereinigt (kein Passwort, kein Dashboard, kein Profil); Anmeldung mit Code per Mail und Passkey; Einladung; Ersteinrichtung per Konsole mit Link und Passkey-Onboarding; App-Datenbank; Verbindungen mit Test, Verschlüsselung und erlaubten Hosts; Dialekt-Schicht mit Vertragstest auf vier Datenbanken; lokales Prüfskript, Workflow sparsam | A-01 bis A-06, A-09, V-01 bis V-03, V-05, B-01 bis B-03, B-06, B-08 | ✅ 28.10.2026 — offen: Touch ID von Hand (A-03), erster Lauf des Workflows auf GitHub |
+| 01 Katalog und Navigator | siehe [Timebox-Plan](../03-foundation/timebox-plan.md#1-die-dreizehn-timeboxes) | O-01, O-04, S-01, V-04, N-06, V-06, V-10, O-06, N-04 | als Nächstes |
 
 ## Architekturentscheide
 
@@ -28,4 +29,4 @@ Ausformuliert in der Foundation am 28.10.2026 (Kontext → Optionen → Entschei
 | [ADR-010](adr/ADR-010-lizenz-mit.md) | Lizenz MIT | angenommen |
 | [ADR-011](adr/ADR-011-php-85-mindestversion.md) | PHP 8.5 als Mindestversion | angenommen (Hoang 28.10.2026) |
 
-**Übernahme aus der Feasibility in TB 00:** Probe-Seiten `routes/probe.php`, `resources/js/pages/probe/*` übernehmen oder entfernen; die Proben in `tests/Feature/Feasibility` werden zu Vertragstests der Dialekt-Schicht.
+**Übernahme aus der Feasibility (erledigt in TB 00):** Die Proben F-1, F-7 und Teile von F-2 sind Vertragstests der Dialekt-Schicht (`tests/Feature/Dialects`); die Probe-Seiten `routes/probe.php`, `resources/js/pages/probe/*` bleiben lokal hinter der Anmeldung, bis Raster (TB 01) und SQL-Editor (TB 05) sie ersetzen.

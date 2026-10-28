@@ -2,7 +2,7 @@
 
 > **PDF der Phase:** [foundation.pdf](foundation.pdf) — bei jeder Änderung neu gebaut (`python3 dokumentationen/werkzeuge/pdf-bauen.py --nur 03`).
 
-> **Status:** ✅ **Foundation v1.0 abgeschlossen (28.10.2026)** — begonnen nach der Verabschiedung der Terms of Reference v1.0 (Hoang: «Ja, Foundation»). Review am selben Tag interaktiv entschieden: Schreibschutz auf Zeit als **V-11**, Raster **endlos scrollen**, **PHP 8.5** (ADR-011), Wireframe-Fragen F-2 bis F-6 wie empfohlen ([Rückfragen § 5](../01-pre-project/ausgangslage-und-rueckfragen.md#5-entscheide-aus-dem-review-der-foundation-vom-28102026)). Offen bleibt nur die Sichtprüfung der Gestaltung (G-01 bis G-08) im Browser — sie geschieht mit TB 00 am echten Bildschirm.
+> **Status:** ✅ **Foundation v1.0 abgeschlossen (28.10.2026)** — begonnen nach der Verabschiedung der Terms of Reference v1.0 (Hoang: «Ja, Foundation»). Review am selben Tag interaktiv entschieden: Schreibschutz auf Zeit als **V-11**, Raster **endlos scrollen**, **PHP 8.5** (ADR-011), Wireframe-Fragen F-2 bis F-6 wie empfohlen ([Rückfragen § 5](../01-pre-project/ausgangslage-und-rueckfragen.md#5-entscheide-aus-dem-review-der-foundation-vom-28102026)). Die Gestaltung ist mit TB 00 im Browser umgesetzt und gegen die Wireframes 1–4 und 13 bei 1440 und 375 px, hell und dunkel, durchgegangen ([Protokoll TB 00](../04-evolutionary-development/timebox-00-fundament.md#browser-durchlauf)); offen bleibt Hoangs eigene Sichtprüfung (G-01 bis G-08).
 
 | Dokument | Inhalt |
 |---|---|

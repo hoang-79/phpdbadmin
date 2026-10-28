@@ -26,6 +26,8 @@
 
 ## 2. TB 00 in Scheiben
 
+> **Abgeschlossen am 28.10.2026** — [Protokoll](../04-evolutionary-development/timebox-00-fundament.md). Ergänzt auf Hoangs Wunsch um die Ersteinrichtung (Link aus `phpdbadmin:install`) und das Passkey-Onboarding nach der ersten Anmeldung.
+
 | # | Scheibe | Inhalt | Anforderungen |
 |---|---|---|---|
 | 1 | Starter-Kit bereinigen | Passwort-Anmeldung, Registrierung, Passwort-Reset und -Bestätigung, Zwei-Faktor, E-Mail-Bestätigung, Dashboard, Profil, «Konto löschen» entfernt; Fortify nur für Passkeys ohne eigene Routen (kein Passwort-Endpunkt); Spalten und Tabelle für Passwörter weg; Startseite = Verbindungsübersicht (leer); Kontomenü mit Sicherheit und Darstellung; Tests des Starter-Kits durch eigene ersetzt; `APP_URL=https://phpdbadmin.test`, `APP_LOCALE=de` | A-01, A-04, A-05, B-01 |

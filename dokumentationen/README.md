@@ -11,6 +11,8 @@ Die Dokumentation folgt dem DSDM-Prozess (Schema wie Fristo und Basalto). Jede P
 > **Entschieden 28.10.2026:** Produkt von Nguyen Development unter **MIT** (R-01, R-40) · **lokal und selbst gehostet**, kein SaaS (R-11) · läuft **neben Basalto**, das bis zur Beta Vorrang hat (R-03) · Name **phpdbadmin** endgültig (R-04).
 > **Befund der Recherche:** phpMyAdmin 5.2 ist nicht für PHP 8.4+ freigegeben, phpPgAdmin ruht seit 2023, Adminer ist breit, aber knapp; Jaxon DbAdmin (PHP, 0.35) zielt seit Oktober 2026 in dieselbe Lücke ([Marktbild](00-change_request/marktbild.md)).
 > **Technik:** Laravel 13 bringt Verbindungen zur Laufzeit, Introspektion für alle Treiber und DDL mit Vorschau mit — eine Dialekt-Schicht deckt nur die Unterschiede ab ([CR-001 § 3.2](00-change_request/CR-001-phpdbadmin.md#32-architektur)).
+> **TB 00 Fundament abgeschlossen 28.10.2026:** Anmeldung ohne Passwort (Code per Mail, Passkey, Einladung, Ersteinrichtung mit Passkey-Onboarding), Verbindungen zu vier Datenbanken mit «Verbindung testen» und erlaubten Hosts, Dialekt-Schicht mit Vertragstests auf MySQL 8.4, MariaDB 10.11, PostgreSQL 18 und SQLite; 211 Tests, App-Datenbank auf allen vier Treibern geprüft ([Protokoll](04-evolutionary-development/timebox-00-fundament.md)). Nächste Timebox: **TB 01** Katalog und Navigator.
+>
 > **Feasibility abgeschlossen 28.10.2026:** zehn Prüfpunkte mit Proben auf MySQL 8.4, MariaDB 10.11, PostgreSQL 18 und SQLite — 6 bestanden, 4 bedingt, **Empfehlung Weiterführen** ([Bericht](02-feasibility/feasibility.md)). Wichtigste Befunde: «Anwenden» braucht je Treiber ein eigenes Verfahren (SQLite löscht naiv abhängige Zeilen), MySQL bricht Abfragen still ab, SQLite kennt kein Zeitlimit, Herd-Konten lesen Dateien des Rechners.
 
 ```

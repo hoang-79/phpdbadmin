@@ -1,6 +1,6 @@
 # Gestaltung — phpdbadmin
 
-**Stand:** 28.10.2026 · v0.1 — Vorschlag der Foundation; die Entscheide G-01 bis G-08 gelten als Annahme bis zur Sichtprüfung am echten Bildschirm mit TB 00 (die Fragen aus den Wireframes hat Hoang am 28.10.2026 wie empfohlen entschieden). Farben und Kontraste stehen nur in `werkzeuge/kontraste.py`; die Tabelle in § 2 wird daraus eingesetzt (`python3 dokumentationen/werkzeuge/kontraste.py --schreiben`).
+**Stand:** 28.10.2026 · v0.1 — Vorschlag der Foundation; die Entscheide G-01 bis G-08 gelten als Annahme bis zur Sichtprüfung am echten Bildschirm (die Fragen aus den Wireframes hat Hoang am 28.10.2026 wie empfohlen entschieden). **Umgesetzt mit TB 00:** Palette hell und dunkel im Stylesheet, Inter und JetBrains Mono mit ausgeliefert, Wortmarke, Umgebungszeichen; durchgegangen gegen die Wireframes 1–4 und 13 ([Protokoll](../04-evolutionary-development/timebox-00-fundament.md#browser-durchlauf)). Noch nicht umgesetzt: Dichte (G-04, mit dem Raster in TB 01). Hoangs eigene Sichtprüfung steht aus. Farben und Kontraste stehen nur in `werkzeuge/kontraste.py`; die Tabelle in § 2 wird daraus eingesetzt (`python3 dokumentationen/werkzeuge/kontraste.py --schreiben`).
 
 ## 1. Haltung
 
