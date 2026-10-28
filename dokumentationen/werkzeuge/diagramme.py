@@ -535,6 +535,165 @@ def anmeldung_ohne_passwort() -> Zeichnung:
     return z
 
 
+# ============================================================================
+# 02 — Feasibility
+# ============================================================================
+
+def pruefmatrix() -> Zeichnung:
+    z = Zeichnung(1180, 620, "phpdbadmin — Feasibility: zehn Prüfpunkte auf vier Datenbanken",
+                  "Jeder Punkt mit Probe im Repo belegt (tests/Feature/Feasibility) — 28.10.2026, MySQL 8.4.11, MariaDB 10.11.6, PostgreSQL 18, SQLite 3.45")
+    spalten = [("Prüfpunkt", 30, 330), ("MySQL", 360, 120), ("MariaDB", 480, 120), ("PostgreSQL", 600, 120), ("SQLite", 720, 120), ("Ergebnis", 840, 310)]
+    for titel, x, b in spalten:
+        z.rechteck(x, 76, b - 4, 30, "kern", 4)
+        z.text(x + 10, 96, titel, "hw")
+    zeilen = [
+        ("F-1 Katalog", "jjjj", "bestanden", "Introspektion reicht; Check/Trigger per Dialekt"),
+        ("F-2 Verbindungen", "hjjh", "bedingt", "MySQL bricht still ab; SQLite ohne Zeitlimit"),
+        ("F-3 Raster, 1 Mio. Zeilen", "jjjj", "bestanden", "erste Seite 0,1–0,6 ms in der DB"),
+        ("F-4 SQL-Editor", "jjjj", "bestanden", "CodeMirror 6; Sichtprüfung im Browser offen"),
+        ("F-5 DDL mit Vorschau", "hhjh", "bedingt", "toSql() stimmt; Anwenden je Treiber anders"),
+        ("F-6 Anmeldung", "----", "bestanden", "Muster aus Basalto, gleiche Versionen"),
+        ("F-7 Sicherheit", "jjjj", "bedingt", "Schutz hält; Herd-Konten lesen Dateien"),
+        ("F-8 Export und Import", "hhhj", "bestanden", "lazyById: 3 MB auf allen vier"),
+        ("F-9 Lizenzen", "----", "bestanden", "alles MIT-verträglich"),
+        ("F-10 Name absichern", "----", "bedingt", "GitHub-Org belegt, US-Marke phpMyAdmin"),
+    ]
+    y = 110
+    for name, zellen, ergebnis, notiz in zeilen:
+        z.rechteck(30, y, 326, 44, "kernhell", 4)
+        z.text(42, y + 27, name, "h")
+        for i, c in enumerate(zellen):
+            x = 360 + i * 120
+            cls, zeichen = {"j": ("gruen", "✓"), "h": ("ausbau", "◐"), "-": ("nein", "—")}[c]
+            z.rechteck(x, y, 116, 44, cls, 4)
+            z.text(x + 58, y + 29, zeichen, "h", "middle")
+        cls = "gruen" if ergebnis == "bestanden" else "ausbau"
+        z.rechteck(840, y, 306, 44, cls, 4)
+        z.text(852, y + 19, ergebnis.upper(), "h")
+        z.text(852, y + 36, notiz, "s")
+        y += 48
+    z.legende(30, 604, [("gruen", "✓ belegt"), ("ausbau", "◐ belegt mit Auflage"), ("nein", "— nicht treiberabhängig")])
+    z.text(1146, 604, "6 bestanden · 4 bedingt · 0 nicht bestanden", "h", "end")
+    return z
+
+
+def messwerte() -> Zeichnung:
+    z = Zeichnung(1180, 664, "phpdbadmin — Messwerte mit einer Million Zeilen (F-3)",
+                  "Median aus drei Läufen, Zeit in der Datenbank in Millisekunden (Laravel-Abfrage, lokal auf Herd); Ziel: erste Seite unter 1 s")
+    werte = [
+        ("Erste Seite (nach Schlüssel)", [0.3, 0.3, 0.6, 0.1]),
+        ("Ab Zeile 900'000, Schlüssel", [0.4, 0.3, 0.5, 0.1]),
+        ("Ab Zeile 900'000, OFFSET", [232.4, 142.6, 115.4, 18.1]),
+        ("Index absteigend, ohne Statistik¹", [322.8, 277.2, 0.5, 0.1]),
+        ("Sortiert ohne Index", [705.7, 194.1, 185.7, 73.5]),
+        ("Suche LIKE '%…%'", [301.2, 282.2, 122.9, 82.0]),
+        ("Genau zählen", [86.6, 100.1, 29.3, 8.6]),
+    ]
+    farben = ["#1e293b", "#475569", "#0e7490", "#94a3b8"]
+    namen = ["MySQL 8.4", "MariaDB 10.11", "PostgreSQL 18", "SQLite 3.45"]
+    x0, breite, skala = 290, 820, 820 / 1000
+    z.roh(f'<path d="M{x0 + 1000 * skala:.0f} 80 L{x0 + 1000 * skala:.0f} 576" stroke="{ROT}" stroke-width="1.5" stroke-dasharray="5 4"/>')
+    z.text(x0 + 1000 * skala - 6, 92, "1 s", "rotT", "end")
+    for t in (0, 250, 500, 750):
+        z.roh(f'<path d="M{x0 + t * skala:.0f} 100 L{x0 + t * skala:.0f} 576" class="linie"/>')
+        z.text(x0 + t * skala, 588, f"{t} ms", "s", "middle")
+    y = 104
+    for name, ms in werte:
+        z.text(30, y + 36, name, "h")
+        for i, v in enumerate(ms):
+            b = max(2, v * skala)
+            z.roh(f'<rect x="{x0}" y="{y + i * 16:.0f}" width="{b:.0f}" height="13" fill="{farben[i]}"/>')
+            z.text(x0 + b + 6, y + i * 16 + 11, f"{v:g} ms".replace(".", ","), "s")
+        y += 68
+    x = 30
+    for f, n in zip(farben, namen):
+        z.roh(f'<rect x="{x}" y="612" width="22" height="13" fill="{f}"/>')
+        z.text(x + 30, 623, n, "s")
+        x += 150
+    z.text(1146, 623, "Browser: erste Seite 281 ms, Nachladen 193 ms (Raster-Probe, SQLite)", "s", "end")
+    z.text(30, 652, "¹ direkt nach dem Füllen wählen MySQL und MariaDB filesort; nach ANALYZE TABLE nehmen sie den Index: 2,1 ms bzw. 3,5 ms (Gegenprobe mit EXPLAIN).", "note")
+    return z
+
+
+def anwenden_je_treiber() -> Zeichnung:
+    z = Zeichnung(1180, 500, "phpdbadmin — «Anwenden» einer Strukturänderung je Treiber (F-5)",
+                  "Die Vorschau kommt immer aus Blueprint::toSql() — ausgeführt wird genau sie, aber nicht überall gleich")
+    z.kasten(30, 80, 360, 244, "MySQL und MariaDB", [
+        "DDL schliesst jede Transaktion",
+        "  implizit ab",
+        "Anweisung für Anweisung,",
+        "  ohne Transaktion",
+        "Fehler in Schritt 3: Schritte 1–2",
+        "  bleiben — Vorschau sagt das",
+        "Daten (DML) weiterhin in",
+        "  einer Transaktion",
+    ], "ausbau", badge="NICHT RÜCKROLLBAR")
+    z.kasten(410, 80, 360, 244, "PostgreSQL", [
+        "DDL ist transaktional",
+        "alle Anweisungen in einer",
+        "  Transaktion",
+        "Fehler: alles zurück,",
+        "  nichts halb geändert",
+    ], "gruen", badge="RÜCKROLLBAR")
+    z.kasten(790, 80, 360, 244, "SQLite", [
+        "Spalte ändern = Tabelle umbauen",
+        "  (Kopie, Daten, Umbenennen)",
+        "1 PRAGMA foreign_keys = OFF",
+        "  ausserhalb der Transaktion",
+        "2 Umbau in der Transaktion",
+        "3 PRAGMA foreign_key_check",
+        "4 Commit, foreign_keys = ON",
+    ], "gruen", badge="RÜCKROLLBAR, MIT VERFAHREN")
+    z.rechteck(30, 340, 1120, 110, "rot", 8)
+    z.text(46, 366, "Gemessen, wenn man naiv alles in eine Transaktion legt:", "rotT")
+    z.zeilen(46, 392, [
+        "MySQL/MariaDB: die Änderung ist geschrieben, danach wirft Laravel «There is no active transaction» — die Oberfläche hielte sie für gescheitert.",
+        "SQLite: PRAGMA foreign_keys wirkt in einer Transaktion nicht; DROP TABLE der Elterntabelle löscht per ON DELETE CASCADE alle Kinder (0 von 2 übrig).",
+        "Und: pretend() taugt auf SQLite nicht als Vorschau — die Lesezugriffe liefern leer, heraus kommt «create table … ()».",
+    ], "t", 20)
+    z.text(30, 480, "Belegt in DdlPreviewProbeTest: naiver Weg (Gefahr) und Weg je Treiber (2 von 2 Kindern bleiben) auf allen vier Datenbanken.", "note")
+    return z
+
+
+def schreibschutz() -> Zeichnung:
+    z = Zeichnung(1180, 600, "phpdbadmin — Schreibschutz in Schichten (F-7)",
+                  "Eine schreibgeschützte Verbindung hält auch, wenn der Mensch im SQL-Editor ausbrechen will")
+    schichten = [
+        ("1  Konto mit Leserechten", "empfohlen: eigenes Datenbank-Konto je schreibgeschützter Verbindung — das einzige Schloss, das der Server selbst hält", "kernhell"),
+        ("2  Nur-lesen-Transaktion je Anweisung", "MySQL/MariaDB: SET SESSION TRANSACTION READ ONLY + Transaktion · PostgreSQL: SET TRANSACTION READ ONLY · immer zurückrollen", "kernhell"),
+        ("3  Eine Anweisung je Aufruf, vorbereitet", "keine Mehrfachanweisungen: «COMMIT; INSERT …» scheitert am Server (Syntaxfehler bzw. «multiple commands»)", "kernhell"),
+        ("4  SQLite: Datei nur lesend öffnen", "Pdo\\Sqlite::OPEN_READONLY — «PRAGMA query_only = OFF» ändert daran nichts", "kernhell"),
+        ("5  SQLite: Authorizer", "Pdo\\Sqlite::setAuthorizer() — ATTACH nur im erlaubten Ordner; ohne lesbaren Dateinamen (ATTACH ?) verweigert", "kernhell"),
+    ]
+    y = 80
+    for titel, text, cls in schichten:
+        z.rechteck(30, y, 760, 62, cls, 8)
+        z.text(46, y + 26, titel, "h")
+        z.text(46, y + 46, text, "s")
+        y += 72
+    z.kasten(810, 80, 340, 350, "Ausbruchsversuche", [
+        "MySQL: 9 Versuche, 7 abgewiesen",
+        "MariaDB: 9 Versuche, 7 abgewiesen",
+        "PostgreSQL: 12, davon 8 abgewiesen",
+        "SQLite: 5 Versuche, 4 abgewiesen",
+        "",
+        "durchgelassen wurden nur SET … READ",
+        "WRITE, COMMIT und PRAGMA —",
+        "ohne Wirkung, weil jede Anweisung",
+        "neu geschützt wird",
+        "",
+        "Bestand danach: unverändert",
+    ], "gruen", abstand=20, punkt=False)
+    z.rechteck(30, 450, 1120, 100, "rot", 8)
+    z.text(46, 476, "Gefahr ausserhalb des Schreibschutzes: was das Konto auf dem Server darf", "rotT")
+    z.zeilen(46, 500, [
+        "Herd-Konten «root»: MariaDB liest mit LOAD_FILE('/etc/hosts') Dateien des Rechners, PostgreSQL ist Superuser und liest mit pg_read_file().",
+        "MySQL 8.4 nicht (secure_file_priv). LOAD DATA LOCAL INFILE verweigert der Client von selbst. → phpdbadmin warnt bei solchen Konten sichtbar.",
+    ], "t", 20)
+    z.text(30, 580, "Belegt in SecurityProbeTest; Fehlermeldungen von Laravel enthalten gebundene Werte — vor dem Protokollieren maskieren.", "note")
+    return z
+
+
 DIAGRAMME = {
     "problembild-ist-soll": ("00-change_request/diagrams/problembild-ist-soll.svg", problembild_ist_soll),
     "marktpositionierung": ("00-change_request/diagrams/marktpositionierung.svg", marktpositionierung),
@@ -544,6 +703,10 @@ DIAGRAMME = {
     "bedienkonzept": ("00-change_request/diagrams/bedienkonzept.svg", bedienkonzept),
     "stufen-fahrplan": ("00-change_request/diagrams/stufen-fahrplan.svg", stufen_fahrplan),
     "anmeldung-ohne-passwort": ("01-pre-project/diagrams/anmeldung-ohne-passwort.svg", anmeldung_ohne_passwort),
+    "pruefmatrix": ("02-feasibility/diagrams/pruefmatrix.svg", pruefmatrix),
+    "messwerte": ("02-feasibility/diagrams/messwerte.svg", messwerte),
+    "anwenden-je-treiber": ("02-feasibility/diagrams/anwenden-je-treiber.svg", anwenden_je_treiber),
+    "schreibschutz": ("02-feasibility/diagrams/schreibschutz.svg", schreibschutz),
 }
 
 

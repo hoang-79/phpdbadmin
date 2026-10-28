@@ -12,4 +12,6 @@
 
 ## Architekturentscheide
 
-Noch keine. Erwartet aus Feasibility und Foundation: Dialekt-Schicht · Verbindung je Anfrage · Anmeldung ohne Passwort · SQL-Editor-Paket · Raster · App-Datenbank · Lizenz.
+Noch keine ausformuliert. Kandidaten aus der [Feasibility § 13](../02-feasibility/feasibility.md#13-folgen-für-anforderungen-und-architektur), auszuformulieren in der Foundation: ADR-001 Dialekt-Schicht · ADR-002 Verbindung je Anfrage · ADR-003 Vorschau und Anwenden je Treiber · ADR-004 Schreibschutz in Schichten · ADR-005 SQL-Editor CodeMirror 6 · ADR-006 Raster TanStack Virtual · ADR-007 Export und Import in Paketen · ADR-008 Anmeldung ohne Passwort · ADR-009 App-Datenbank SQLite · ADR-010 Lizenz MIT.
+
+**Übernahme aus der Feasibility in TB 00:** Probe-Seiten `routes/probe.php`, `resources/js/pages/probe/*` übernehmen oder entfernen; die Proben in `tests/Feature/Feasibility` werden zu Vertragstests der Dialekt-Schicht.

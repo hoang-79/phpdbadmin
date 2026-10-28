@@ -104,11 +104,11 @@ Was «intuitiver und benutzerfreundlicher» heisst, legen diese Prinzipien fest.
 | Zielverbindungen | Konfiguration aus der App-Datenbank, Verbindung je Anfrage mit `DB::build()`, Grenzen je Treiber (Zeitlimit, nur lesen) | Prüfpunkt Feasibility |
 | Katalog | Laravel-Schema-Introspektion, ergänzt durch eine **Dialekt-Schicht** je Treiber für Prozesse, Rechte, Routinen, EXPLAIN, Server-Werte | Prüfpunkt Feasibility |
 | Struktur ändern | `Blueprint` + `toSql()` bzw. `pretend()` für die SQL-Vorschau; SQLite-Tabellenumbau wie Laravel | Prüfpunkt Feasibility |
-| SQL-Editor | CodeMirror 6 mit SQL-Dialekten (MIT) — neue Abhängigkeit, Freigabe nötig (R-32) | offen |
-| Datenraster | eigenes Vue-Raster mit Virtualisierung oder TanStack (MIT) — Leistungsprobe mit 1 Mio. Zeilen | offen |
+| SQL-Editor | CodeMirror 6 mit SQL-Dialekten (MIT) | probeweise installiert 28.10.2026 (Freigabe Hoang), F-4 bestanden |
+| Datenraster | eigenes Raster mit `@tanstack/vue-virtual` (MIT), Blättern über den Schlüssel | probeweise installiert, F-3 bestanden |
 | App-Datenbank | SQLite als Vorgabe (Konten, Passkeys, Verbindungen, Verlauf, Protokoll) | Annahme R-31 |
 | Hintergrund | Queue (`database`) für Export und Import | vorhanden |
-| Tests | PHPUnit 12 gegen MySQL 8.4, MariaDB 10.11, PostgreSQL 18 und SQLite; MySQL-Dienst in Herd fehlt noch (R-33) | offen |
+| Tests | PHPUnit 12 gegen MySQL 8.4, MariaDB 10.11, PostgreSQL 18 und SQLite | MySQL 8.4.11 in Herd seit 28.10.2026; Feasibility-Proben laufen auf allen vier |
 
 Die Schichten im Detail: [Architektur-Diagramm in CR-001 § 3.2](CR-001-phpdbadmin.md#32-architektur).
 
@@ -116,7 +116,7 @@ Die Schichten im Detail: [Architektur-Diagramm in CR-001 § 3.2](CR-001-phpdbadm
 
 | Stufe | Ort | Bemerkung |
 |---|---|---|
-| Dev | `https://phpdbadmin.test` | Laravel Herd (macOS), HTTPS aktiv — Passkeys brauchen einen sicheren Ursprung; MariaDB 10.11.6 :3306, PostgreSQL 18 :5432 laufen, MySQL fehlt |
+| Dev | `https://phpdbadmin.test` | Laravel Herd (macOS), HTTPS aktiv — Passkeys brauchen einen sicheren Ursprung; MySQL 8.4.11 :3307, MariaDB 10.11.6 :3306, PostgreSQL 18 :5432 |
 | Testing / Demo | offen | Demo mit mitgelieferten SQLite-Beispieldatenbanken denkbar (R-30) |
 | Produktion | beim Anwender | selbst gehostet neben den eigenen Datenbanken; kein SaaS (entschieden 28.10.2026, R-11) |
 

@@ -2,19 +2,27 @@
 
 > **PDF der Phase:** [feasibility.pdf](feasibility.pdf) — bei jeder Änderung neu gebaut (`python3 dokumentationen/werkzeuge/pdf-bauen.py --nur 02`).
 
-📋 **Geplant** — beginnt nach dem Entscheid «Weiterführen» auf [CR-001](../00-change_request/CR-001-phpdbadmin.md). Jeder Prüfpunkt wird mit Code auf allen vier Datenbanken belegt (Spike im Repo, danach verworfen oder übernommen), nicht nur beschrieben.
+✅ **Abgeschlossen am 28.10.2026** — gestartet auf Hoangs «Feasibility starten». Jeder Prüfpunkt ist mit einer Probe im Repo belegt, die gegen **MySQL 8.4.11, MariaDB 10.11.6, PostgreSQL 18 und SQLite 3.45** läuft (`tests/Feature/Feasibility`), oder mit einer Recherche mit Fundstellen. **6 bestanden, 4 bedingt, 0 nicht bestanden — Empfehlung: Weiterführen.**
 
-| Nr. | Prüfpunkt | Frage | Belegt durch |
+| Dokument | Inhalt | Status |
+|---|---|---|
+| [Feasibility-Bericht](feasibility.md) | Prüfpunkte F-1 bis F-10 mit Frage, Nachweis, Befunden, Ergebnis und Folgen; neue und geänderte Anforderungen; ADR-Kandidaten; Empfehlung | ✅ v1.0 |
+| [Sicherheit und Bedrohungen](sicherheit-und-bedrohungen.md) | Schutzgüter, 18 Bedrohungen mit Gegenmittel und Beleg, Restrisiken | 🔨 v0.1 |
+| [Name und Marke](name-und-marke.md) | Markenlage phpMyAdmin und phpdbadmin, Namensräume, Domains, Auflagen | ✅ Recherchebefund |
+
+| Nr. | Prüfpunkt | Ergebnis | Probe |
 |---|---|---|---|
-| F-1 | Katalog | Reicht die Laravel-Introspektion (`getSchemas`, `getTables`, `getViews`, `getTypes`, `getColumns`, `getIndexes`, `getForeignKeys`) auf MySQL 8.4, MariaDB 10.11, PostgreSQL 18 und SQLite? Was fehlt (Check-Constraints, Trigger, Kommentare, Kollationen)? | Spike mit einer Beispieltabelle mit allen Merkmalen je Treiber |
-| F-2 | Verbindungen | `DB::build()` je Anfrage: Zeitlimits je Treiber, nur lesen (read-only-Transaktion, `query_only`), Abbrechen laufender Abfragen (`KILL QUERY`, `pg_cancel_backend`), Zeitzone UTC je Sitzung | Spike mit langer Abfrage und schreibender Anweisung auf geschützter Verbindung |
-| F-3 | Raster | Erste Seite einer Tabelle mit 1 Mio. Zeilen unter 1 s; Blättern über den Schlüssel; Virtualisierung im Browser — eigenes Raster oder TanStack? | Messung je Treiber, Abfrageplan gelesen |
-| F-4 | SQL-Editor | CodeMirror 6 mit Dialekten und Vervollständigung aus dem Schema; Paket trocken installieren, Grösse im Build | `npm` trocken, Probe-Seite |
-| F-5 | DDL mit Vorschau | `Blueprint::toSql()` und `pretend()` liefern genau das SQL, das danach läuft — auch beim SQLite-Tabellenumbau? | Spike: Vorschau = Ausführung, Introspektion danach |
-| F-6 | Anmeldung | Fortify 1.41 nur mit Passkeys, Code-Anmeldung, Passwort-Endpunkte weg (Muster Basalto TB 00) | Spike mit virtuellem Authenticator |
-| F-7 | Sicherheit | Hosts-Liste gegen SSRF, verschlüsselte Zugangsdaten, CSP, Protokoll; Bedrohungsmodell für ein Werkzeug mit Zugang zu allen Datenbanken | Bedrohungsmodell, Tests mit fremdem Host |
-| F-8 | Export und Import | Streaming grosser Daten, Queue, Speicherverbrauch; CSV-Probelauf | Messung mit 1 Mio. Zeilen |
-| F-9 | Lizenz und Aufwand | Lizenz MIT entschieden (R-40): Sind alle Abhängigkeiten MIT-verträglich? Aufwand gegen Nutzen nach den Proben | Lizenzliste aus `composer licenses` und npm, Rechnung |
-| F-10 | Name absichern | Name phpdbadmin entschieden (R-04): Markenlage zu «phpMyAdmin» (IGE, EUIPO), `phpdbadmin.ch` sichern, eigenständiger Auftritt | Recherche mit Fundstellen |
+| F-1 | Katalog | ✅ bestanden | `CatalogProbeTest` |
+| F-2 | Verbindungen | 🟡 bedingt | `ConnectionProbeTest` |
+| F-3 | Raster, 1 Mio. Zeilen | ✅ bestanden | `LargeTableProbeTest` (`PROBE_GROSS=1`), `/probe/raster` |
+| F-4 | SQL-Editor | ✅ bestanden (Sichtprüfung offen) | `/probe/editor`, `editor-completion-probe.mjs` |
+| F-5 | DDL mit Vorschau | 🟡 bedingt | `DdlPreviewProbeTest` |
+| F-6 | Anmeldung | ✅ bestanden | Quellcode Fortify, Vorlage Basalto |
+| F-7 | Sicherheit | 🟡 bedingt | `SecurityProbeTest` |
+| F-8 | Export und Import | ✅ bestanden | `LargeTableProbeTest` |
+| F-9 | Lizenzen | ✅ bestanden | `composer licenses`, npm |
+| F-10 | Name absichern | 🟡 bedingt | [Name und Marke](name-und-marke.md) |
 
-**Diagramme** (`diagrams/`, geplant): Ablauf Verbindung je Anfrage · Bedrohungsmodell · Messergebnisse Raster.
+**Proben wiederholen:** `php vendor/bin/phpunit --group feasibility` (Herd-Dienste müssen laufen; ein nicht erreichbarer Server wird ausdrücklich übersprungen) · schwer: `PROBE_GROSS=1 php -d memory_limit=1G vendor/bin/phpunit tests/Feature/Feasibility/LargeTableProbeTest.php` · Editor: `node tests/Feature/Feasibility/editor-completion-probe.mjs`. Befunde landen in `storage/framework/testing/feasibility/*.json`.
+
+**Diagramme** (`diagrams/`, aus `werkzeuge/diagramme.py`): Prüfmatrix · Messwerte mit einer Million Zeilen · Anwenden je Treiber · Schreibschutz in Schichten.

@@ -2,9 +2,9 @@
 
 | Feld | Wert |
 |---|---|
-| Status | 🟡 **Entwurf v0.2** (28.10.2026) — Kernfragen entschieden (R-01, R-03, R-04, R-11, R-40); v1.0 nach der Feasibility |
-| Eingang | [CR-001](../00-change_request/CR-001-phpdbadmin.md) Fassung 1 (Entwurf), [Ausgangslage und Rückfragen](ausgangslage-und-rueckfragen.md), [Ideen-Backlog](ideen-backlog.md) |
-| Ausgang | Feasibility mit den Prüfpunkten F-1 bis F-10 ([02-feasibility](../02-feasibility/README.md)) |
+| Status | 🟡 **v1.0 zur Verabschiedung** (28.10.2026) — nach CR-001 Fassung 3 (Weiterführen) und Feasibility v1.0 (6 bestanden, 4 bedingt); verabschiedet, sobald Hoang zustimmt |
+| Eingang | [CR-001](../00-change_request/CR-001-phpdbadmin.md) Fassung 3 (Weiterführen 28.10.2026), [Feasibility](../02-feasibility/feasibility.md) v1.0, [Ausgangslage und Rückfragen](ausgangslage-und-rueckfragen.md), [Ideen-Backlog](ideen-backlog.md) |
+| Ausgang | [Foundation](../03-foundation/README.md): Gestaltung, PRL, Solution-Architektur, Datenmodell, Timebox-Plan, ADR-001 bis ADR-010 |
 | Träger | Nguyen Development, Einzelfirma von Hoang Nguyen, Zürich (entschieden 28.10.2026, R-01) |
 
 ## 1. Projektziel
@@ -13,7 +13,7 @@ Nguyen Development baut **phpdbadmin**, ein Werkzeug im Browser, mit dem man **M
 
 ## 2. Hintergrund
 
-Die PHP-Klassiker stehen technisch still (phpMyAdmin 5.2 nicht für PHP 8.4+ freigegeben, phpPgAdmin seit 2023 ohne Commit), Adminer ist breit, aber knapp, und die modernen Werkzeuge sind nicht PHP oder nicht im Browser ([Marktbild](../00-change_request/marktbild.md)). Laravel 13 bringt Verbindungen zur Laufzeit, Introspektion für alle Treiber und DDL mit Vorschau bereits mit; die passwortlose Anmeldung und die Tests auf mehreren Datenbanken sind aus Basalto erprobt.
+Die PHP-Klassiker stehen technisch still (phpMyAdmin 5.2 nicht für PHP 8.4+ freigegeben, phpPgAdmin seit 2023 ohne Commit), Adminer ist breit, aber knapp, und die modernen Werkzeuge sind nicht PHP oder nicht im Browser ([Marktbild](../00-change_request/marktbild.md)). Laravel 13 bringt Verbindungen zur Laufzeit, Introspektion für alle Treiber und DDL mit Vorschau bereits mit; die passwortlose Anmeldung und die Tests auf mehreren Datenbanken sind aus Basalto erprobt. Die [Feasibility](../02-feasibility/feasibility.md) hat alle zehn Prüfpunkte mit Proben auf MySQL 8.4, MariaDB 10.11, PostgreSQL 18 und SQLite belegt: sechs bestanden, vier bedingt — die Auflagen (Anwenden je Treiber, SQLite im Arbeitsprozess, Kontowarnung, maskierte Meldungen, Name absichern) stehen als Anforderungen in CR-001.
 
 ## 3. Systemkontext
 
@@ -30,8 +30,8 @@ Eine Installation mit ihren Personen (Entwickler, Administrator, Mitarbeitende, 
 | Team | Hoang Nguyen + Claude Code (Pair); Rückfragen interaktiv mit Empfehlung zuerst, Defaults ohne Rückfrage |
 | Business Ambassador | Hoang als erster Nutzer; Gegenleser ab Alpha gesucht |
 | Vorrang | Basalto bis zur Beta vor phpdbadmin; phpdbadmin in kleinen Timeboxes daneben (entschieden, R-03) |
-| Zeitmodell | Stufen statt Termine; rund 40–50 PT bis v1.2 (Schätzung vor Feasibility) |
-| Technischer Rahmen | Laravel 13.39 (PHP 8.5), Inertia v3, Vue 3, TypeScript, Tailwind 4, Wayfinder, Fortify nur für Passkeys; App-Datenbank SQLite; Herd lokal |
+| Zeitmodell | Stufen statt Termine; rund 42–53 PT bis v1.2 (nach Feasibility) |
+| Technischer Rahmen | Laravel 13.39 (PHP 8.5), Inertia v3, Vue 3, TypeScript, Tailwind 4, Wayfinder, Fortify nur für Passkeys; App-Datenbank SQLite; CodeMirror 6 und TanStack Virtual (probeweise installiert, ADR-005/006); Herd lokal mit MySQL 8.4, MariaDB 10.11, PostgreSQL 18 |
 | Starter-Kit | Passwort, Dashboard und Profil werden entfernt (Vorgabe Hoang 28.10.2026) |
 | Betriebsmodell | lokal und selbst gehostet, kein SaaS (entschieden, R-11) |
 | Lizenz | Open Source unter MIT (entschieden, R-40); Abhängigkeiten MIT-verträglich |
@@ -63,7 +63,7 @@ SQL Server und Oracle (vorerst) · NoSQL · SaaS mit fremden Zugangsdaten · Des
 4. **Stufe 3 — Verwalten:** Server-Verwaltung, weitere Objekte, Beziehungsdiagramm, EXPLAIN, Sicherung → **v1.1**
 5. **Stufe 4 — Komfort und Team:** Schemavergleich, Laravel-Migration, Herd, SSH-Tunnel, KI optional → **v1.2**
 
-Der Must-Anteil bis v1.0 liegt nach der ersten Zählung bei 71 % (CR-001 § 4); die PRL bringt ihn unter 60 %.
+Der Must-Anteil bis v1.0 liegt nach CR-001 Fassung 3 bei 68 % (62 Anforderungen, davon 42 Must); die PRL bringt ihn unter 60 %.
 
 ## 7. Fahrplan und Meilensteine
 
@@ -84,7 +84,7 @@ Hoang ersetzt phpMyAdmin, phpPgAdmin und den Desktop-Client im Alltag ab v1.0 ·
 
 ## 9. Risiken
 
-Aus [CR-001 § 10](../00-change_request/CR-001-phpdbadmin.md#10-risiken-auf-oberster-ebene): Zeit neben Basalto und Fristo (R1) · Treiberunterschiede (R2) · Sicherheit eines Werkzeugs mit Zugang zu allen Datenbanken (R3) · Leistung des Rasters (R4) · Mitbewerber Jaxon DbAdmin und phpMyAdmin 6 (R5) · Name (R6) · Arbeitsvertrag (R7).
+Aus [CR-001 § 10](../00-change_request/CR-001-phpdbadmin.md#10-risiken-auf-oberster-ebene): Zeit neben Basalto und Fristo (R1) · Treiberunterschiede (R2) · Sicherheit eines Werkzeugs mit Zugang zu allen Datenbanken (R3) · Leistung des Rasters (R4) · Mitbewerber Jaxon DbAdmin und phpMyAdmin 6 (R5) · Name (R6) · Arbeitsvertrag (R7). Durch die Feasibility gesenkt: R2 (Dialekt-Unterschiede gemessen und eingegrenzt), R4 (erste Seite 0,1–0,6 ms in der Datenbank). Neu sichtbar: Datenverlust beim SQLite-Umbau in einer Transaktion und stille Abbrüche bei MySQL — beides mit Anforderung (N-03, Q-02) und Probe belegt.
 
 ## 10. Entscheide und Vorbedingungen
 
@@ -92,8 +92,10 @@ Aus [CR-001 § 10](../00-change_request/CR-001-phpdbadmin.md#10-risiken-auf-ober
 |---|---|---|
 | R-01 bis R-42 | [Rückfragen-Katalog](ausgangslage-und-rueckfragen.md) | erste Runde 28.10.2026: R-01, R-03, R-04, R-11, R-40 entschieden, übrige mit Annahme |
 | Starter-Kit ohne Passwort, Dashboard, Profil | Hoang 28.10.2026 | entschieden |
+| CR-001 Weiterführen | Hoang 28.10.2026 («Feasibility starten») | entschieden |
+| Feasibility F-1 bis F-10, Pakete CodeMirror und TanStack probeweise, MySQL 8.4 in Herd | [Feasibility](../02-feasibility/feasibility.md), Freigaben Hoang 28.10.2026 | abgeschlossen 28.10.2026 |
 
-**Vorbedingungen vor Stufe 0:** Entscheid «Weiterführen» auf CR-001 · Feasibility mit F-1 bis F-10 · Foundation (Gestaltung, PRL, Architektur, Datenmodell, Timebox-Plan) · MySQL in Herd (R-33). **Vor dem ersten öffentlichen Auftritt:** Markenrecherche zum Namen (F-10) · `phpdbadmin.ch` gesichert · Lizenzdatei MIT im Repo · Nebenbeschäftigung gemeldet (R-05).
+**Vorbedingungen vor Stufe 0:** Entscheid «Weiterführen» auf CR-001 ✓ · Feasibility mit F-1 bis F-10 ✓ · MySQL in Herd ✓ · Terms of Reference verabschiedet (Hoang) · Foundation (Gestaltung, PRL, Architektur, Datenmodell, Timebox-Plan, ADRs). **Vor dem ersten öffentlichen Auftritt:** Auflagen aus [Name und Marke](../02-feasibility/name-und-marke.md): Domains (`.ch`, nach Wahl `.org`, `.net`, `.io`, `.dev`) gesichert, Repo `hoang-79/phpdbadmin` (Organisation `phpdbadmin` ist belegt), Hinweis «nicht verbunden mit phpMyAdmin» · Lizenzdatei MIT im Repo · Nebenbeschäftigung gemeldet (R-05).
 
 ## 11. DSDM-Prinzipien-Check
 

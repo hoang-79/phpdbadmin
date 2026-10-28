@@ -9,3 +9,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
+
+// Feasibility-Proben F-3 und F-4, nur lokal (dokumentationen/02-feasibility).
+if (app()->environment('local')) {
+    require __DIR__.'/probe.php';
+}

@@ -6,8 +6,8 @@
 | Titel | phpdbadmin — ein Werkzeug für vier Datenbanken, intuitiver als phpMyAdmin und phpPgAdmin |
 | Antragsteller | Hoang Nguyen |
 | Datum | 28.10.2026 |
-| Fassung | 2 (Entwurf) |
-| Status | 🟡 **Entwurf** — Kernfragen entschieden 28.10.2026 (Träger Nguyen Development, MIT, lokal und selbst gehostet, neben Basalto, Name phpdbadmin); übrige Rückfragen mit Annahmen; Entscheid zur Weiterführung steht aus |
+| Fassung | 3 |
+| Status | ✅ **Weiterführen** entschieden 28.10.2026 (Hoang: «Feasibility starten») · Feasibility abgeschlossen 28.10.2026: 6 bestanden, 4 bedingt — Auflagen als V-10, Q-09, E-06 und geänderte Abnahmen eingearbeitet |
 | Grundlagen | [Ideensammlung](ideensammlung.md) · [Marktbild](marktbild.md) · [Funktionsraster](funktionsraster.md) · [Ausgangslage und Rückfragen](../01-pre-project/ausgangslage-und-rueckfragen.md) · [Ideen-Backlog](../01-pre-project/ideen-backlog.md) |
 | Folgt | [Terms of Reference](../01-pre-project/terms-of-reference.md) (Entwurf v0.1) → Feasibility |
 
@@ -17,6 +17,7 @@
 |---|---|---|
 | 1 | 28.10.2026 | Erste Fassung aus Hoangs Auftrag, Recherche und Funktionsraster; Anforderungen A, V, O, D, S, Q, E, W, B, N mit Abnahme |
 | 2 | 28.10.2026 | Interaktive Rückfragen: R-01 und R-40 (Nguyen Development, MIT), R-11 (lokal und selbst gehostet), R-03 (neben Basalto), R-04 (Name phpdbadmin endgültig) — § 6, § 10, § 11, § 14 nachgeführt |
+| 3 | 28.10.2026 | Entscheid Weiterführen; Ergebnisse der [Feasibility](../02-feasibility/feasibility.md): neu V-10, Q-09, E-06; Abnahmen von V-02, V-04, O-01, D-04, S-02, S-03, Q-02, Q-03, E-01, B-04, N-02, N-03 geschärft; Schätzung 42–53 PT |
 
 ## 1. Ausgangslage und Problem
 
@@ -95,20 +96,21 @@ Priorität nach MoSCoW: **M** Must · **S** Should · **C** Could · **W** Won't
 | Nr. | Anforderung | Prio | Stufe | Abnahme |
 |---|---|---|---|---|
 | V-01 | Verbindung anlegen für **MariaDB, MySQL, PostgreSQL** (Host, Port, Benutzer, Passwort, Datenbank, SSL-Modus) und **SQLite** (Datei in einem erlaubten Ordner) | M | 0 | je Treiber ein Test gegen den echten Dienst; ungültige Angaben am Feld gemeldet |
-| V-02 | **Verbindung testen** vor dem Speichern: Serverversion oder Fehler in Klartext (Host nicht erreichbar, Zugang verweigert, SSL, Datenbank fehlt) | M | 0 | je Fehlerart ein Test mit erzwungenem Fehler |
+| V-02 | **Verbindung testen** vor dem Speichern: Serverversion oder Fehler in Klartext (Host nicht erreichbar, Zugang verweigert, SSL, Datenbank fehlt) | M | 0 | je Fehlerart ein Test mit erzwungenem Fehler; MySQL/MariaDB nach Code (2002, 1045, 1049), PostgreSQL nach Meldungstext (alle 08006) — F-2 |
 | V-03 | **Zugangsdaten verschlüsselt** gespeichert und nie an den Browser ausgeliefert; Wahl «Passwort nicht speichern — in der Sitzung fragen» | M | 0 | Test: Inertia-Props und JSON enthalten kein Passwort; Spalte verschlüsselt (Rohwert ≠ Klartext) |
-| V-04 | **Umgebung** je Verbindung (lokal, Test, Produktion) mit Farbe in Kopf, Reiter und Seitentitel; Produktion standardmässig schreibgeschützt | M | 1 | Test: schreibgeschützte Verbindung lehnt jede schreibende Anweisung ab (auch im SQL-Editor) |
+| V-04 | **Umgebung** je Verbindung (lokal, Test, Produktion) mit Farbe in Kopf, Reiter und Seitentitel; Produktion standardmässig schreibgeschützt — Schreibschutz in Schichten (Nur-lesen-Transaktion je Anweisung, vorbereitet, SQLite `OPEN_READONLY`), Lesekonto empfohlen | M | 1 | Test: schreibgeschützte Verbindung lehnt jede schreibende Anweisung ab, auch die Ausbruchsversuche aus `SecurityProbeTest` — F-7 |
 | V-05 | **Erlaubte Hosts und SQLite-Ordner** je Installation (Konfiguration); andere werden abgelehnt | M | 0 | Test mit nicht erlaubtem Host und Pfad (auch `..`, Symlink) |
 | V-06 | Verbindungen gruppieren, sortieren, suchen, Favoriten | S | 1 | Durchlauf |
 | V-07 | Herd-Dienste und `.env` der Herd-Sites als Vorschläge erkennen | C | 4 | Durchlauf auf Hoangs Mac |
 | V-08 | SSH-Tunnel | C | 4 | Test gegen einen lokalen SSH-Dienst |
 | V-09 | Verbindungen persönlich oder geteilt (Administrator teilt mit Rechten) | S | 2 | Test: persönliche Verbindung ist für andere 404 |
+| V-10 | **Warnung bei Konten mit zu vielen Rechten:** Superuser (PostgreSQL), Dateirechte (`FILE`, `LOAD_FILE` ohne `secure_file_priv`) — sichtbar an der Verbindung, mit Empfehlung eines eigenen Kontos | S | 1 | Test gegen Herd-`root` auf MariaDB und PostgreSQL (warnt) und ein Lesekonto (warnt nicht) — F-7 |
 
 ### 4.3 O — Oberfläche und Bedienung
 
 | Nr. | Anforderung | Prio | Stufe | Abnahme |
 |---|---|---|---|---|
-| O-01 | **Navigator:** Verbindung → Datenbank → Schema (PostgreSQL) → Objektgruppen → Objekte, mit Suche | M | 1 | Durchlauf mit 1'000 Tabellen flüssig (N-01) |
+| O-01 | **Navigator:** Verbindung → Datenbank → Schema (PostgreSQL) → Objektgruppen → Objekte, mit Suche | M | 1 | Durchlauf mit 1'000 Tabellen flüssig (N-01); Katalog übergibt das Schema immer ausdrücklich (MariaDB listet sonst alle Datenbanken) — F-1, F-3 |
 | O-02 | **Befehlspalette ⌘K:** Objekte öffnen, Aktionen ausführen, Verbindung wechseln, zuletzt Benutztes | M | 1 | Test der Suchquelle; Durchlauf nur mit Tastatur |
 | O-03 | **Reiter** für offene Objekte und Abfragen; bleiben beim Neuladen | S | 1 | Durchlauf |
 | O-04 | **Gleiche Bildschirme und Begriffe** für alle Treiber; Besonderheiten mit Erklärung | M | 1 | Bildschirmfotos derselben Tabelle in allen vier Datenbanken nebeneinander |
@@ -125,7 +127,7 @@ Priorität nach MoSCoW: **M** Must · **S** Should · **C** Could · **W** Won't
 | D-01 | **Datenraster:** blättern (über den Schlüssel, sonst Seitenversatz), Seitengrösse, sortieren, Spalten ein- und ausblenden, Breite merken | M | 1 | Tests je Treiber mit Sortierung inkl. NULL (Reihenfolge ausdrücklich, nicht treiberabhängig) |
 | D-02 | **Filtern** geführt (Spalte, Operator, Wert, und/oder) und als freies WHERE; Suche über die Textspalten der Tabelle, ohne Rücksicht auf Gross- und Kleinschreibung und Umlaute, wo der Treiber es zulässt | M | 1 | Tests je Treiber, auch mit Umlauten und Werten, die wie SQL aussehen |
 | D-03 | Fremdschlüssel folgen (→ Datensatz) und rückwärts (verweisende Zeilen) | S | 1 | Test je Treiber |
-| D-04 | **Bearbeiten:** Zellen ändern, Zeilen einfügen, duplizieren, löschen; Änderungen sammeln; **SQL-Vorschau**; Anwenden in einer Transaktion; Verwerfen | M | 2 | Test: nichts geschrieben vor «Anwenden»; Fehler in der zweiten Anweisung rollt die erste zurück |
+| D-04 | **Bearbeiten:** Zellen ändern, Zeilen einfügen, duplizieren, löschen; Änderungen sammeln; **SQL-Vorschau**; Anwenden in einer Transaktion; Verwerfen | M | 2 | Test je Treiber: nichts geschrieben vor «Anwenden»; Fehler in der zweiten Anweisung rollt die erste zurück; Vorschau der DML über `pretend()` mit Bindungen — F-5 |
 | D-05 | Werte typgerecht: NULL gegen leer, JSON (formatiert und geprüft), Datum und Zeit mit Zeitzone, Binärdaten (Grösse, Herunterladen, Bildvorschau), Enum und Set als Auswahl, Boolean | M | 2 | Tests je Typ und Treiber, Werte nach dem Speichern byte-genau verglichen |
 | D-06 | Zeilen zählen: genau bei kleinen Tabellen, geschätzt bei grossen, «genau zählen» auf Wunsch | S | 1 | Test mit Schwelle |
 | D-07 | Tabellen ohne Primärschlüssel: Bearbeiten nur mit Warnung und eindeutigem Treffer | M | 2 | Test: mehrdeutige Zeile wird nicht geändert |
@@ -137,8 +139,8 @@ Priorität nach MoSCoW: **M** Must · **S** Should · **C** Could · **W** Won't
 | Nr. | Anforderung | Prio | Stufe | Abnahme |
 |---|---|---|---|---|
 | S-01 | **Struktur ansehen:** Spalten (Typ, NULL, Vorgabe, Kommentar, Kollation), Indizes, Fremdschlüssel, Check-Constraints, Trigger; DDL anzeigen und kopieren | M | 1 | Tests je Treiber gegen eine Beispieltabelle mit allen Merkmalen |
-| S-02 | **Tabelle anlegen** mit geführtem Formular (Spalten, Primärschlüssel, Indizes, Fremdschlüssel) und SQL-Vorschau | M | 2 | Test: Vorschau = ausgeführtes SQL; Tabelle danach per Introspektion gleich der Eingabe |
-| S-03 | **Tabelle ändern:** Spalten hinzufügen, ändern, umbenennen, löschen; Indizes und Fremdschlüssel; Kommentare | M | 2 | Tests je Treiber; SQLite-Umbau erhält Daten, Indizes und Fremdschlüssel |
+| S-02 | **Tabelle anlegen** mit geführtem Formular (Spalten, Primärschlüssel, Indizes, Fremdschlüssel) und SQL-Vorschau | M | 2 | Test: Vorschau (aus `Blueprint::toSql()`, nie `pretend()`) = ausgeführtes SQL; Tabelle danach per Introspektion gleich der Eingabe — F-5 |
+| S-03 | **Tabelle ändern:** Spalten hinzufügen, ändern, umbenennen, löschen; Indizes und Fremdschlüssel; Kommentare — angewendet je Treiber (MySQL/MariaDB Anweisung für Anweisung mit Hinweis «nicht rückrollbar», PostgreSQL in einer Transaktion, SQLite nach dem Umbauverfahren) | M | 2 | Tests je Treiber mit Elterntabelle und abhängigen Zeilen: Daten, Indizes, Fremdschlüssel und Kinder bleiben — F-5 |
 | S-04 | Tabelle umbenennen, kopieren (Struktur, mit Daten), leeren, löschen — Leeren und Löschen nur mit Namenseingabe | M | 2 | Test: ohne korrekten Namen keine Ausführung |
 | S-05 | Datenbank bzw. Schema anlegen und löschen | S | 2 | Test je Treiber (SQLite: neue Datei im erlaubten Ordner) |
 | S-06 | Views, Routinen, Trigger, Sequenzen, Typen und Enums (PostgreSQL), Events (MySQL/MariaDB) ansehen und bearbeiten | S | 3 | Test je Objektart und Treiber |
@@ -151,23 +153,25 @@ Priorität nach MoSCoW: **M** Must · **S** Should · **C** Could · **W** Won't
 | Nr. | Anforderung | Prio | Stufe | Abnahme |
 |---|---|---|---|---|
 | Q-01 | **SQL-Editor:** Hervorhebung je Dialekt, Autovervollständigung aus dem Schema, Formatieren | M | 1 | Durchlauf je Treiber |
-| Q-02 | Ausführen: Auswahl, aktuelle Anweisung oder alles; mehrere Ergebnisse als Reiter; Dauer und Zeilenzahl; **Abbrechen** | M | 1 | Test: Abbrechen beendet die Abfrage auf dem Server (Prozessliste) |
-| Q-03 | **Grenzen:** Zeitlimit je Anweisung, Zeilengrenze je Ergebnis («mehr laden»), schreibgeschützte Verbindungen nur lesend (Transaktion «read only» bzw. `query_only`) | M | 1 | Tests je Treiber mit schreibender Anweisung auf geschützter Verbindung |
+| Q-02 | Ausführen: Auswahl, aktuelle Anweisung oder alles; mehrere Ergebnisse als Reiter; Dauer und Zeilenzahl; **Abbrechen** | M | 1 | Test: Abbrechen beendet die Abfrage auf dem Server; die Oberfläche zeigt «abgebrochen» auch bei MySQL, das ohne Fehler zurückkehrt — F-2 |
+| Q-03 | **Grenzen:** Zeitlimit je Anweisung (`max_execution_time`, `max_statement_time`, `statement_timeout`), Zeilengrenze je Ergebnis («mehr laden»), schreibgeschützte Verbindungen nur lesend (V-04) | M | 1 | Tests je Treiber mit langer und mit schreibender Anweisung auf geschützter Verbindung — F-2, F-7 |
 | Q-04 | Verlauf je Konto und Verbindung; gespeicherte Abfragen mit Namen | S | 1 | Test |
 | Q-05 | Ergebnisse bearbeiten, wenn die Abfrage eine Tabelle mit Primärschlüssel liest | C | 3 | Test |
 | Q-06 | EXPLAIN als Baum mit Hinweisen | S | 3 | Durchlauf je Treiber |
 | Q-07 | **Gefährliche Anweisungen** erkennen (DROP, TRUNCATE, DELETE und UPDATE ohne WHERE) und bestätigen lassen | M | 2 | Tests mit Varianten (Kommentare, Gross-/Kleinschreibung, mehrere Anweisungen) |
 | Q-08 | SQL-Hilfe mit KI — nur eingeschaltet, nur mit eigenem Schlüssel, nur das Schema wird gesendet | C | 4 | Test mit Attrappe: keine Datenzeilen im Auftrag; `Http::preventStrayRequests()` |
+| Q-09 | **SQLite-Abfragen aus dem SQL-Editor in einem Arbeitsprozess mit Zeitgrenze** — SQLite kennt kein Zeitlimit je Anweisung und lässt sich in PDO nicht unterbrechen | S | 1 | Test: eine Abfrage über die Grenze wird beendet, die Oberfläche meldet es — F-2 |
 
 ### 4.7 E — Export und Import
 
 | Nr. | Anforderung | Prio | Stufe | Abnahme |
 |---|---|---|---|---|
-| E-01 | **Export** von Tabelle, Abfrage oder Datenbank als CSV, JSON, SQL (Struktur, Daten, beides); grosse Exporte im Hintergrund mit Download | M | 2 | Test: Export und Re-Import ergeben dieselben Daten je Treiber |
+| E-01 | **Export** von Tabelle, Abfrage oder Datenbank als CSV, JSON, SQL (Struktur, Daten, beides); grosse Exporte im Hintergrund mit Download, in Paketen über den Schlüssel | M | 2 | Test: Export und Re-Import ergeben dieselben Daten je Treiber; 1 Mio. Zeilen unter 64 MB Speicher (gemessen 3 MB mit `lazyById`) — F-8 |
 | E-02 | **Import** von CSV mit Spaltenzuordnung und Probelauf; SQL-Datei ausführen mit Fortschritt | M | 2 | Tests mit Fehlerzeilen; Probelauf schreibt nichts |
 | E-03 | Sicherung und Wiederherstellung über die Werkzeuge des Servers (`mariadb-dump`, `mysqldump`, `pg_dump`), wo vorhanden | S | 3 | Test überspringt sichtbar, wenn das Werkzeug fehlt; Versionsprüfung |
 | E-04 | Export als Excel (XLSX) | C | 3 | Test |
 | E-05 | Kopieren aus dem Raster als TSV, Markdown oder INSERT | S | 2 | Test |
+| E-06 | **Statistik aktualisieren** nach eigenen Importen und auf Knopfdruck (`ANALYZE`) — ohne Statistik sortieren MySQL und MariaDB über den Index 100-mal langsamer | S | 2 | Test: nach Import ist die Schätzung der Zeilenzahl aktuell — F-3 |
 
 ### 4.8 W — Server-Verwaltung
 
@@ -186,7 +190,7 @@ Priorität nach MoSCoW: **M** Must · **S** Should · **C** Could · **W** Won't
 | B-01 | Stack: Laravel 13, Inertia v3, Vue 3, TypeScript, Tailwind 4; Starter-Kit bereinigt | M | 0 | Routenliste und Seitenordner ohne Starter-Kit-Reste |
 | B-02 | **Dialekt-Schicht:** ein Vertrag, je Treiber eine Umsetzung; Laravel-Introspektion, wo sie reicht | M | 0 | Vertragstest läuft gegen alle vier Umsetzungen |
 | B-03 | **Tests gegen vier Datenbanken** (MySQL 8.4, MariaDB 10.11, PostgreSQL 18, SQLite) lokal; CI sparsam: ein schlanker Auftrag je Push (SQLite), die Matrix wöchentlich und von Hand | M | 0 | lokales Skript fährt alle vier; Workflow mit `paths-ignore`, `concurrency`, `timeout-minutes` |
-| B-04 | **Protokoll** aller schreibenden Aktionen (wer, wann, Verbindung, SQL, betroffene Zeilen) mit Aufbewahrungsfrist | M | 2 | Test: jede schreibende Aktion erzeugt genau einen Eintrag; Bereinigung nach Frist |
+| B-04 | **Protokoll** aller schreibenden Aktionen (wer, wann, Verbindung, SQL, betroffene Zeilen) mit Aufbewahrungsfrist; Fehlermeldungen maskiert (Laravel setzt Bindungen in die Meldung ein) | M | 2 | Test: jede schreibende Aktion erzeugt genau einen Eintrag; Bereinigung nach Frist; ein gebundener Wert erscheint in keiner Meldung — F-7 |
 | B-05 | Installation per Git oder `composer create-project` und einem Einrichtungsbefehl | S | 2 | Durchlauf in einem leeren Ordner unter 15 Minuten |
 | B-06 | App-Datenbank SQLite als Vorgabe, MariaDB, MySQL und PostgreSQL möglich | M | 0 | Suite läuft mit jeder App-Datenbank |
 | B-07 | Queue für Export und Import; ohne Worker synchron mit Grenze | S | 2 | Test beider Wege |
@@ -197,13 +201,13 @@ Priorität nach MoSCoW: **M** Must · **S** Should · **C** Could · **W** Won't
 | Nr. | Anforderung | Prio | Stufe | Abnahme |
 |---|---|---|---|---|
 | N-01 | **Leistung:** erste Seite einer Tabelle mit 1 Mio. Zeilen unter 1 s lokal; Navigator mit 1'000 Tabellen flüssig | M | 1 | Messung mit erzeugten Daten je Treiber, Zeit im Protokoll der Timebox |
-| N-02 | **Sicherheit:** keine Zugangsdaten im Browser, CSP, CSRF, Drosselung, Hosts-Liste, Protokoll; White-Box-Prüfung nach OWASP vor v1.0 | M | 2 | Prüfbericht ohne hohen Befund |
-| N-03 | **Kein Datenverlust durch die Anwendung:** jede Änderung zuerst als Vorschau; Transaktion, wo möglich; DDL ohne Transaktion (MySQL, MariaDB) ehrlich angezeigt | M | 2 | Tests mit erzwungenem Fehler mitten in einer Folge |
+| N-02 | **Sicherheit:** keine Zugangsdaten im Browser, CSP, CSRF, Drosselung, Hosts-Liste, Protokoll, maskierte Meldungen; Bedrohungsmodell T-01 bis T-18; White-Box-Prüfung nach OWASP vor v1.0 | M | 2 | Prüfbericht ohne hohen Befund; jede Bedrohung mit Test oder begründet — [Sicherheit und Bedrohungen](../02-feasibility/sicherheit-und-bedrohungen.md) |
+| N-03 | **Kein Datenverlust durch die Anwendung:** jede Änderung zuerst als Vorschau; Transaktion, wo möglich; DDL ohne Transaktion (MySQL, MariaDB) ehrlich angezeigt; SQLite-Umbau nie mit aktiven Fremdschlüsseln in einer Transaktion | M | 2 | Tests mit erzwungenem Fehler mitten in einer Folge und mit Elterntabelle und Kindern (naiv: 0 von 2 Kindern übrig) — F-5 |
 | N-04 | **Kompatibilität:** MariaDB ab 10.6, MySQL ab 8.0, PostgreSQL ab 14, SQLite ab 3.35 (Annahme R-15) | M | 1 | Feasibility prüft die Untergrenzen |
 | N-05 | Kurze Hilfe in der Oberfläche; Projekt-Doku nach DSDM, bei jedem Commit nachgeführt | S | 2 | Doku-Prüfung im Commit |
 | N-06 | Sprache: Deutsch und Englisch, Sie-Form, Bezeichner im Code englisch | M | 1 | Test über Sprachdateien |
 
-**Zählung** (per Skript aus den Tabellen, 28.10.2026): 77 Anforderungen — M 42, S 24, C 11. Must-Anteil gesamt 55 %; **bis v1.0 (Stufen 0–2, 59 Anforderungen) 71 %** — über der DSDM-Richtgrösse von 60 %. Die PRL in der Foundation muss deshalb Musts in Kern und Bequemlichkeit teilen oder zurückstufen; Kandidaten mit Rückfallweg «bis dahin über den Navigator bzw. den SQL-Editor»: O-02 Befehlspalette, O-09 Zustände (Kern: Fehler; Rest: Leer- und Ladezustände), D-05 (Kern: NULL, JSON, Datum; Bildvorschau später), E-02 (Kern: CSV; SQL-Datei später), Q-01 (Kern: Hervorhebung und Vervollständigung; Formatieren später).
+**Zählung** (per Skript aus den Tabellen, Fassung 3, 28.10.2026): 80 Anforderungen — M 42, S 27, C 11. Must-Anteil gesamt 52 %; **bis v1.0 (Stufen 0–2, 62 Anforderungen) 68 %** (Fassung 2: 77 Anforderungen, bis v1.0 71 %) — über der DSDM-Richtgrösse von 60 %. Die PRL in der Foundation muss deshalb Musts in Kern und Bequemlichkeit teilen oder zurückstufen; Kandidaten mit Rückfallweg «bis dahin über den Navigator bzw. den SQL-Editor»: O-02 Befehlspalette, O-09 Zustände (Kern: Fehler; Rest: Leer- und Ladezustände), D-05 (Kern: NULL, JSON, Datum; Bildvorschau später), E-02 (Kern: CSV; SQL-Datei später), Q-01 (Kern: Hervorhebung und Vervollständigung; Formatieren später).
 
 ## 5. Lösungsansatz und technischer Rahmen
 
@@ -251,7 +255,7 @@ Priorität nach MoSCoW: **M** Must · **S** Should · **C** Could · **W** Won't
 | 3 Verwalten | Benutzer und Rechte, Prozesse, Views, Routinen, Beziehungsdiagramm, EXPLAIN, Sicherung | 8–10 PT | **v1.1** |
 | 4 Komfort und Team | Schemavergleich, Laravel-Migration, Herd, SSH-Tunnel, Sitzungen, KI optional | 8–10 PT | **v1.2** |
 
-Summe rund 40–50 PT. Die Schätzung wird nach den Feasibility-Proben überarbeitet.
+Summe rund 40–50 PT vor der Feasibility; mit ihren Auflagen (Arbeitsprozess für SQLite, Anwenden je Treiber, Kontowarnung, Maskierung) **rund 42–53 PT** ([Feasibility § 14](../02-feasibility/feasibility.md#14-empfehlung)).
 
 ## 10. Risiken auf oberster Ebene
 
@@ -286,7 +290,7 @@ Alle offenen Punkte stehen mit Annahme im [Rückfragen-Katalog](../01-pre-projec
 | Schritt | Inhalt | Stand |
 |---|---|---|
 | 1 | Rückfragen beantworten (mindestens R-01, R-03, R-04, R-11, R-40) | ✅ 28.10.2026; übrige laufen mit Annahme |
-| 2 | Entscheid **Weiterführen** auf Grundlage dieses CR | offen |
-| 3 | Feasibility mit den Prüfpunkten F-1 bis F-10 ([02-feasibility](../02-feasibility/README.md)) | geplant |
-| 4 | Terms of Reference v1.0 nach Feasibility | geplant |
+| 2 | Entscheid **Weiterführen** auf Grundlage dieses CR | ✅ 28.10.2026 (Hoang: «Feasibility starten») |
+| 3 | Feasibility mit den Prüfpunkten F-1 bis F-10 ([02-feasibility](../02-feasibility/README.md)) | ✅ 28.10.2026 — 6 bestanden, 4 bedingt, Empfehlung Weiterführen |
+| 4 | Terms of Reference v1.0 nach Feasibility | 🟡 v1.0 zur Verabschiedung durch Hoang |
 | 5 | Foundation: Gestaltung, PRL, Architektur, Datenmodell, Timebox-Plan; danach TB 00 Fundament | geplant |

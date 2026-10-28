@@ -11,6 +11,7 @@ Die Dokumentation folgt dem DSDM-Prozess (Schema wie Fristo und Basalto). Jede P
 > **Entschieden 28.10.2026:** Produkt von Nguyen Development unter **MIT** (R-01, R-40) · **lokal und selbst gehostet**, kein SaaS (R-11) · läuft **neben Basalto**, das bis zur Beta Vorrang hat (R-03) · Name **phpdbadmin** endgültig (R-04).
 > **Befund der Recherche:** phpMyAdmin 5.2 ist nicht für PHP 8.4+ freigegeben, phpPgAdmin ruht seit 2023, Adminer ist breit, aber knapp; Jaxon DbAdmin (PHP, 0.35) zielt seit Oktober 2026 in dieselbe Lücke ([Marktbild](00-change_request/marktbild.md)).
 > **Technik:** Laravel 13 bringt Verbindungen zur Laufzeit, Introspektion für alle Treiber und DDL mit Vorschau mit — eine Dialekt-Schicht deckt nur die Unterschiede ab ([CR-001 § 3.2](00-change_request/CR-001-phpdbadmin.md#32-architektur)).
+> **Feasibility abgeschlossen 28.10.2026:** zehn Prüfpunkte mit Proben auf MySQL 8.4, MariaDB 10.11, PostgreSQL 18 und SQLite — 6 bestanden, 4 bedingt, **Empfehlung Weiterführen** ([Bericht](02-feasibility/feasibility.md)). Wichtigste Befunde: «Anwenden» braucht je Treiber ein eigenes Verfahren (SQLite löscht naiv abhängige Zeilen), MySQL bricht Abfragen still ab, SQLite kennt kein Zeitlimit, Herd-Konten lesen Dateien des Rechners.
 
 ```
 dokumentationen/
@@ -42,9 +43,9 @@ Jede Phase hat zusätzlich einen Ordner `diagrams/`.
 
 | Phase | PDF | Leitdokument und Anhänge |
 |---|---|---|
-| 00 | [CR-001-phpdbadmin.pdf](00-change_request/CR-001-phpdbadmin.pdf) | CR-001 Fassung 2 + Ideensammlung, Rückfragen, Marktbild, Funktionsraster, Ideen-Backlog |
-| 01 | [terms-of-reference.pdf](01-pre-project/terms-of-reference.pdf) | Terms of Reference v0.1 + Übersicht, Rückfragen, Ideen-Backlog |
-| 02 | [feasibility.pdf](02-feasibility/feasibility.pdf) | Prüfpunkte F-1 bis F-10 (geplant) |
+| 00 | [CR-001-phpdbadmin.pdf](00-change_request/CR-001-phpdbadmin.pdf) | CR-001 Fassung 3 + Ideensammlung, Rückfragen, Marktbild, Funktionsraster, Ideen-Backlog |
+| 01 | [terms-of-reference.pdf](01-pre-project/terms-of-reference.pdf) | Terms of Reference v1.0 (zur Verabschiedung) + Übersicht, Rückfragen, Ideen-Backlog |
+| 02 | [feasibility.pdf](02-feasibility/feasibility.pdf) | Feasibility-Bericht v1.0 + Sicherheit und Bedrohungen, Name und Marke |
 | 03 | [foundation.pdf](03-foundation/foundation.pdf) | Platzhalter |
 | 04 | [evolutionary-development.pdf](04-evolutionary-development/evolutionary-development.pdf) | geplante TB 00 |
 | 05 | [deployment.pdf](05-deployment/deployment.pdf) | Zielbild |
@@ -59,7 +60,7 @@ Jede Phase hat zusätzlich einen Ordner `diagrams/`.
 | Produktion | beim Anwender | selbst gehostet neben den eigenen Datenbanken (entschieden, R-11) |
 
 - **Stack (installiert):** Laravel 13.39 (PHP 8.5) · Inertia v3.5 · Vue 3.5 · TypeScript · Tailwind 4 · Vite (vite-plus 1.4) · Wayfinder · Fortify 1.41 (mit `laravel/passkeys`) · PHPUnit 12 · Larastan · Pint · Laravel Boost.
-- **Lokale Datenbanken (Herd):** MariaDB 10.11.6 :3306 · PostgreSQL 18 :5432 · SQLite · MySQL 8.4 noch zu installieren (R-33).
+- **Lokale Datenbanken (Herd):** MySQL 8.4.11 :3307 (seit 28.10.2026) · MariaDB 10.11.6 :3306 · PostgreSQL 18 :5432 · SQLite 3.45.
 - **Repo:** lokal `~/Development/phpdbadmin`, Branch `main`; GitHub-Remote noch nicht angelegt (R-07).
 
 ## Status
@@ -69,13 +70,13 @@ Jede Phase hat zusätzlich einen Ordner `diagrams/`.
 | 00 | [Ideensammlung](00-change_request/ideensammlung.md) | 🔨 v0.1 — W-Fragen, Prinzipien P-01 bis P-11 |
 | 00 | [Marktbild](00-change_request/marktbild.md) | 🔨 v0.1 — acht Befunde, Positionierung A + C, Quellen mit Prüfart |
 | 00 | [Funktionsraster](00-change_request/funktionsraster.md) | 🔨 v0.1 — drei Vorbilder → v1.0 / v1.1 / v1.2 / Nein |
-| 00 | [CR-001 phpdbadmin](00-change_request/CR-001-phpdbadmin.md) · [PDF-Dossier](00-change_request/CR-001-phpdbadmin.pdf) | 🟡 Fassung 2 (Entwurf) — 77 Anforderungen, Kernfragen entschieden; Entscheid «Weiterführen» steht aus |
+| 00 | [CR-001 phpdbadmin](00-change_request/CR-001-phpdbadmin.md) · [PDF-Dossier](00-change_request/CR-001-phpdbadmin.pdf) | ✅ Fassung 3 — **Weiterführen** entschieden 28.10.2026; 80 Anforderungen nach der Feasibility |
 | 01 | [Ausgangslage und Rückfragen](01-pre-project/ausgangslage-und-rueckfragen.md) | 🔨 erste Runde — R-01, R-03, R-04, R-11, R-40 entschieden; übrige mit Annahmen |
 | 01 | [Ideen-Backlog](01-pre-project/ideen-backlog.md) | 🔨 erste Sammlung |
-| 01 | [Terms of Reference](01-pre-project/terms-of-reference.md) · [PDF](01-pre-project/terms-of-reference.pdf) | 🟡 Entwurf v0.1 |
-| 02 | [Feasibility](02-feasibility/README.md) | 📋 geplant — F-1 bis F-10 |
+| 01 | [Terms of Reference](01-pre-project/terms-of-reference.md) · [PDF](01-pre-project/terms-of-reference.pdf) | 🟡 v1.0 zur Verabschiedung durch Hoang |
+| 02 | [Feasibility](02-feasibility/README.md) | ✅ abgeschlossen 28.10.2026 — 6 bestanden, 4 bedingt, Empfehlung Weiterführen; Proben in `tests/Feature/Feasibility` |
 | 03 | [Foundation](03-foundation/README.md) | 📋 Platzhalter |
-| 04 | [Evolutionary Development](04-evolutionary-development/README.md) | 📋 TB 00 Fundament geplant (Starter-Kit bereinigen, Anmeldung, Verbindungen) |
+| 04 | [Evolutionary Development](04-evolutionary-development/README.md) | 📋 TB 00 Fundament geplant (Starter-Kit bereinigen, Anmeldung, Verbindungen); ADR-Kandidaten 001–010 |
 | 05 | [Deployment](05-deployment/README.md) | 📋 Zielbild |
 | 06 | [Post-Project](06-post-project/README.md) | 📋 Platzhalter |
 
