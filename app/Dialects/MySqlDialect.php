@@ -116,6 +116,10 @@ class MySqlDialect extends BaseDialect
         ), ['name', 'timing', 'event', 'definition']));
     }
 
+    /**
+     * Nur Verweise aus demselben Schema: MariaDB öffnet für information_schema sonst jede Tabelle jeder Datenbank
+     * (gemessen über 15 s auf einem Server mit vielen Datenbanken); mit festem table_schema nur die eine.
+     */
     public function referencingForeignKeys(Connection $connection, string $schema, string $table): array
     {
         return array_map(fn (array $row): array => [
@@ -132,10 +136,11 @@ class MySqlDialect extends BaseDialect
              from information_schema.key_column_usage kcu
              join information_schema.referential_constraints rc
                on rc.constraint_schema = kcu.constraint_schema and rc.constraint_name = kcu.constraint_name and rc.table_name = kcu.table_name
-             where kcu.referenced_table_schema = ? and kcu.referenced_table_name = ?
+             where kcu.table_schema = ? and kcu.referenced_table_schema = ? and kcu.referenced_table_name = ?
+               and rc.constraint_schema = ?
              group by kcu.constraint_name, kcu.table_name, rc.delete_rule
              order by kcu.table_name, kcu.constraint_name',
-            [$schema, $table],
+            [$schema, $schema, $table, $schema],
         ), ['name', 'tbl', 'cols', 'refcols', 'on_delete']));
     }
 

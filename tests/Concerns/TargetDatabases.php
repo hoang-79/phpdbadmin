@@ -175,9 +175,16 @@ trait TargetDatabases
      */
     protected function createSampleSchema(Connection $connection, DatabaseDriver $driver): void
     {
+        // Alle Merkmale, die die Strukturansicht zeigen muss (aus der Probe F-1).
         $connection->getSchemaBuilder()->create('customers', function (Blueprint $table) {
             $table->id();
             $table->string('email')->unique();
+            $table->string('name')->nullable()->comment('Anzeigename');
+            $table->enum('status', ['aktiv', 'gesperrt'])->default('aktiv');
+            $table->decimal('balance', 10, 2)->default(0);
+            $table->json('meta')->nullable();
+            $table->timestamp('created_at')->nullable();
+            $table->index('name');
         });
 
         $connection->statement(match ($driver) {
