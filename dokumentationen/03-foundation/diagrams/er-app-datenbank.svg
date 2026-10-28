@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 720" width="1180" height="720" role="img">
+  <style>
+    text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; fill: #1e293b; }
+    .cap { font-size: 19px; font-weight: bold; }
+    .sub { font-size: 12px; fill: #475569; }
+    .h { font-size: 14px; font-weight: bold; }
+    .hw { font-size: 14px; font-weight: bold; fill: #ffffff; }
+    .t { font-size: 12px; }
+    .tw { font-size: 12px; fill: #e2e8f0; }
+    .s { font-size: 10.5px; fill: #475569; }
+    .sw { font-size: 10.5px; fill: #cbd5e1; }
+    .badge { font-size: 10px; font-weight: bold; fill: #ffffff; }
+    .note { font-size: 11.5px; fill: #475569; font-style: italic; }
+    .mono { font-family: Menlo, "SF Mono", monospace; font-size: 11px; }
+    .monow { font-family: Menlo, "SF Mono", monospace; font-size: 11px; fill: #e2e8f0; }
+    .rotT { font-size: 12px; font-weight: bold; fill: #b42318; }
+    .kern { fill: #1e293b; stroke: #1e293b; }
+    .kernhell { fill: #eef2f6; stroke: #1e293b; stroke-width: 1.4; }
+    .ausbau { fill: #e6f4f7; stroke: #0e7490; stroke-width: 1.4; }
+    .gruen { fill: #e7f4ec; stroke: #2f7d4f; stroke-width: 1.4; }
+    .nein { fill: #f5f6f8; stroke: #94a3b8; stroke-width: 1.4; stroke-dasharray: 5 3; }
+    .neutral { fill: #ffffff; stroke: #94a3b8; stroke-width: 1.4; }
+    .rot { fill: #fdecea; stroke: #b42318; stroke-width: 1.4; }
+    .flaeche { fill: #f5f6f8; stroke: none; }
+    .pfeil { stroke: #1e293b; stroke-width: 1.6; fill: none; marker-end: url(#pf); }
+    .pfeilg { stroke: #475569; stroke-width: 1.4; fill: none; marker-end: url(#pfg); stroke-dasharray: 5 3; }
+    .linie { stroke: #94a3b8; stroke-width: 1.2; fill: none; }
+    .achse { stroke: #475569; stroke-width: 1.4; fill: none; marker-end: url(#pfg); }
+</style>
+
+  <defs>
+    <marker id="pf" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#1e293b"/>
+    </marker>
+    <marker id="pfg" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1180" height="720" fill="#ffffff"/>
+  <text x="30" y="36" class="cap" text-anchor="start">phpdbadmin — App-Datenbank v0.1 (ER)</text>
+  <text x="30" y="57" class="sub" text-anchor="start">Eigene Tabellen von phpdbadmin; Zieldatenbanken haben hier kein Modell. Zeitpunkte UTC, Geheimnisse verschlüsselt, Einmalwerte als Prüfsumme</text>
+  <rect x="30" y="80" width="230" height="157" rx="6" class="kernhell"/>
+  <rect x="30" y="80" width="230" height="26" rx="6" class="kern"/>
+  <text x="40" y="98" class="hw" text-anchor="start">users</text>
+  <text x="40" y="124" class="mono" text-anchor="start">id</text>
+  <text x="40" y="141" class="mono" text-anchor="start">name</text>
+  <text x="40" y="158" class="mono" text-anchor="start">email ∪</text>
+  <text x="40" y="175" class="mono" text-anchor="start">role</text>
+  <text x="40" y="192" class="mono" text-anchor="start">locale, theme, density</text>
+  <text x="40" y="209" class="mono" text-anchor="start">timezone</text>
+  <text x="40" y="226" class="mono" text-anchor="start">last_login_at</text>
+  <rect x="30" y="290" width="230" height="140" rx="6" class="kernhell"/>
+  <rect x="30" y="290" width="230" height="26" rx="6" class="kern"/>
+  <text x="40" y="308" class="hw" text-anchor="start">passkeys</text>
+  <text x="40" y="334" class="mono" text-anchor="start">id</text>
+  <text x="40" y="351" class="mono" text-anchor="start">user_id →</text>
+  <text x="40" y="368" class="mono" text-anchor="start">name</text>
+  <text x="40" y="385" class="mono" text-anchor="start">credential_id ∪</text>
+  <text x="40" y="402" class="mono" text-anchor="start">credential (json)</text>
+  <text x="40" y="419" class="mono" text-anchor="start">last_used_at</text>
+  <rect x="30" y="480" width="230" height="140" rx="6" class="kernhell"/>
+  <rect x="30" y="480" width="230" height="26" rx="6" class="kern"/>
+  <text x="40" y="498" class="hw" text-anchor="start">login_codes</text>
+  <text x="40" y="524" class="mono" text-anchor="start">id</text>
+  <text x="40" y="541" class="mono" text-anchor="start">email_hash</text>
+  <text x="40" y="558" class="mono" text-anchor="start">code_hash</text>
+  <text x="40" y="575" class="mono" text-anchor="start">attempts</text>
+  <text x="40" y="592" class="mono" text-anchor="start">expires_at, consumed_at</text>
+  <text x="40" y="609" class="mono" text-anchor="start">ip_hash</text>
+  <rect x="290" y="80" width="230" height="140" rx="6" class="kernhell"/>
+  <rect x="290" y="80" width="230" height="26" rx="6" class="kern"/>
+  <text x="300" y="98" class="hw" text-anchor="start">invitations</text>
+  <text x="300" y="124" class="mono" text-anchor="start">id</text>
+  <text x="300" y="141" class="mono" text-anchor="start">email</text>
+  <text x="300" y="158" class="mono" text-anchor="start">role</text>
+  <text x="300" y="175" class="mono" text-anchor="start">token_hash</text>
+  <text x="300" y="192" class="mono" text-anchor="start">invited_by →</text>
+  <text x="300" y="209" class="mono" text-anchor="start">expires_at, accepted_at</text>
+  <rect x="560" y="80" width="250" height="191" rx="6" class="ausbau"/>
+  <rect x="560" y="80" width="250" height="26" rx="6" class="kern"/>
+  <text x="570" y="98" class="hw" text-anchor="start">connections</text>
+  <text x="570" y="124" class="mono" text-anchor="start">id (ULID)</text>
+  <text x="570" y="141" class="mono" text-anchor="start">owner_id →, shared</text>
+  <text x="570" y="158" class="mono" text-anchor="start">name, group, driver</text>
+  <text x="570" y="175" class="mono" text-anchor="start">host, port, database</text>
+  <text x="570" y="192" class="mono" text-anchor="start">username, password 🔒</text>
+  <text x="570" y="209" class="mono" text-anchor="start">sqlite_path, options</text>
+  <text x="570" y="226" class="mono" text-anchor="start">environment, read_only</text>
+  <text x="570" y="243" class="mono" text-anchor="start">server_version</text>
+  <text x="570" y="260" class="mono" text-anchor="start">account_warnings (json)</text>
+  <rect x="290" y="290" width="230" height="123" rx="6" class="kernhell"/>
+  <rect x="290" y="290" width="230" height="26" rx="6" class="kern"/>
+  <text x="300" y="308" class="hw" text-anchor="start">connection_user</text>
+  <text x="300" y="334" class="mono" text-anchor="start">connection_id →</text>
+  <text x="300" y="351" class="mono" text-anchor="start">user_id →</text>
+  <text x="300" y="368" class="mono" text-anchor="start">permission</text>
+  <text x="300" y="385" class="mono" text-anchor="start">favorite</text>
+  <text x="300" y="402" class="mono" text-anchor="start">last_opened_at</text>
+  <rect x="850" y="80" width="300" height="140" rx="6" class="kernhell"/>
+  <rect x="850" y="80" width="300" height="26" rx="6" class="kern"/>
+  <text x="860" y="98" class="hw" text-anchor="start">query_history</text>
+  <text x="860" y="124" class="mono" text-anchor="start">id</text>
+  <text x="860" y="141" class="mono" text-anchor="start">user_id →</text>
+  <text x="860" y="158" class="mono" text-anchor="start">connection_id →</text>
+  <text x="860" y="175" class="mono" text-anchor="start">sql (longText)</text>
+  <text x="860" y="192" class="mono" text-anchor="start">status, duration_ms</text>
+  <text x="860" y="209" class="mono" text-anchor="start">row_count</text>
+  <rect x="850" y="250" width="300" height="123" rx="6" class="kernhell"/>
+  <rect x="850" y="250" width="300" height="26" rx="6" class="kern"/>
+  <text x="860" y="268" class="hw" text-anchor="start">saved_queries</text>
+  <text x="860" y="294" class="mono" text-anchor="start">id</text>
+  <text x="860" y="311" class="mono" text-anchor="start">user_id →</text>
+  <text x="860" y="328" class="mono" text-anchor="start">connection_id →</text>
+  <text x="860" y="345" class="mono" text-anchor="start">name, sql</text>
+  <text x="860" y="362" class="mono" text-anchor="start">parameters (json), shared</text>
+  <rect x="850" y="400" width="300" height="106" rx="6" class="kernhell"/>
+  <rect x="850" y="400" width="300" height="26" rx="6" class="kern"/>
+  <text x="860" y="418" class="hw" text-anchor="start">table_views</text>
+  <text x="860" y="444" class="mono" text-anchor="start">id</text>
+  <text x="860" y="461" class="mono" text-anchor="start">user_id →, connection_id →</text>
+  <text x="860" y="478" class="mono" text-anchor="start">schema, table</text>
+  <text x="860" y="495" class="mono" text-anchor="start">columns, filters, sort (json)</text>
+  <rect x="560" y="360" width="250" height="140" rx="6" class="kernhell"/>
+  <rect x="560" y="360" width="250" height="26" rx="6" class="kern"/>
+  <text x="570" y="378" class="hw" text-anchor="start">audit_log</text>
+  <text x="570" y="404" class="mono" text-anchor="start">id</text>
+  <text x="570" y="421" class="mono" text-anchor="start">user_id →</text>
+  <text x="570" y="438" class="mono" text-anchor="start">connection_id →</text>
+  <text x="570" y="455" class="mono" text-anchor="start">action, target</text>
+  <text x="570" y="472" class="mono" text-anchor="start">sql (maskiert)</text>
+  <text x="570" y="489" class="mono" text-anchor="start">affected_rows, ip_hash</text>
+  <rect x="560" y="560" width="250" height="106" rx="6" class="kernhell"/>
+  <rect x="560" y="560" width="250" height="26" rx="6" class="kern"/>
+  <text x="570" y="578" class="hw" text-anchor="start">change_snapshots</text>
+  <text x="570" y="604" class="mono" text-anchor="start">id, audit_log_id →</text>
+  <text x="570" y="621" class="mono" text-anchor="start">target, key (json)</text>
+  <text x="570" y="638" class="mono" text-anchor="start">before, after (json)</text>
+  <text x="570" y="655" class="mono" text-anchor="start">expires_at</text>
+  <rect x="290" y="480" width="240" height="123" rx="6" class="kernhell"/>
+  <rect x="290" y="480" width="240" height="26" rx="6" class="kern"/>
+  <text x="300" y="498" class="hw" text-anchor="start">transfers</text>
+  <text x="300" y="524" class="mono" text-anchor="start">id</text>
+  <text x="300" y="541" class="mono" text-anchor="start">user_id →, connection_id →</text>
+  <text x="300" y="558" class="mono" text-anchor="start">kind, format, status</text>
+  <text x="300" y="575" class="mono" text-anchor="start">progress, rows</text>
+  <text x="300" y="592" class="mono" text-anchor="start">file_path, expires_at</text>
+  <path d="M290 160 L262 160" class="pfeil"/>
+  <path d="M145 290 L145 228" class="pfeil"/>
+  <path d="M290 330 L262 236" class="pfeil"/>
+  <path d="M530 330 L558 200" class="pfeil"/>
+  <path d="M850 130 L812 130" class="pfeil"/>
+  <path d="M850 290 L812 190" class="pfeil"/>
+  <path d="M850 440 L812 230" class="pfeil"/>
+  <path d="M685 360 L685 258" class="pfeil"/>
+  <path d="M685 560 L685 498" class="pfeil"/>
+  <path d="M530 540 L558 240" class="pfeil"/>
+  <text x="30" y="676" class="s" text-anchor="start">Pfeile: Fremdschlüssel von der verweisenden zur referenzierten Tabelle; die Arbeitstabellen verweisen zusätzlich über user_id auf users (nicht gezeichnet).</text>
+  <text x="30" y="694" class="s" text-anchor="start">∪ eindeutig · 🔒 verschlüsselt (encrypted-Cast) · Fristen: Codes 1 Tag, Verlauf 90 Tage, Sicherungen 7 Tage, Exporte 24 h, Protokoll 365 Tage</text>
+</svg>

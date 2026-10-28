@@ -8,7 +8,7 @@ Projekteingang ist [CR-001](../00-change_request/CR-001-phpdbadmin.md). Das Pre-
 |---|---|---|
 | [Ausgangslage und Rückfragen](ausgangslage-und-rueckfragen.md) | Was feststeht, was nachgelesen ist, **Interview R-01 bis R-42** mit Annahmen | 🔨 erste Runde 28.10.2026 — R-01, R-03, R-04, R-11, R-40 entschieden |
 | [Ideen-Backlog](ideen-backlog.md) | Alle Ideen mit Nutzen, Herkunft und MoSCoW-Vorschlag | 🔨 erste Sammlung |
-| [Terms of Reference](terms-of-reference.md) | Projektziel, Hintergrund, Systemkontext, Rahmen, Umfang, Priorisierung, Fahrplan, Erfolgskriterien, Risiken, Vorbedingungen, DSDM-Check | 🟡 v1.0 zur Verabschiedung (28.10.2026, nach Feasibility) |
+| [Terms of Reference](terms-of-reference.md) | Projektziel, Hintergrund, Systemkontext, Rahmen, Umfang, Priorisierung, Fahrplan, Erfolgskriterien, Risiken, Vorbedingungen, DSDM-Check | ✅ **v1.0 verabschiedet 28.10.2026** |
 
 **Diagramme** (`diagrams/`): Anmeldung ohne Passwort (Code und Passkey, Entferntes aus dem Starter-Kit). Systemkontext und Fahrplan liegen in `00-change_request/diagrams/`.
 

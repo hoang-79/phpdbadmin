@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="de-CH" class="mk-hell"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>09 Tabelle ändern mit Vorschau · desktop — TEST · orders · shop — phpdbadmin</title><style>.mk-hell{--grund:#ffffff;--flaeche:#f6f7f9;--flaeche-stark:#eceff3;--rand:#dde2e8;--text:#1c2534;--text-zweit:#4a5568;--text-leise:#5f6b7d;--akzent:#0b6e82;--akzent-text:#ffffff;--akzent-hell:#e3f2f5;--erfolg:#1d7a46;--warnung:#9a5b00;--gefahr:#b3261e;--gefahr-text:#ffffff;--gefahr-hell:#fbeaea;--umgebung-lokal:#4a5568;--umgebung-test:#9a5b00;--umgebung-produktion:#b3261e;--zelle-geaendert:#e3f2f5;--zelle-neu:#e6f4ea;--zelle-geloescht:#fbeaea;--schleier:rgba(11,17,32,.42);--schatten:0 12px 32px rgba(11,17,32,.18),0 2px 6px rgba(11,17,32,.08);}.mk-dunkel{--grund:#0b1120;--flaeche:#111a2c;--flaeche-stark:#1a2438;--rand:#2a3550;--text:#e5e9f0;--text-zweit:#a9b4c6;--text-leise:#8c98ad;--akzent:#4fc3d9;--akzent-text:#062a33;--akzent-hell:#0f3540;--erfolg:#5bd08f;--warnung:#f2b84b;--gefahr:#ff8a80;--gefahr-text:#3b0a07;--gefahr-hell:#3a1416;--umgebung-lokal:#a9b4c6;--umgebung-test:#f2b84b;--umgebung-produktion:#ff8a80;--zelle-geaendert:#0f3540;--zelle-neu:#103522;--zelle-geloescht:#3a1416;--schleier:rgba(0,0,0,.6);--schatten:0 12px 32px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);}
+.mk-body{margin:0;background:var(--flaeche-stark);scrollbar-width:none}
+.mk-body::-webkit-scrollbar{display:none}
+.mk-rahmen{position:relative;overflow:hidden;background:var(--grund);color:var(--text);font-family:Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif;font-size:14px;line-height:20px;-webkit-font-smoothing:antialiased;font-feature-settings:"cv05"}
+.mk-rahmen *{box-sizing:border-box}
+.mk-rahmen *::-webkit-scrollbar{display:none}
+.mk-rahmen h1,.mk-rahmen h2,.mk-rahmen h3,.mk-rahmen h4,.mk-rahmen p,.mk-rahmen ul,.mk-rahmen ol,.mk-rahmen pre,.mk-rahmen figure{margin:0;padding:0}
+.mk-rahmen ul,.mk-rahmen ol{list-style:none}
+.mk-rahmen b,.mk-rahmen strong{font-weight:600}
+.mk-rahmen a{color:var(--akzent);text-decoration:underline;text-underline-offset:2px}
+.mk-rahmen code{font-family:"JetBrains Mono", Menlo, monospace;font-size:13px}
+.mk-rahmen code,.mk-rahmen pre,.mk-mono,.mk-sql,.mk-editor,.mk-marke,.mk-raster th .mk-typ{font-variant-ligatures:none;font-feature-settings:"calt" 0,"liga" 0}
+.mk-desktop{width:1440px;height:900px}
+.mk-mobil{width:375px;height:812px;overflow-wrap:anywhere}
+.mk-mono{font-family:"JetBrains Mono", Menlo, monospace;font-size:13px;line-height:20px}
+.mk-zahl{font-variant-numeric:tabular-nums}
+.mk-zweit{color:var(--text-zweit)}
+.mk-leise{color:var(--text-leise)}
+.mk-klein{font-size:12px;line-height:16px}
+.mk-fett{font-weight:600}
+.mk-gefahr-text{color:var(--gefahr)}
+.mk-erfolg-text{color:var(--erfolg)}
+.mk-warnung-text{color:var(--warnung)}
+.mk-akzent-text{color:var(--akzent)}
+.mk-ic{width:16px;height:16px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px}
+.mk-ic-20{width:20px;height:20px}
+.mk-ic-14{width:14px;height:14px}
+.mk-zeile{display:flex;align-items:center;gap:8px;min-width:0}
+.mk-zeile-wrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.mk-stapel{display:flex;flex-direction:column;min-width:0}
+.mk-luecke-4{gap:4px}.mk-luecke-8{gap:8px}.mk-luecke-12{gap:12px}.mk-luecke-16{gap:16px}.mk-luecke-24{gap:24px}
+.mk-rechts-weg{margin-left:auto}
+.mk-voll{flex:1;min-width:0}
+.mk-nowrap{white-space:nowrap}
+.mk-abschneiden{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.mk-trenner{width:1px;align-self:stretch;background:var(--rand);flex-shrink:0}
+
+/* Umgebung: Punkt + Wort, nie Farbe allein */
+.mk-punkt{width:10px;height:10px;flex-shrink:0;display:inline-block;vertical-align:-1px}
+.mk-umg{display:inline-flex;align-items:center;gap:6px;font-weight:500;white-space:nowrap}
+.mk-umg-lokal{color:var(--umgebung-lokal)}
+.mk-umg-test{color:var(--umgebung-test)}
+.mk-umg-prod{color:var(--umgebung-produktion)}
+.mk-streifen-prod{position:absolute;top:0;left:0;right:0;height:2px;background:var(--umgebung-produktion);z-index:30}
+
+/* Kopfleiste */
+.mk-kopf{position:relative;height:52px;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--rand);background:var(--grund)}
+.mk-marke{font-family:"JetBrains Mono", Menlo, monospace;font-weight:600;font-size:15px;letter-spacing:-.2px;color:var(--text);white-space:nowrap}
+.mk-marke b{color:var(--akzent)}
+.mk-chip{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 10px;border-radius:999px;border:1px solid var(--rand);background:var(--grund);font-weight:500;white-space:nowrap;color:var(--text)}
+.mk-chip.mk-umg-test{border-color:var(--umgebung-test);color:var(--umgebung-test)}
+.mk-chip.mk-umg-prod{border-color:var(--umgebung-produktion);background:var(--gefahr-hell);color:var(--umgebung-produktion)}
+.mk-chip .mk-name{font-weight:600}
+.mk-chip.mk-chip-klein{height:24px;padding:0 8px;font-size:12px;line-height:16px;gap:6px}
+.mk-treiber{display:inline-flex;align-items:center;font-size:12px;line-height:16px;padding:1px 6px;border-radius:4px;border:1px solid var(--rand);color:var(--text-zweit);background:var(--grund);font-weight:500;white-space:nowrap}
+.mk-schild{display:inline-flex;align-items:center;gap:4px;font-size:12px;line-height:16px;padding:2px 8px;border-radius:999px;border:1px solid var(--rand);color:var(--text-zweit);background:var(--grund);font-weight:500;white-space:nowrap}
+.mk-schild.mk-s-akzent{border-color:var(--akzent);color:var(--akzent)}
+.mk-schild.mk-s-erfolg{border-color:var(--erfolg);color:var(--erfolg)}
+.mk-schild.mk-s-warnung{border-color:var(--warnung);color:var(--warnung)}
+.mk-schild.mk-s-gefahr{border-color:var(--gefahr);color:var(--gefahr);background:var(--gefahr-hell)}
+.mk-palette-feld{flex:1;max-width:460px;margin:0 auto;height:34px;border:1px solid var(--rand);border-radius:6px;background:var(--flaeche);display:flex;align-items:center;gap:8px;padding:0 6px 0 10px;color:var(--text-leise);min-width:0}
+.mk-taste{display:inline-flex;align-items:center;font-size:12px;line-height:16px;border:1px solid var(--rand);border-bottom-width:2px;border-radius:4px;padding:1px 5px;background:var(--grund);color:var(--text-zweit);font-weight:500;white-space:nowrap}
+.mk-ikonknopf{width:34px;height:34px;display:inline-grid;place-items:center;border-radius:6px;border:1px solid var(--rand);background:var(--grund);color:var(--text-zweit);flex-shrink:0}
+.mk-ikonknopf.mk-ohne-rand{border-color:transparent;background:transparent}
+.mk-konto{display:inline-flex;align-items:center;gap:4px;color:var(--text-zweit)}
+.mk-avatar{width:32px;height:32px;border-radius:999px;background:var(--flaeche-stark);color:var(--text);display:inline-grid;place-items:center;font-weight:600;font-size:12px;flex-shrink:0;border:1px solid var(--rand)}
+.mk-entsperrt{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;border:1px dashed var(--umgebung-produktion);color:var(--umgebung-produktion);font-size:13px;font-weight:500;white-space:nowrap;background:var(--grund)}
+
+/* Arbeitsfläche */
+.mk-rumpf{display:flex;height:calc(100% - 52px);position:relative}
+.mk-navi{width:256px;flex-shrink:0;background:var(--flaeche);border-right:1px solid var(--rand);display:flex;flex-direction:column;position:relative;overflow:hidden}
+.mk-navi-suche{margin:12px 12px 8px;height:32px;border:1px solid var(--rand);border-radius:6px;background:var(--grund);display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--text-leise);font-size:13px}
+.mk-baum{flex:1;min-height:0;overflow:hidden;padding:0 8px;position:relative}
+.mk-baum-e{display:flex;align-items:center;gap:6px;height:28px;padding:0 8px;border-radius:6px;color:var(--text);white-space:nowrap;font-size:13px}
+.mk-baum-e .mk-ic{color:var(--text-leise)}
+.mk-baum-e.mk-aktiv{background:var(--akzent-hell);font-weight:600;box-shadow:inset 3px 0 0 var(--akzent)}
+.mk-baum-e.mk-aktiv .mk-ic{color:var(--akzent)}
+.mk-baum-e.mk-gruppe{color:var(--text-zweit);font-weight:500}
+.mk-zaehler{margin-left:auto;font-size:12px;line-height:16px;color:var(--text-leise);font-variant-numeric:tabular-nums;font-weight:400}
+.mk-navi-unten{border-top:1px solid var(--rand);padding:8px;background:var(--flaeche)}
+.mk-navi-titel{display:flex;align-items:center;gap:6px;font-size:12px;line-height:16px;font-weight:600;color:var(--text-zweit);padding:6px 8px 4px;text-transform:none}
+.mk-haupt{flex:1;min-width:0;display:flex;flex-direction:column;position:relative;background:var(--grund)}
+.mk-offen{display:flex;flex-wrap:wrap;align-items:flex-end;padding:0 8px;background:var(--flaeche);border-bottom:1px solid var(--rand);min-height:40px}
+.mk-reiter{display:flex;align-items:center;gap:8px;height:39px;padding:0 12px;color:var(--text-zweit);font-size:13px;border-right:1px solid var(--rand);white-space:nowrap;position:relative}
+.mk-reiter:first-child{border-left:1px solid var(--rand)}
+.mk-reiter.mk-aktiv{background:var(--grund);color:var(--text);font-weight:600;box-shadow:inset 0 2px 0 var(--akzent);margin-bottom:-1px;height:40px}
+.mk-reiter .mk-x{color:var(--text-leise)}
+.mk-objkopf{display:flex;align-items:center;gap:12px;padding:12px 16px 0;flex-wrap:wrap}
+.mk-objkopf h1{font-size:18px;line-height:24px;font-weight:600;font-family:"JetBrains Mono", Menlo, monospace}
+.mk-ansichten{display:flex;gap:4px;padding:0 16px;border-bottom:1px solid var(--rand);flex-wrap:wrap}
+.mk-ansicht{display:inline-flex;align-items:center;gap:6px;padding:10px 10px 9px;color:var(--text-zweit);font-weight:500;border-bottom:2px solid transparent;white-space:nowrap}
+.mk-ansicht.mk-aktiv{color:var(--akzent);border-bottom-color:var(--akzent);font-weight:600}
+.mk-filter{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 16px;border-bottom:1px solid var(--rand)}
+.mk-fchip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 6px 0 10px;border-radius:999px;background:var(--flaeche);border:1px solid var(--rand);font-size:13px;white-space:nowrap;max-width:100%}
+.mk-fchip .mk-sp{font-family:"JetBrains Mono", Menlo, monospace;font-size:12px;font-weight:500}
+.mk-fchip .mk-op{color:var(--text-zweit)}
+.mk-fchip.mk-neu{background:var(--grund);border-style:dashed;color:var(--akzent);padding:0 10px;font-weight:500}
+.mk-umschalter{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text-zweit);white-space:nowrap}
+
+/* Datenraster */
+.mk-raster-huelle{position:relative;flex:1;min-height:0;overflow:hidden}
+.mk-raster{border-collapse:separate;border-spacing:0;table-layout:fixed;font-size:13px;line-height:20px;font-variant-numeric:tabular-nums}
+.mk-raster th,.mk-raster td{height:32px;padding:0 10px;border-bottom:1px solid var(--rand);border-right:1px solid var(--rand);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;vertical-align:middle;background:var(--grund)}
+.mk-dicht .mk-raster td{height:28px}
+.mk-raster th{height:44px;background:var(--flaeche);font-weight:600;line-height:16px;padding-top:4px;padding-bottom:4px}
+.mk-raster th .mk-typ{display:block;font-weight:400;font-size:12px;line-height:16px;color:var(--text-leise);font-family:"JetBrains Mono", Menlo, monospace}
+.mk-raster th .mk-sort{float:right;color:var(--akzent)}
+.mk-raster .mk-nr{text-align:center;color:var(--text-leise);background:var(--flaeche);padding:0 4px;font-weight:500}
+.mk-raster .mk-fix-ende{box-shadow:3px 0 0 0 var(--rand)}
+.mk-raster td.mk-geaendert{background:var(--zelle-geaendert);font-weight:600;position:relative}
+.mk-raster td.mk-geaendert::after{content:"";position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:999px;background:var(--akzent)}
+.mk-raster tr.mk-neu td{background:var(--zelle-neu)}
+.mk-raster tr.mk-neu td.mk-nr{color:var(--erfolg);font-weight:700}
+.mk-raster tr.mk-loeschen td{background:var(--zelle-geloescht);text-decoration:line-through;text-decoration-color:var(--gefahr)}
+.mk-raster tr.mk-loeschen td.mk-nr{color:var(--gefahr);font-weight:700;text-decoration:none}
+.mk-raster td.mk-fokus{outline:2px solid var(--akzent);outline-offset:-2px}
+.mk-raster tr.mk-gewaehlt td{background:var(--akzent-hell)}
+.mk-raster .mk-r{text-align:right}
+.mk-null{font-style:italic;color:var(--text-leise);font-weight:400}
+.mk-vorgabe{font-style:italic;color:var(--text-leise)}
+.mk-fk{color:var(--akzent);margin-right:4px;font-weight:600}
+.mk-fk-name{color:var(--text-zweit)}
+.mk-kante-rechts{position:absolute;top:0;right:0;bottom:0;width:72px;background:linear-gradient(to right,transparent,var(--grund) 72%);display:flex;align-items:center;justify-content:flex-end;padding-right:10px;pointer-events:none;z-index:4}
+.mk-kante-unten{position:absolute;left:0;right:0;bottom:0;height:56px;background:linear-gradient(to bottom,transparent,var(--grund) 78%);display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;pointer-events:none;z-index:4}
+.mk-kante-unten.mk-auf-flaeche{background:linear-gradient(to bottom,transparent,var(--flaeche) 78%)}
+.mk-kante-zeichen{width:26px;height:26px;border-radius:999px;background:var(--grund);border:1px solid var(--rand);display:grid;place-items:center;color:var(--akzent);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.mk-statusleiste{display:flex;align-items:center;gap:12px;padding:0 16px;height:40px;border-top:1px solid var(--rand);background:var(--flaeche);font-size:13px;color:var(--text-zweit);flex-wrap:wrap}
+.mk-aenderungen{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--akzent-hell);border-top:1px solid var(--akzent);flex-wrap:wrap}
+.mk-aenderungen .mk-anzahl{font-weight:600}
+.mk-legende{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text-zweit);white-space:nowrap}
+.mk-lmarke{width:16px;height:16px;border-radius:4px;display:inline-grid;place-items:center;font-size:12px;font-weight:700;line-height:1;flex-shrink:0;font-style:normal}
+.mk-lmarke.mk-lm-geaendert{background:var(--zelle-geaendert);border:1px solid var(--akzent)}
+.mk-lmarke.mk-lm-geaendert::after{content:"";width:6px;height:6px;border-radius:999px;background:var(--akzent)}
+.mk-lmarke.mk-lm-neu{background:var(--zelle-neu);border:1px solid var(--erfolg);color:var(--erfolg)}
+.mk-lmarke.mk-lm-loeschen{background:var(--zelle-geloescht);border:1px solid var(--gefahr);color:var(--gefahr)}
+
+/* Knöpfe und Felder */
+.mk-knopf{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 14px;border-radius:6px;border:1px solid var(--rand);background:var(--grund);color:var(--text);font-weight:500;white-space:nowrap;font-size:14px;line-height:20px;flex-shrink:0}
+.mk-knopf.mk-primaer{background:var(--akzent);border-color:var(--akzent);color:var(--akzent-text)}
+.mk-knopf.mk-gefahr{background:var(--gefahr);border-color:var(--gefahr);color:var(--gefahr-text)}
+.mk-knopf.mk-gefahr-rand{color:var(--gefahr);border-color:var(--gefahr);background:var(--grund)}
+.mk-knopf.mk-leise{border-color:transparent;background:transparent;color:var(--text-zweit)}
+.mk-knopf.mk-aus{background:var(--flaeche-stark);border-color:var(--rand);color:var(--text-leise)}
+.mk-knopf.mk-klein{height:28px;padding:0 10px;font-size:13px}
+.mk-knopf.mk-gross{height:40px;font-size:15px}
+.mk-knopf.mk-breit{width:100%}
+.mk-knopf.mk-fokusring{box-shadow:0 0 0 2px var(--grund),0 0 0 4px var(--akzent)}
+.mk-mobil .mk-knopf{min-height:40px;height:auto;padding:8px 14px;white-space:normal;text-align:center}
+.mk-mobil .mk-knopf.mk-klein{min-height:32px;padding:4px 10px}
+.mk-feld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.mk-feld-titel{font-weight:500;font-size:13px;line-height:18px;color:var(--text);display:flex;align-items:center;gap:6px}
+.mk-eingabe{min-height:36px;border:1px solid var(--rand);border-radius:6px;background:var(--grund);padding:0 10px;display:flex;align-items:center;gap:8px;color:var(--text);min-width:0}
+.mk-eingabe.mk-fokus{border-color:var(--akzent);box-shadow:0 0 0 2px var(--grund),0 0 0 4px var(--akzent)}
+.mk-eingabe.mk-fehler{border-color:var(--gefahr);box-shadow:inset 0 0 0 1px var(--gefahr)}
+.mk-eingabe.mk-gesperrt{background:var(--flaeche);color:var(--text-zweit)}
+.mk-eingabe .mk-platzhalter{color:var(--text-leise)}
+.mk-eingabe .mk-praefix{color:var(--text-zweit);background:var(--flaeche);border-right:1px solid var(--rand);margin-left:-10px;padding:0 10px;align-self:stretch;display:flex;align-items:center;border-radius:6px 0 0 6px;white-space:nowrap}
+.mk-cursor{display:inline-block;width:1.5px;height:18px;background:var(--text);vertical-align:-4px;margin-left:1px}
+.mk-hilfe{font-size:12px;line-height:16px;color:var(--text-leise)}
+.mk-fehlertext{font-size:13px;line-height:18px;color:var(--gefahr);display:flex;gap:6px;align-items:flex-start}
+.mk-check{display:flex;gap:10px;align-items:flex-start}
+.mk-kasten{width:18px;height:18px;border:1.5px solid var(--text-zweit);border-radius:4px;flex-shrink:0;margin-top:1px;display:grid;place-items:center;background:var(--grund);color:var(--akzent-text)}
+.mk-kasten.mk-an{background:var(--akzent);border-color:var(--akzent)}
+.mk-kasten .mk-ic{width:12px;height:12px;stroke-width:3}
+.mk-radio{width:18px;height:18px;border-radius:999px;border:1.5px solid var(--text-zweit);flex-shrink:0;margin-top:1px;background:var(--grund)}
+.mk-radio.mk-an{border:5px solid var(--akzent)}
+.mk-schalter{width:36px;height:20px;border-radius:999px;background:var(--flaeche-stark);border:1px solid var(--text-leise);position:relative;flex-shrink:0;margin-top:1px}
+.mk-schalter::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:999px;background:var(--text-leise)}
+.mk-schalter.mk-an{background:var(--akzent);border-color:var(--akzent)}
+.mk-schalter.mk-an::after{left:18px;background:var(--akzent-text)}
+.mk-segment{display:inline-flex;border:1px solid var(--rand);border-radius:6px;overflow:hidden;background:var(--grund);flex-wrap:wrap}
+.mk-segment > span{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-right:1px solid var(--rand);white-space:nowrap;font-weight:500;color:var(--text-zweit)}
+.mk-segment > span:last-child{border-right:0}
+.mk-segment > span.mk-aktiv{background:var(--akzent-hell);color:var(--text);font-weight:600;box-shadow:inset 0 -2px 0 var(--akzent)}
+
+/* Flächen */
+.mk-karte{border:1px solid var(--rand);border-radius:10px;background:var(--grund)}
+.mk-karte-kopf{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--rand)}
+.mk-karte-kopf h2,.mk-karte-kopf h3{font-size:15px;line-height:20px;font-weight:600}
+.mk-karte-inhalt{padding:12px 16px}
+.mk-titel-1{font-size:20px;line-height:28px;font-weight:600}
+.mk-titel-2{font-size:16px;line-height:24px;font-weight:600}
+.mk-titel-3{font-size:14px;line-height:20px;font-weight:600}
+.mk-ueberschrift-klein{font-size:12px;line-height:16px;font-weight:600;color:var(--text-zweit);letter-spacing:.02em}
+.mk-hinweis{display:flex;gap:10px;padding:10px 12px;border-radius:6px;border:1px solid var(--rand);border-left:3px solid var(--text-zweit);background:var(--grund);align-items:flex-start;font-size:13px;line-height:18px}
+.mk-hinweis > .mk-ic{margin-top:1px}
+.mk-hinweis.mk-h-info{border-left-color:var(--akzent)}
+.mk-hinweis.mk-h-info > .mk-ic{color:var(--akzent)}
+.mk-hinweis.mk-h-warnung{border-color:var(--warnung);border-left-color:var(--warnung)}
+.mk-hinweis.mk-h-warnung > .mk-ic{color:var(--warnung)}
+.mk-hinweis.mk-h-erfolg{border-left-color:var(--erfolg)}
+.mk-hinweis.mk-h-erfolg > .mk-ic{color:var(--erfolg)}
+.mk-hinweis.mk-h-gefahr{border-color:var(--gefahr);background:var(--gefahr-hell)}
+.mk-hinweis.mk-h-gefahr > .mk-ic{color:var(--gefahr)}
+.mk-fehlerkarte{border:1px solid var(--gefahr);background:var(--gefahr-hell);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.mk-fehlerkarte .mk-fk-titel{display:flex;gap:8px;align-items:center;color:var(--gefahr);font-weight:600}
+.mk-servertext{border-top:1px solid var(--rand);padding-top:8px;display:flex;flex-direction:column;gap:6px}
+.mk-servertext pre{font-family:"JetBrains Mono", Menlo, monospace;font-size:12px;line-height:18px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text);background:var(--grund);border:1px solid var(--rand);border-radius:6px;padding:8px 10px}
+.mk-liste-trenn > *{border-bottom:1px solid var(--rand)}
+.mk-liste-trenn > *:last-child{border-bottom:0}
+
+/* SQL */
+.mk-sql{font-family:"JetBrains Mono", Menlo, monospace;font-size:13px;line-height:20px;background:var(--flaeche);border:1px solid var(--rand);border-radius:6px;padding:10px 12px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text)}
+.mk-t-kw{color:var(--akzent);font-weight:600}
+.mk-t-str{color:var(--erfolg)}
+.mk-t-zahl{color:var(--warnung)}
+.mk-t-kom{color:var(--text-leise);font-style:italic}
+.mk-t-fn{color:var(--text);font-weight:600}
+.mk-t-id{color:var(--text)}
+
+/* Schwebende Ebenen */
+.mk-schleier{position:absolute;inset:0;background:var(--schleier);z-index:20}
+.mk-schublade{position:absolute;top:0;right:0;bottom:0;background:var(--grund);border-left:1px solid var(--rand);box-shadow:var(--schatten);z-index:21;display:flex;flex-direction:column;border-radius:10px 0 0 10px}
+.mk-blatt{position:absolute;left:0;right:0;bottom:0;background:var(--grund);border-top:1px solid var(--rand);box-shadow:var(--schatten);z-index:21;display:flex;flex-direction:column;border-radius:10px 10px 0 0}
+.mk-griff{width:40px;height:4px;border-radius:999px;background:var(--rand);margin:8px auto 0;flex-shrink:0}
+.mk-sch-kopf{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--rand);flex-wrap:wrap}
+.mk-sch-inhalt{flex:1;min-height:0;overflow:hidden;padding:16px;position:relative;display:flex;flex-direction:column;gap:16px}
+.mk-sch-fuss{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--rand);flex-wrap:wrap;background:var(--grund)}
+.mk-dialog{position:absolute;z-index:21;background:var(--grund);border:1px solid var(--rand);border-radius:10px;box-shadow:var(--schatten);display:flex;flex-direction:column;overflow:hidden}
+.mk-menue{position:absolute;z-index:22;background:var(--grund);border:1px solid var(--rand);border-radius:10px;box-shadow:var(--schatten);padding:6px;display:flex;flex-direction:column}
+.mk-menue-e{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;white-space:nowrap}
+.mk-menue-e.mk-aktiv{background:var(--akzent-hell)}
+
+/* Anmeldung */
+.mk-anmelde-grund{position:absolute;inset:0;background:var(--flaeche);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:16px}
+.mk-anmelde-karte{width:400px;max-width:100%;background:var(--grund);border:1px solid var(--rand);border-radius:10px;padding:32px;display:flex;flex-direction:column;gap:20px}
+.mk-mobil .mk-anmelde-karte{padding:24px 20px}
+.mk-oder{display:flex;align-items:center;gap:12px;color:var(--text-leise);font-size:13px}
+.mk-oder::before,.mk-oder::after{content:"";flex:1;height:1px;background:var(--rand)}
+.mk-code-feld{height:52px;font-size:26px;letter-spacing:.42em;font-variant-numeric:tabular-nums;font-weight:600;justify-content:center;padding-left:18px}
+
+/* Verbindungsübersicht */
+.mk-vkarte{border:1px solid var(--rand);border-radius:10px;background:var(--grund);padding:14px 16px;display:flex;flex-direction:column;gap:8px;position:relative;min-width:0}
+.mk-vkarte.mk-umg-prod-karte{border-color:var(--umgebung-produktion);box-shadow:inset 0 3px 0 var(--umgebung-produktion)}
+.mk-vkarte.mk-umg-test-karte{box-shadow:inset 0 3px 0 var(--umgebung-test)}
+.mk-vkarte .mk-vname{font-size:16px;line-height:22px;font-weight:600;font-family:"JetBrains Mono", Menlo, monospace;overflow-wrap:anywhere}
+.mk-stern{color:var(--text-leise)}
+.mk-stern.mk-an{color:var(--warnung)}
+.mk-stern.mk-an .mk-ic{fill:currentColor}
+.mk-warnschild{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:6px;border:1px solid var(--warnung);font-size:13px;line-height:18px;background:var(--grund)}
+.mk-warnschild > .mk-ic{color:var(--warnung);margin-top:1px}
+.mk-gruppe-titel{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text-zweit);margin:0 0 10px}
+.mk-kachel{border:1px solid var(--rand);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px;background:var(--grund);position:relative;min-width:0}
+.mk-kachel.mk-aktiv{border:2px solid var(--akzent);padding:11px;background:var(--akzent-hell)}
+.mk-kachel .mk-haken{position:absolute;top:10px;right:10px;width:18px;height:18px;border-radius:999px;background:var(--akzent);color:var(--akzent-text);display:grid;place-items:center}
+.mk-kachel .mk-haken .mk-ic{width:12px;height:12px;stroke-width:3}
+.mk-pruefschritt{display:flex;gap:10px;align-items:flex-start;padding:8px 0;font-size:13px;line-height:18px}
+.mk-pruefschritt .mk-ic{margin-top:1px}
+
+/* Tabellen in Seiten (nicht das Datenraster) */
+.mk-tabelle{width:100%;border-collapse:collapse;font-size:13px;line-height:18px}
+.mk-tabelle th{text-align:left;font-weight:600;font-size:12px;line-height:16px;color:var(--text-zweit);padding:8px 10px;border-bottom:1px solid var(--rand);background:var(--flaeche);white-space:nowrap}
+.mk-tabelle td{padding:8px 10px;border-bottom:1px solid var(--rand);vertical-align:top}
+.mk-tabelle tr:last-child td{border-bottom:0}
+.mk-tabelle .mk-r{text-align:right}
+.mk-tabelle tr.mk-neu td{background:var(--zelle-neu)}
+.mk-tabelle tr.mk-geaendert td{background:var(--zelle-geaendert)}
+.mk-tabelle tr.mk-loeschen td{background:var(--zelle-geloescht)}
+.mk-tabelle tr.mk-loeschen td.mk-durch{text-decoration:line-through;text-decoration-color:var(--gefahr)}
+.mk-tabelle tr.mk-gewaehlt td{background:var(--akzent-hell)}
+.mk-tabelle.mk-eng td{padding:6px 10px}
+.mk-tabelle.mk-einzeilig td{white-space:nowrap}
+.mk-tabelle.mk-eng th{padding:6px 10px}
+.mk-tabelle td.mk-durch code,.mk-tabelle td.mk-durch span{text-decoration:inherit}
+
+/* Mobil */
+.mk-mkopf{position:relative;height:52px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--rand);background:var(--grund)}
+.mk-minhalt{position:absolute;top:52px;left:0;right:0;bottom:0;overflow:hidden;padding:16px;display:flex;flex-direction:column;gap:16px}
+.mk-mkarte{border:1px solid var(--rand);border-radius:10px;background:var(--grund);padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.mk-mzeile{display:flex;gap:4px 8px;flex-wrap:wrap;align-items:baseline;min-width:0;font-variant-numeric:tabular-nums}
+.mk-mzeile .mk-lab{font-size:12px;line-height:16px;color:var(--text-leise);font-family:"JetBrains Mono", Menlo, monospace}
+.mk-mzeile .mk-lab:not(:first-child){margin-left:8px}
+.mk-mzeile .mk-wert.mk-geaendert{background:var(--zelle-geaendert);font-weight:600;border-radius:4px;padding:0 4px;box-shadow:inset 0 0 0 1px var(--akzent)}
+.mk-mkarte.mk-neu{background:var(--zelle-neu)}
+.mk-mkarte.mk-loeschen{background:var(--zelle-geloescht)}
+.mk-mkarte.mk-loeschen .mk-wert{text-decoration:line-through;text-decoration-color:var(--gefahr)}
+.mk-mkarte.mk-loeschen .mk-mono{text-decoration:line-through;text-decoration-color:var(--gefahr)}
+.mk-mfelder{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}
+.mk-mfeld{display:flex;flex-direction:column;min-width:0}
+.mk-mfeld .mk-lab{font-size:12px;line-height:16px;color:var(--text-leise);font-family:"JetBrains Mono", Menlo, monospace}
+.mk-mfeld .mk-wert{font-variant-numeric:tabular-nums}
+.mk-mfeld.mk-geaendert .mk-wert{background:var(--zelle-geaendert);font-weight:600;border-radius:4px;padding:0 4px;margin-left:-4px;align-self:flex-start}
+.mk-unten-fest{position:absolute;left:0;right:0;bottom:0;z-index:10}
+.mk-sch-inhalt > *,.mk-minhalt > *,.mk-stapel > .mk-karte,.mk-stapel > .mk-hinweis,.mk-stapel > .mk-anw-liste,.mk-stapel > .mk-bestaetigung{flex-shrink:0}
+
+.mk-anw-liste{border:1px solid var(--rand);border-radius:6px;background:var(--flaeche);overflow:hidden}
+.mk-anw{display:flex;gap:10px;padding:8px 12px;border-bottom:1px solid var(--rand);align-items:flex-start}
+.mk-anw:last-child{border-bottom:0}
+.mk-anw-nr{width:18px;flex-shrink:0;color:var(--text-leise);font-family:"JetBrains Mono", Menlo, monospace;font-size:12px;line-height:20px;text-align:right}
+.mk-anw pre{flex:1;min-width:0;font-family:"JetBrains Mono", Menlo, monospace;font-size:13px;line-height:20px;white-space:pre-wrap;overflow-wrap:anywhere}
+.mk-anw-zahl{flex-shrink:0;font-size:12px;line-height:20px;color:var(--text-zweit);white-space:nowrap;text-align:right}
+.mk-anw.mk-rahmenzeile{padding-top:6px;padding-bottom:6px}
+.mk-anw.mk-rahmenzeile pre{color:var(--text-leise)}
+.mk-anw-folge{display:flex;gap:6px;align-items:flex-start;font-size:12px;line-height:16px;color:var(--warnung);margin-top:4px;font-family:Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif;white-space:normal}
+.mk-bestaetigung{border:1px solid var(--gefahr);background:var(--gefahr-hell);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.mk-bestaetigung .mk-b-titel{display:flex;gap:8px;align-items:center;color:var(--gefahr);font-weight:600}
+.mk-dfelder{display:flex;flex-direction:column}
+.mk-dfeld{display:grid;grid-template-columns:168px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px solid var(--rand)}
+.mk-dlabel{display:flex;flex-direction:column;min-width:0}
+.mk-dlabel .mk-mono{font-weight:600}
+.mk-dwert{display:flex;flex-direction:column;gap:6px;min-width:0}
+.mk-mobil .mk-dfeld{grid-template-columns:minmax(0,1fr);gap:6px}
+.mk-detail-eng .mk-dfeld{padding:8px 0}
+.mk-detail-eng .mk-eingabe{min-height:32px}
+.mk-detail-eng .mk-sql{padding:6px 10px}
+.mk-schiene{width:52px;flex-shrink:0;background:var(--flaeche);border-right:1px solid var(--rand);display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 0}
+.mk-unterreiter{display:flex;gap:8px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--rand)}
+.mk-unterreiter span{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;border:1px solid var(--rand);font-size:13px;color:var(--text-zweit);white-space:nowrap}
+.mk-unterreiter span.mk-aktiv{border-color:var(--akzent);color:var(--akzent);font-weight:600;background:var(--akzent-hell)}
+.mk-oberbegriff{display:inline-flex;font-size:12px;line-height:16px;padding:0 6px;border-radius:4px;background:var(--flaeche-stark);color:var(--text-zweit);white-space:nowrap}
+.mk-editor{display:flex;font-family:"JetBrains Mono", Menlo, monospace;font-size:13px;line-height:20px;background:var(--grund);position:relative;overflow:visible}
+.mk-editor-nr{width:44px;flex-shrink:0;text-align:right;padding:10px 10px 10px 0;color:var(--text-leise);background:var(--flaeche);border-right:1px solid var(--rand);user-select:none}
+.mk-editor-text{flex:1;min-width:0;padding:10px 12px;white-space:pre;color:var(--text)}
+.mk-editor-zeile{display:block;margin:0 -12px;padding:0 12px}
+.mk-editor-zeile.mk-aktiv{background:var(--akzent-hell)}
+.mk-ergebnisreiter{display:flex;align-items:flex-end;gap:0;padding:0 8px;border-bottom:1px solid var(--rand);background:var(--flaeche);flex-wrap:wrap}
+.mk-schritte{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mk-schritt{display:inline-flex;align-items:center;gap:8px;color:var(--text-zweit);font-weight:500;white-space:nowrap}
+.mk-schritt i{width:22px;height:22px;border-radius:999px;border:1.5px solid var(--rand);display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:600;color:var(--text-zweit);background:var(--grund)}
+.mk-schritt.mk-fertig i{background:var(--akzent);border-color:var(--akzent);color:var(--akzent-text)}
+.mk-schritt.mk-aktiv{color:var(--text);font-weight:600}
+.mk-schritt.mk-aktiv i{border:2px solid var(--akzent);color:var(--akzent)}
+.mk-schritt-linie{width:32px;height:1px;background:var(--rand)}
+.mk-fortschritt{height:6px;border-radius:999px;background:var(--flaeche-stark);overflow:hidden}
+.mk-fortschritt > i{display:block;height:100%;background:var(--akzent);border-radius:999px}
+.mk-pal-e{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;min-width:0}
+.mk-pal-e.mk-aktiv{background:var(--akzent-hell);box-shadow:inset 3px 0 0 var(--akzent)}
+.mk-pal-e mark{background:transparent;color:var(--akzent);font-weight:700}
+.mk-pal-gruppe{font-size:12px;line-height:16px;font-weight:600;color:var(--text-zweit);padding:10px 12px 4px}
+.mk-rechte{display:inline-flex;border:1px solid var(--rand);border-radius:6px;overflow:hidden;flex-wrap:wrap}
+.mk-rechte span{padding:4px 10px;font-size:13px;border-right:1px solid var(--rand);color:var(--text-zweit);white-space:nowrap}
+.mk-rechte span:last-child{border-right:0}
+.mk-rechte span.mk-aktiv{background:var(--akzent-hell);color:var(--text);font-weight:600;box-shadow:inset 0 -2px 0 var(--akzent)}
+.mk-person{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:6px;min-width:0}
+.mk-person.mk-aktiv{background:var(--akzent-hell);box-shadow:inset 3px 0 0 var(--akzent)}
+.mk-dichte-muster{display:flex;flex-direction:column;border:1px solid var(--rand);border-radius:6px;overflow:hidden;font-size:12px;width:100%}
+.mk-dichte-muster span{border-bottom:1px solid var(--rand);padding:0 8px;display:flex;align-items:center;color:var(--text-zweit)}
+.mk-dichte-muster span:last-child{border-bottom:0}
+.mk-wahlkarte{border:1px solid var(--rand);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0;background:var(--grund)}
+.mk-wahlkarte.mk-aktiv{border:2px solid var(--akzent);padding:11px}
+</style></head>
+<body class="mk-body"><div class="mk-rahmen mk-desktop"><header class="mk-kopf"><span class="mk-marke">php<b>db</b>admin</span><span class="mk-chip mk-umg-test"><svg class="mk-punkt" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 1.1A3.9 3.9 0 0 0 5 8.9Z" fill="currentColor"/></svg><span>test · <span class="mk-name">shop</span></span><span class="mk-treiber">MySQL 8.4</span><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span><div class="mk-palette-feld"><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span class="mk-voll mk-abschneiden">Tabelle, Abfrage oder Befehl suchen …</span><span class="mk-taste">⌘K</span></div><span class="mk-ikonknopf mk-ohne-rand" title="Tastenkürzel"><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></svg></span><span class="mk-konto"><span class="mk-avatar">HN</span><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></header><div class="mk-rumpf"><nav class="mk-schiene" aria-label="Navigator (eingeklappt)"><span class="mk-ikonknopf mk-ohne-rand" title="Navigator ausklappen"><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg></span><span class="mk-ikonknopf mk-ohne-rand" title="Objekte filtern"><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span><span class="mk-ikonknopf mk-ohne-rand" title="shop_test"><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg></span><span class="mk-ikonknopf mk-ohne-rand" title="Gespeichert"><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></span><span class="mk-ikonknopf mk-ohne-rand" title="Verlauf"><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/></svg></span></nav><main class="mk-haupt"><div class="mk-offen"><span class="mk-reiter mk-aktiv"><span class="mk-umg-test" title="Test"><svg class="mk-punkt" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 1.1A3.9 3.9 0 0 0 5 8.9Z" fill="currentColor"/></svg></span><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M3 15h18M12 3v18"/></svg><span class="mk-mono">orders</span><span class="mk-x"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></span></span><span class="mk-reiter"><span class="mk-umg-test" title="Test"><svg class="mk-punkt" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 1.1A3.9 3.9 0 0 0 5 8.9Z" fill="currentColor"/></svg></span><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M3 15h18M12 3v18"/></svg><span class="mk-mono">customers</span><span class="mk-x"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></span></span><span class="mk-reiter"><span class="mk-umg-test" title="Test"><svg class="mk-punkt" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 1.1A3.9 3.9 0 0 0 5 8.9Z" fill="currentColor"/></svg></span><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 17 6-6-6-6M12 19h8"/></svg><span class="mk-mono">Abfrage 1</span><span class="mk-x"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></span></span><span class="mk-reiter mk-leise" style="border-right:0" title="Neuer Reiter"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></span></div><div class="mk-objkopf"><h1>orders</h1><span class="mk-zweit" style="font-size:13px">Tabelle · InnoDB · ≈ 12'406 Zeilen · <b>Struktur wird bearbeitet</b></span><span class="mk-rechts-weg mk-zeile"><span class="mk-knopf mk-klein "><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>Bearbeiten beenden</span></span></div><div class="mk-ansichten"><span class="mk-ansicht"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M3 15h18M12 3v18"/></svg>Daten</span><span class="mk-ansicht mk-aktiv"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 3v18"/></svg>Struktur</span><span class="mk-ansicht"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><rect width="8" height="8" x="2" y="2" rx="2"/><rect width="8" height="8" x="14" y="14" rx="2"/><path d="M6 10v4a2 2 0 0 0 2 2h6"/></svg>Beziehungen</span><span class="mk-ansicht"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 17 6-6-6-6M12 19h8"/></svg>SQL</span></div><div style="display:flex;gap:16px;padding:16px;flex:1;min-height:0;overflow:hidden"><div class="mk-voll" style="position:relative;overflow:hidden"><section class="mk-karte" style="overflow:hidden"><div class="mk-karte-kopf" style="padding:10px 14px"><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 3v18"/></svg><h3>Spalten</h3><span class="mk-zaehler" style="margin-left:0">11</span><span class="mk-rechts-weg mk-zeile"><span class="mk-knopf mk-klein "><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>Spalte</span><span class="mk-knopf mk-klein "><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>Index</span><span class="mk-knopf mk-klein "><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>Fremdschlüssel</span><span class="mk-knopf mk-klein "><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>Check</span></span></div><table class="mk-tabelle mk-eng" style="table-layout:fixed"><colgroup><col style="width:30px"><col style="width:190px"><col style="width:250px"><col style="width:52px"><col style="width:136px"><col></colgroup><thead><tr><th></th><th>Name</th><th>Typ</th><th>NULL</th><th>Vorgabe</th><th></th></tr></thead><tbody><tr><td class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></td><td><code class="mk-fett mk-abschneiden" style="display:block">id</code></td><td><span class="mk-eingabe" style="min-height:28px;font-size:12px"><code class="mk-voll mk-abschneiden" style="font-size:12px">bigint unsigned auto_increment</code><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></td><td><span class="mk-kasten"></span></td><td><span class=mk-leise>—</span></td><td style="text-align:right"><span class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr><tr><td class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></td><td><code class="mk-fett mk-abschneiden" style="display:block">customer_id</code></td><td><span class="mk-eingabe" style="min-height:28px;font-size:12px"><code class="mk-voll mk-abschneiden" style="font-size:12px">bigint unsigned</code><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></td><td><span class="mk-kasten"></span></td><td><span class=mk-leise>—</span></td><td style="text-align:right"><span class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr><tr><td class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></td><td><code class="mk-fett mk-abschneiden" style="display:block">status</code></td><td><span class="mk-eingabe" style="min-height:28px;font-size:12px"><code class="mk-voll mk-abschneiden" style="font-size:12px">enum('offen','bezahlt','versendet','storniert')</code><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></td><td><span class="mk-kasten"></span></td><td><code>'offen'</code></td><td style="text-align:right"><span class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr><tr><td class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></td><td><code class="mk-fett mk-abschneiden" style="display:block">total</code><span class="mk-hilfe mk-abschneiden" style="display:block">Kommentar: Betrag inkl. MWST</span></td><td><span class="mk-eingabe" style="min-height:28px;font-size:12px"><code class="mk-voll mk-abschneiden" style="font-size:12px">decimal(10,2)</code><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></td><td><span class="mk-kasten"></span></td><td><span class=mk-leise>—</span></td><td style="text-align:right"><span class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr><tr><td class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></td><td><code class="mk-fett mk-abschneiden" style="display:block">currency</code></td><td><span class="mk-eingabe" style="min-height:28px;font-size:12px"><code class="mk-voll mk-abschneiden" style="font-size:12px">char(3)</code><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></td><td><span class="mk-kasten"></span></td><td><code>'CHF'</code></td><td style="text-align:right"><span class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr><tr class="mk-neu"><td class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></td><td><code class="mk-fett mk-abschneiden" style="display:block">tracking_number</code><span class="mk-hilfe mk-abschneiden" style="display:block">Kommentar: Sendungsnummer der Post</span></td><td><span class="mk-eingabe" style="min-height:28px;font-size:12px"><code class="mk-voll mk-abschneiden" style="font-size:12px">varchar(40)</code><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></td><td><span class="mk-kasten mk-an"><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></td><td><span class="mk-null">NULL</span></td><td style="text-align:right"><span class="mk-schild mk-s-erfolg"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>neu</span></td></tr><tr><td class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></td><td><code class="mk-fett mk-abschneiden" style="display:block">shipping_address</code></td><td><span class="mk-eingabe" style="min-height:28px;font-size:12px"><code class="mk-voll mk-abschneiden" style="font-size:12px">json</code><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></td><td><span class="mk-kasten mk-an"><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></td><td><span class="mk-null">NULL</span></td><td style="text-align:right"><span class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr><tr class="mk-geaendert"><td class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></td><td><code class="mk-fett mk-abschneiden" style="display:block">internal_notes <span class='mk-leise' style='font-weight:400'>war notes</span></code><span class="mk-hilfe mk-abschneiden" style="display:block">Kommentar: Interne Notiz</span></td><td><span class="mk-eingabe" style="min-height:28px;font-size:12px"><code class="mk-voll mk-abschneiden" style="font-size:12px">text</code><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></td><td><span class="mk-kasten mk-an"><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></td><td><span class="mk-null">NULL</span></td><td style="text-align:right"><span class="mk-schild mk-s-akzent"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>umbenannt</span></td></tr><tr class="mk-loeschen"><td class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></td><td class="mk-durch"><code class="mk-fett mk-abschneiden" style="display:block">invoice_pdf</code></td><td class="mk-durch"><span class="mk-eingabe" style="min-height:28px;font-size:12px"><code class="mk-voll mk-abschneiden" style="font-size:12px">longblob</code><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></td><td><span class="mk-kasten mk-an"><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="mk-durch"><span class="mk-null">NULL</span></td><td style="text-align:right"><span class="mk-schild mk-s-gefahr"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6M14 11v6"/></svg>wird gelöscht</span></td></tr><tr><td class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></td><td><code class="mk-fett mk-abschneiden" style="display:block">created_at</code></td><td><span class="mk-eingabe" style="min-height:28px;font-size:12px"><code class="mk-voll mk-abschneiden" style="font-size:12px">timestamp</code><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></td><td><span class="mk-kasten"></span></td><td><code>CURRENT_TIMESTAMP</code></td><td style="text-align:right"><span class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr><tr><td class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></td><td><code class="mk-fett mk-abschneiden" style="display:block">updated_at</code></td><td><span class="mk-eingabe" style="min-height:28px;font-size:12px"><code class="mk-voll mk-abschneiden" style="font-size:12px">timestamp</code><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></td><td><span class="mk-kasten mk-an"><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></td><td><span class="mk-null">NULL</span></td><td style="text-align:right"><span class="mk-leise"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr></tbody></table><div class="mk-zeile-wrap" style="padding:10px 14px;border-top:1px solid var(--rand);background:var(--zelle-neu)"><span class="mk-schild mk-s-erfolg"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>neu</span><span><b>Index</b> <code>orders_tracking_number_index</code> auf <code>tracking_number</code></span></div></section></div><div class="mk-stapel mk-luecke-12" style="width:540px;flex-shrink:0"><section class="mk-karte mk-stapel" style="overflow:hidden"><div class="mk-karte-kopf" style="padding:10px 14px"><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg><h3>Erzeugtes SQL</h3><span class="mk-hilfe">wird genau so ausgeführt</span><span class="mk-rechts-weg mk-zeile" style="gap:4px"><span class="mk-ikonknopf" title="Kopieren"><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></span><span class="mk-ikonknopf" title="Im Editor öffnen"><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><path d="m4 17 6-6-6-6M12 19h8"/></svg></span></span></div><div class="mk-karte-inhalt mk-stapel mk-luecke-12"><div class="mk-hinweis mk-h-warnung "><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></svg><div class="mk-stapel mk-luecke-4"><b class="mk-warnung-text">Nicht rückrollbar — Anweisung für Anweisung</b><span>MySQL schliesst bei jeder Strukturänderung die Transaktion ab. Schlägt Anweisung 3 fehl, bleiben 1 und 2 bestehen; phpdbadmin hält dann an und zeigt, was angewendet ist.</span></div></div><div class="mk-anw-liste"><div class="mk-anw"><span class="mk-anw-nr">1</span><div class="mk-voll"><pre><span class="mk-t-kw">ALTER</span> <span class="mk-t-kw">TABLE</span> `orders` <span class="mk-t-kw">ADD</span> `tracking_number` varchar(<span class="mk-t-zahl">40</span>) <span class="mk-t-kw">NULL</span> <span class="mk-t-kw">AFTER</span> `currency`;</pre></div><span class="mk-anw-zahl">Spalte neu</span></div><div class="mk-anw"><span class="mk-anw-nr">2</span><div class="mk-voll"><pre><span class="mk-t-kw">ALTER</span> <span class="mk-t-kw">TABLE</span> `orders` <span class="mk-t-kw">RENAME</span> <span class="mk-t-kw">COLUMN</span> `notes` <span class="mk-t-kw">TO</span> `internal_notes`;</pre></div><span class="mk-anw-zahl">umbenannt</span></div><div class="mk-anw"><span class="mk-anw-nr">3</span><div class="mk-voll"><pre><span class="mk-t-kw">ALTER</span> <span class="mk-t-kw">TABLE</span> `orders` <span class="mk-t-kw">DROP</span> <span class="mk-t-kw">COLUMN</span> `invoice_pdf`;</pre><div class="mk-anw-folge"><svg class="mk-ic mk-ic-14" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></svg><span>löscht die Werte in 12'406 Zeilen, davon 8'115 nicht NULL</span></div></div><span class="mk-anw-zahl">Spalte weg</span></div><div class="mk-anw"><span class="mk-anw-nr">4</span><div class="mk-voll"><pre><span class="mk-t-kw">ALTER</span> <span class="mk-t-kw">TABLE</span> `orders` <span class="mk-t-kw">ADD</span> <span class="mk-t-kw">INDEX</span> `orders_tracking_number_index` (`tracking_number`);</pre></div><span class="mk-anw-zahl">Index neu</span></div></div></div></section><div class="mk-bestaetigung"><div class="mk-b-titel"><svg class="mk-ic " viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></svg>Diese Änderung löscht Daten</div><p>Die Spalte <code>invoice_pdf</code> wird mit allen Werten gelöscht. Geben Sie zur Bestätigung den Namen der Tabelle ein: <b class="mk-mono">orders</b></p><label class="mk-feld "><span class="mk-eingabe mk-fokus"><span class="mk-voll mk-abschneiden mk-mono">ord<i class=mk-cursor></i></span></span><span class="mk-hilfe">Der Knopf wird aktiv, sobald der Name stimmt.</span></label></div><div class="mk-zeile"><span class="mk-knopf mk-leise ">Verwerfen</span><span class="mk-rechts-weg"><span class="mk-knopf mk-aus ">4 Anweisungen anwenden</span></span></div></div></div></main></div></div></body></html>

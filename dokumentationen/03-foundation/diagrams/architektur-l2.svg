@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 660" width="1180" height="660" role="img">
+  <style>
+    text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; fill: #1e293b; }
+    .cap { font-size: 19px; font-weight: bold; }
+    .sub { font-size: 12px; fill: #475569; }
+    .h { font-size: 14px; font-weight: bold; }
+    .hw { font-size: 14px; font-weight: bold; fill: #ffffff; }
+    .t { font-size: 12px; }
+    .tw { font-size: 12px; fill: #e2e8f0; }
+    .s { font-size: 10.5px; fill: #475569; }
+    .sw { font-size: 10.5px; fill: #cbd5e1; }
+    .badge { font-size: 10px; font-weight: bold; fill: #ffffff; }
+    .note { font-size: 11.5px; fill: #475569; font-style: italic; }
+    .mono { font-family: Menlo, "SF Mono", monospace; font-size: 11px; }
+    .monow { font-family: Menlo, "SF Mono", monospace; font-size: 11px; fill: #e2e8f0; }
+    .rotT { font-size: 12px; font-weight: bold; fill: #b42318; }
+    .kern { fill: #1e293b; stroke: #1e293b; }
+    .kernhell { fill: #eef2f6; stroke: #1e293b; stroke-width: 1.4; }
+    .ausbau { fill: #e6f4f7; stroke: #0e7490; stroke-width: 1.4; }
+    .gruen { fill: #e7f4ec; stroke: #2f7d4f; stroke-width: 1.4; }
+    .nein { fill: #f5f6f8; stroke: #94a3b8; stroke-width: 1.4; stroke-dasharray: 5 3; }
+    .neutral { fill: #ffffff; stroke: #94a3b8; stroke-width: 1.4; }
+    .rot { fill: #fdecea; stroke: #b42318; stroke-width: 1.4; }
+    .flaeche { fill: #f5f6f8; stroke: none; }
+    .pfeil { stroke: #1e293b; stroke-width: 1.6; fill: none; marker-end: url(#pf); }
+    .pfeilg { stroke: #475569; stroke-width: 1.4; fill: none; marker-end: url(#pfg); stroke-dasharray: 5 3; }
+    .linie { stroke: #94a3b8; stroke-width: 1.2; fill: none; }
+    .achse { stroke: #475569; stroke-width: 1.4; fill: none; marker-end: url(#pfg); }
+</style>
+
+  <defs>
+    <marker id="pf" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#1e293b"/>
+    </marker>
+    <marker id="pfg" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1180" height="660" fill="#ffffff"/>
+  <text x="30" y="36" class="cap" text-anchor="start">phpdbadmin — Container (C4 Level 2)</text>
+  <text x="30" y="57" class="sub" text-anchor="start">Eine Laravel-Anwendung mit Arbeitsprozess und eigener App-Datenbank; Zieldatenbanken sind Umsysteme</text>
+  <rect x="250" y="76" width="640" height="470" rx="16" class="nein"/>
+  <text x="266" y="98" class="s" text-anchor="start">phpdbadmin-Installation (lokal in Herd oder selbst gehostet)</text>
+  <rect x="30" y="120" width="190" height="110" rx="10" class="kernhell"/>
+  <text x="44" y="146" class="h" text-anchor="start">Person</text>
+  <text x="44" y="170" class="t" text-anchor="start">Browser</text>
+  <text x="44" y="188" class="t" text-anchor="start">Passkey/Authenticator</text>
+  <rect x="270" y="110" width="290" height="150" rx="10" class="kernhell"/>
+  <text x="284" y="136" class="h" text-anchor="start">Oberfläche (Browser)</text>
+  <text x="284" y="160" class="t" text-anchor="start">• Vue 3 + Inertia v3</text>
+  <text x="284" y="179" class="t" text-anchor="start">• Raster (TanStack Virtual)</text>
+  <text x="284" y="198" class="t" text-anchor="start">• SQL-Editor (CodeMirror 6)</text>
+  <text x="284" y="217" class="t" text-anchor="start">• Befehlspalette, Schubladen</text>
+  <rect x="580" y="110" width="290" height="150" rx="10" class="kern"/>
+  <text x="594" y="136" class="hw" text-anchor="start">Laravel-Anwendung (PHP 8.5)</text>
+  <text x="594" y="160" class="tw" text-anchor="start">• Controller, Policies</text>
+  <text x="594" y="179" class="tw" text-anchor="start">• Dienste: Katalog, Daten, Struktur,</text>
+  <text x="603" y="198" class="tw" text-anchor="start">Abfragen, Austausch, Protokoll</text>
+  <text x="594" y="217" class="tw" text-anchor="start">• Dialekte: MySQL, MariaDB, PG, SQLite</text>
+  <rect x="270" y="300" width="290" height="120" rx="10" class="kernhell"/>
+  <text x="284" y="326" class="h" text-anchor="start">Arbeitsprozess (queue:work)</text>
+  <text x="284" y="350" class="t" text-anchor="start">• Export und Import in Paketen</text>
+  <text x="284" y="369" class="t" text-anchor="start">• SQLite-Abfragen mit Zeitgrenze</text>
+  <text x="284" y="388" class="t" text-anchor="start">• Aufräumläufe (model:prune)</text>
+  <rect x="580" y="300" width="290" height="120" rx="10" class="ausbau"/>
+  <text x="594" y="326" class="h" text-anchor="start">App-Datenbank (SQLite)</text>
+  <text x="594" y="350" class="t" text-anchor="start">• Konten, Passkeys, Codes</text>
+  <text x="594" y="369" class="t" text-anchor="start">• Verbindungen (verschlüsselt)</text>
+  <text x="594" y="388" class="t" text-anchor="start">• Verlauf, Protokoll, Sicherungen</text>
+  <rect x="270" y="440" width="600" height="86" rx="10" class="neutral"/>
+  <text x="284" y="466" class="h" text-anchor="start">Dateien (storage/app/private)</text>
+  <text x="284" y="490" class="t" text-anchor="start">Exportdateien mit Frist 24 h · SQLite-Zieldateien nur in erlaubten Ordnern</text>
+  <path d="M220 175 L270 175" class="pfeil"/>
+  <rect x="225" y="158" width="40" height="16" rx="4" fill="#ffffff" opacity="0.95"/>
+  <text x="245" y="170" class="s" text-anchor="middle">HTTPS</text>
+  <path d="M560 185 L580 185" class="pfeil"/>
+  <path d="M725 260 L725 300" class="pfeil"/>
+  <path d="M580 360 L560 360" class="pfeil"/>
+  <rect x="940" y="90" width="210" height="300" rx="10" class="neutral"/>
+  <text x="954" y="116" class="h" text-anchor="start">Zieldatenbanken</text>
+  <text x="954" y="140" class="t" text-anchor="start">MySQL 8.4</text>
+  <text x="954" y="162" class="t" text-anchor="start">MariaDB 10.11</text>
+  <text x="954" y="184" class="t" text-anchor="start">PostgreSQL 18</text>
+  <text x="954" y="206" class="t" text-anchor="start">SQLite-Dateien</text>
+  <text x="954" y="228" class="t" text-anchor="start"></text>
+  <text x="954" y="250" class="t" text-anchor="start">Verbindung je Anfrage,</text>
+  <text x="954" y="272" class="t" text-anchor="start">mit Zeitlimit und</text>
+  <text x="954" y="294" class="t" text-anchor="start">Schreibschutz</text>
+  <path d="M870 160 L940 160" class="pfeil"/>
+  <rect x="867" y="143" width="76" height="16" rx="4" fill="#ffffff" opacity="0.95"/>
+  <text x="905" y="155" class="s" text-anchor="middle">DB::build()</text>
+  <path d="M415 300 L415 282 L938 282" class="pfeilg"/>
+  <rect x="940" y="410" width="210" height="100" rx="10" class="neutral"/>
+  <text x="954" y="436" class="h" text-anchor="start">Mail (SMTP)</text>
+  <text x="954" y="460" class="t" text-anchor="start">Anmeldecode, Einladung</text>
+  <path d="M870 230 L940 450" class="pfeilg"/>
+  <text x="30" y="590" class="note" text-anchor="start">Querschnitt hinter den Controllern: Recht vor Routenbindung (404 statt 403) · Grenzen · Maskierung von Meldungen · Protokoll schreibender Aktionen.</text>
+  <text x="30" y="610" class="note" text-anchor="start">Kein Container für Suche, Cache-Server oder Push: Cache und Warteschlange laufen über die App-Datenbank.</text>
+</svg>

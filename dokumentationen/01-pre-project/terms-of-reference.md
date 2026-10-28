@@ -2,7 +2,7 @@
 
 | Feld | Wert |
 |---|---|
-| Status | 🟡 **v1.0 zur Verabschiedung** (28.10.2026) — nach CR-001 Fassung 3 (Weiterführen) und Feasibility v1.0 (6 bestanden, 4 bedingt); verabschiedet, sobald Hoang zustimmt |
+| Status | ✅ **v1.0 verabschiedet 28.10.2026** (Hoang: «Ja, Foundation») — nach CR-001 Fassung 3 (Weiterführen) und Feasibility v1.0 (6 bestanden, 4 bedingt) |
 | Eingang | [CR-001](../00-change_request/CR-001-phpdbadmin.md) Fassung 3 (Weiterführen 28.10.2026), [Feasibility](../02-feasibility/feasibility.md) v1.0, [Ausgangslage und Rückfragen](ausgangslage-und-rueckfragen.md), [Ideen-Backlog](ideen-backlog.md) |
 | Ausgang | [Foundation](../03-foundation/README.md): Gestaltung, PRL, Solution-Architektur, Datenmodell, Timebox-Plan, ADR-001 bis ADR-010 |
 | Träger | Nguyen Development, Einzelfirma von Hoang Nguyen, Zürich (entschieden 28.10.2026, R-01) |
@@ -95,7 +95,7 @@ Aus [CR-001 § 10](../00-change_request/CR-001-phpdbadmin.md#10-risiken-auf-ober
 | CR-001 Weiterführen | Hoang 28.10.2026 («Feasibility starten») | entschieden |
 | Feasibility F-1 bis F-10, Pakete CodeMirror und TanStack probeweise, MySQL 8.4 in Herd | [Feasibility](../02-feasibility/feasibility.md), Freigaben Hoang 28.10.2026 | abgeschlossen 28.10.2026 |
 
-**Vorbedingungen vor Stufe 0:** Entscheid «Weiterführen» auf CR-001 ✓ · Feasibility mit F-1 bis F-10 ✓ · MySQL in Herd ✓ · Terms of Reference verabschiedet (Hoang) · Foundation (Gestaltung, PRL, Architektur, Datenmodell, Timebox-Plan, ADRs). **Vor dem ersten öffentlichen Auftritt:** Auflagen aus [Name und Marke](../02-feasibility/name-und-marke.md): Domains (`.ch`, nach Wahl `.org`, `.net`, `.io`, `.dev`) gesichert, Repo `hoang-79/phpdbadmin` (Organisation `phpdbadmin` ist belegt), Hinweis «nicht verbunden mit phpMyAdmin» · Lizenzdatei MIT im Repo · Nebenbeschäftigung gemeldet (R-05).
+**Vorbedingungen vor Stufe 0:** Entscheid «Weiterführen» auf CR-001 ✓ · Feasibility mit F-1 bis F-10 ✓ · MySQL in Herd ✓ · Terms of Reference verabschiedet ✓ · Foundation (Gestaltung, PRL, Architektur, Datenmodell, Timebox-Plan, ADRs). **Vor dem ersten öffentlichen Auftritt:** Auflagen aus [Name und Marke](../02-feasibility/name-und-marke.md): Domains (`.ch`, nach Wahl `.org`, `.net`, `.io`, `.dev`) gesichert, Repo `hoang-79/phpdbadmin` (Organisation `phpdbadmin` ist belegt), Hinweis «nicht verbunden mit phpMyAdmin» · Lizenzdatei MIT im Repo · Nebenbeschäftigung gemeldet (R-05).
 
 ## 11. DSDM-Prinzipien-Check
 

@@ -292,5 +292,5 @@ Alle offenen Punkte stehen mit Annahme im [Rückfragen-Katalog](../01-pre-projec
 | 1 | Rückfragen beantworten (mindestens R-01, R-03, R-04, R-11, R-40) | ✅ 28.10.2026; übrige laufen mit Annahme |
 | 2 | Entscheid **Weiterführen** auf Grundlage dieses CR | ✅ 28.10.2026 (Hoang: «Feasibility starten») |
 | 3 | Feasibility mit den Prüfpunkten F-1 bis F-10 ([02-feasibility](../02-feasibility/README.md)) | ✅ 28.10.2026 — 6 bestanden, 4 bedingt, Empfehlung Weiterführen |
-| 4 | Terms of Reference v1.0 nach Feasibility | 🟡 v1.0 zur Verabschiedung durch Hoang |
-| 5 | Foundation: Gestaltung, PRL, Architektur, Datenmodell, Timebox-Plan; danach TB 00 Fundament | geplant |
+| 4 | Terms of Reference v1.0 nach Feasibility | ✅ verabschiedet 28.10.2026 |
+| 5 | Foundation: Gestaltung, PRL, Architektur, Datenmodell, Timebox-Plan; danach TB 00 Fundament | 🔨 begonnen 28.10.2026 |

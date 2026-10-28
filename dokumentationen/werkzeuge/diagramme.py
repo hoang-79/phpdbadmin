@@ -694,6 +694,190 @@ def schreibschutz() -> Zeichnung:
     return z
 
 
+# ============================================================================
+# 03 — Foundation
+# ============================================================================
+
+def architektur_l2() -> Zeichnung:
+    z = Zeichnung(1180, 660, "phpdbadmin — Container (C4 Level 2)",
+                  "Eine Laravel-Anwendung mit Arbeitsprozess und eigener App-Datenbank; Zieldatenbanken sind Umsysteme")
+    z.rechteck(250, 76, 640, 470, "nein", 16)
+    z.text(266, 98, "phpdbadmin-Installation (lokal in Herd oder selbst gehostet)", "s")
+    z.kasten(30, 120, 190, 110, "Person", ["Browser", "Passkey/Authenticator"], "kernhell", punkt=False)
+    z.kasten(270, 110, 290, 150, "Oberfläche (Browser)", ["Vue 3 + Inertia v3", "Raster (TanStack Virtual)", "SQL-Editor (CodeMirror 6)", "Befehlspalette, Schubladen"], "kernhell", abstand=19)
+    z.kasten(580, 110, 290, 150, "Laravel-Anwendung (PHP 8.5)", ["Controller, Policies", "Dienste: Katalog, Daten, Struktur,", "  Abfragen, Austausch, Protokoll", "Dialekte: MySQL, MariaDB, PG, SQLite"], "kern", dunkel=True, abstand=19)
+    z.kasten(270, 300, 290, 120, "Arbeitsprozess (queue:work)", ["Export und Import in Paketen", "SQLite-Abfragen mit Zeitgrenze", "Aufräumläufe (model:prune)"], "kernhell", abstand=19)
+    z.kasten(580, 300, 290, 120, "App-Datenbank (SQLite)", ["Konten, Passkeys, Codes", "Verbindungen (verschlüsselt)", "Verlauf, Protokoll, Sicherungen"], "ausbau", abstand=19)
+    z.kasten(270, 440, 600, 86, "Dateien (storage/app/private)", ["Exportdateien mit Frist 24 h · SQLite-Zieldateien nur in erlaubten Ordnern"], "neutral", punkt=False)
+    z.pfeil(220, 175, 270, 175, beschriftung="HTTPS")
+    z.pfeil(560, 185, 580, 185)
+    z.pfeil(725, 260, 725, 300)
+    z.pfeil(580, 360, 560, 360)
+    z.kasten(940, 90, 210, 300, "Zieldatenbanken", ["MySQL 8.4", "MariaDB 10.11", "PostgreSQL 18", "SQLite-Dateien", "", "Verbindung je Anfrage,", "mit Zeitlimit und", "Schreibschutz"], "neutral", abstand=22, punkt=False)
+    z.pfeil(870, 160, 940, 160, beschriftung="DB::build()")
+    z.roh('<path d="M415 300 L415 282 L938 282" class="pfeilg"/>')
+    z.kasten(940, 410, 210, 100, "Mail (SMTP)", ["Anmeldecode, Einladung"], "neutral", punkt=False)
+    z.pfeil(870, 230, 940, 450, "pfeilg")
+    z.text(30, 590, "Querschnitt hinter den Controllern: Recht vor Routenbindung (404 statt 403) · Grenzen · Maskierung von Meldungen · Protokoll schreibender Aktionen.", "note")
+    z.text(30, 610, "Kein Container für Suche, Cache-Server oder Push: Cache und Warteschlange laufen über die App-Datenbank.", "note")
+    return z
+
+
+def anfrageverlauf() -> Zeichnung:
+    z = Zeichnung(1180, 660, "phpdbadmin — Ändern mit Vorschau und Anwenden",
+                  "Ablauf einer Datenänderung: sammeln im Browser, Vorschau vom Server, Anwenden in einer Transaktion mit Sicherung für Rückgängig")
+    spuren = [("Person", 90), ("Oberfläche", 300), ("Laravel: ChangeSet", 540), ("Dialekt / Verbindung", 790), ("Zieldatenbank", 1040)]
+    for name, x in spuren:
+        z.rechteck(x - 90, 74, 180, 34, "kern", 6)
+        z.text(x, 96, name, "hw", "middle")
+        z.roh(f'<path d="M{x} 108 L{x} 575" stroke="{LINIE}" stroke-width="1.2" stroke-dasharray="4 4"/>')
+    schritte = [
+        (90, 300, 140, "Zellen ändern (bleibt im Browser)"),
+        (90, 300, 180, "«SQL ansehen»"),
+        (300, 540, 220, "Änderungen (Spalte, alt, neu, Schlüssel)"),
+        (540, 790, 260, "pretend(): Anweisungen + Bindungen"),
+        (540, 300, 300, "Vorschau, Hinweis je Treiber, betroffene Zeilen"),
+        (90, 300, 350, "«Anwenden» (Produktion: Name eintippen)"),
+        (300, 540, 390, "anwenden (mit Prüfsumme der Vorschau)"),
+        (540, 790, 430, "Verbindung je Anfrage, Schreibschutz?"),
+        (790, 1040, 470, "BEGIN · SELECT Vorher-Werte · UPDATE … · COMMIT"),
+        (540, 540, 510, "change_snapshots + audit_log (maskiert)"),
+        (540, 300, 550, "Ergebnis: n Zeilen, «Rückgängig» möglich"),
+    ]
+    for x1, x2, y, text in schritte:
+        if x1 == x2:
+            z.rechteck(x1 - 110, y - 16, 220, 26, "ausbau", 6)
+            z.text(x1, y + 2, text, "s", "middle")
+            continue
+        z.pfeil(x1, y, x2 - (8 if x2 > x1 else -8), y)
+        mx = (x1 + x2) / 2
+        tb = len(text) * 5.9 + 12
+        z.rechteck(mx - tb / 2, y - 22, tb, 16, "neutral", 4)
+        z.text(mx, y - 10, text, "s", "middle")
+    z.text(30, 600, "Strukturänderungen laufen gleich, aber die Vorschau kommt aus Blueprint::toSql() und «Anwenden» folgt dem Verfahren je Treiber (ADR-003).", "note")
+    z.text(30, 620, "Weicht die Prüfsumme der Vorschau vom neu gebauten SQL ab (jemand hat inzwischen geändert), wird nichts ausgeführt und die Vorschau neu gezeigt.", "note")
+    return z
+
+
+def er_app_datenbank() -> Zeichnung:
+    z = Zeichnung(1180, 720, "phpdbadmin — App-Datenbank v0.1 (ER)",
+                  "Eigene Tabellen von phpdbadmin; Zieldatenbanken haben hier kein Modell. Zeitpunkte UTC, Geheimnisse verschlüsselt, Einmalwerte als Prüfsumme")
+    def tabelle(x, y, name, spalten, cls="kernhell", b=230):
+        h = 30 + len(spalten) * 17 + 8
+        z.rechteck(x, y, b, h, cls, 6)
+        z.rechteck(x, y, b, 26, "kern", 6)
+        z.text(x + 10, y + 18, name, "hw")
+        for i, sp in enumerate(spalten):
+            z.text(x + 10, y + 44 + i * 17, sp, "mono")
+        return (x, y, b, h)
+    u = tabelle(30, 80, "users", ["id", "name", "email ∪", "role", "locale, theme, density", "timezone", "last_login_at"])
+    pk = tabelle(30, 290, "passkeys", ["id", "user_id →", "name", "credential_id ∪", "credential (json)", "last_used_at"])
+    lc = tabelle(30, 480, "login_codes", ["id", "email_hash", "code_hash", "attempts", "expires_at, consumed_at", "ip_hash"])
+    inv = tabelle(290, 80, "invitations", ["id", "email", "role", "token_hash", "invited_by →", "expires_at, accepted_at"])
+    c = tabelle(560, 80, "connections", ["id (ULID)", "owner_id →, shared", "name, group, driver", "host, port, database", "username, password 🔒", "sqlite_path, options", "environment, read_only", "server_version", "account_warnings (json)"], "ausbau", 250)
+    cu = tabelle(290, 290, "connection_user", ["connection_id →", "user_id →", "permission", "favorite", "last_opened_at"])
+    qh = tabelle(850, 80, "query_history", ["id", "user_id →", "connection_id →", "sql (longText)", "status, duration_ms", "row_count"], "kernhell", 300)
+    sq = tabelle(850, 250, "saved_queries", ["id", "user_id →", "connection_id →", "name, sql", "parameters (json), shared"], "kernhell", 300)
+    tv = tabelle(850, 400, "table_views", ["id", "user_id →, connection_id →", "schema, table", "columns, filters, sort (json)"], "kernhell", 300)
+    al = tabelle(560, 360, "audit_log", ["id", "user_id →", "connection_id →", "action, target", "sql (maskiert)", "affected_rows, ip_hash"], "kernhell", 250)
+    cs = tabelle(560, 560, "change_snapshots", ["id, audit_log_id →", "target, key (json)", "before, after (json)", "expires_at"], "kernhell", 250)
+    tr = tabelle(290, 480, "transfers", ["id", "user_id →, connection_id →", "kind, format, status", "progress, rows", "file_path, expires_at"], "kernhell", 240)
+    # Pfeile immer von der verweisenden zur referenzierten Tabelle
+    z.pfeil(290, 160, 262, 160)            # invitations.invited_by → users
+    z.pfeil(145, 290, 145, 228)            # passkeys.user_id → users
+    z.pfeil(290, 330, 262, 236)            # connection_user.user_id → users
+    z.pfeil(530, 330, 558, 200)            # connection_user.connection_id → connections
+    z.pfeil(850, 130, 812, 130)            # query_history → connections
+    z.pfeil(850, 290, 812, 190)            # saved_queries → connections
+    z.pfeil(850, 440, 812, 230)            # table_views → connections
+    z.pfeil(685, 360, 685, 258)            # audit_log → connections
+    z.pfeil(685, 560, 685, 498)            # change_snapshots → audit_log
+    z.pfeil(530, 540, 558, 240)            # transfers → connections
+    z.text(30, 676, "Pfeile: Fremdschlüssel von der verweisenden zur referenzierten Tabelle; die Arbeitstabellen verweisen zusätzlich über user_id auf users (nicht gezeichnet).", "s")
+    z.text(30, 694, "∪ eindeutig · 🔒 verschlüsselt (encrypted-Cast) · Fristen: Codes 1 Tag, Verlauf 90 Tage, Sicherungen 7 Tage, Exporte 24 h, Protokoll 365 Tage", "s")
+    return z
+
+
+def use_cases() -> Zeichnung:
+    z = Zeichnung(1180, 470, "phpdbadmin — Rollen und Anwendungsfälle",
+                  "Konto-Rolle (Administrator, Mitglied) plus Recht je Verbindung (lesen, schreiben, verwalten)")
+    rollen = [
+        ("Administrator", "Konten, Einladungen, alle Verbindungen", ["Konten einladen und entfernen", "Verbindungen anlegen und teilen", "Rechte je Verbindung vergeben", "Protokoll lesen, Fristen sehen"], "kern"),
+        ("Recht «lesen»", "für eine Verbindung", ["Navigator, Raster, Filter", "Struktur ansehen", "SQL nur lesend (Wächter)", "Export"], "kernhell"),
+        ("Recht «schreiben»", "dazu", ["Daten bearbeiten mit Vorschau", "Rückgängig", "Import", "SQL schreibend (nicht auf", "  schreibgeschützter Verbindung)"], "ausbau"),
+        ("Recht «verwalten»", "dazu", ["Struktur ändern", "Datenbank/Schema anlegen", "Server-Verwaltung (v1.1)", "Statistik aktualisieren"], "ausbau"),
+    ]
+    x = 30
+    for titel, unter, faelle, cls in rollen:
+        z.kreis(x + 130, 104, 18, "kern" if cls == "kern" else "kernhell")
+        z.text(x + 130, 146, titel, "h", "middle")
+        z.text(x + 130, 164, unter, "s", "middle")
+        z.rechteck(x, 180, 260, 160, cls, 10)
+        z.zeilen(x + 16, 210, faelle, "tw" if cls == "kern" else "t", 24, punkt=True)
+        x += 285
+    z.rechteck(30, 360, 1115, 80, "nein", 10)
+    z.text(46, 386, "Für alle Konten", "h")
+    z.text(46, 410, "Anmelden mit Code oder Passkey · Passkeys und Sitzungen verwalten · Darstellung (hell/dunkel, Dichte, Sprache) · eigene Verbindungen anlegen (persönlich)", "t")
+    z.text(46, 430, "Kein Profil (Name und E-Mail ändert ein Administrator), keine Selbstregistrierung, kein Dashboard — die Startseite ist die Verbindungsübersicht.", "s")
+    return z
+
+
+def export_im_hintergrund() -> Zeichnung:
+    z = Zeichnung(1180, 360, "phpdbadmin — Export im Hintergrund",
+                  "Pakete über den Schlüssel (lazyById), Datei mit Frist; gemessen 3 MB Speicher je Million Zeilen (F-8)")
+    schritte = [
+        ("Auftrag", "Format, Tabelle oder Abfrage,\nStruktur und/oder Daten;\ntransfers: queued", "kernhell"),
+        ("Arbeitsprozess", "RunExport: lazyById(5000),\nFortschritt je Paket", "kern"),
+        ("Datei", "storage/app/private/transfers,\nFrist 24 Stunden", "kernhell"),
+        ("Benachrichtigung", "Oberfläche fragt den Stand ab;\n«Herunterladen» prüft\ndas Recht erneut", "kernhell"),
+        ("Aufräumen", "model:prune löscht Datei\nund Eintrag nach Ablauf", "nein"),
+    ]
+    x = 30
+    for i, (titel, text, cls) in enumerate(schritte):
+        z.rechteck(x, 90, 205, 130, cls, 10)
+        z.text(x + 14, 118, titel, "hw" if cls == "kern" else "h")
+        z.zeilen(x + 14, 146, text.split("\n"), "tw" if cls == "kern" else "t", 20)
+        if i < len(schritte) - 1:
+            z.pfeil(x + 205, 150, x + 228, 150)
+        x += 228
+    z.rechteck(30, 236, 1115, 84, "ausbau", 10)
+    z.text(46, 262, "Ohne laufenden Worker (lokal ohne queue:work)", "h")
+    z.text(46, 286, "läuft der Export synchron in der Anfrage bis zu einer Grenze (Vorgabe 100'000 Zeilen); darüber verlangt phpdbadmin den Worker (B-07).", "t")
+    z.text(46, 306, "Import gleich, mit Probelauf in einer zurückgerollten Transaktion und ANALYZE nach dem echten Lauf (E-02, E-06).", "t")
+    return z
+
+
+def timebox_plan() -> Zeichnung:
+    z = Zeichnung(1180, 430, "phpdbadmin — Timebox-Plan",
+                  "Dreizehn Timeboxes in fünf Stufen; Personentage aus der PRL (obere Schätzung 53 PT). Reihenfolge, keine Termine (neben Basalto, R-03)")
+    tbs = [("00", "Fundament", 8.0, "0"), ("01", "Katalog", 4.0, "1"), ("02", "Raster", 3.6, "1"), ("03", "SQL-Editor", 3.4, "1"),
+           ("04", "Bearbeiten", 4.4, "2"), ("05", "Struktur", 2.8, "2"), ("06", "Austausch", 2.1, "2"), ("07", "Rechte", 1.9, "2"), ("08", "Prüfung", 2.8, "2"),
+           ("09", "Server", 3.3, "3"), ("10", "Objekte", 6.7, "3"), ("11", "Komfort", 7.1, "4"), ("12", "Team, KI", 2.9, "4")]
+    farbe = {"0": "kern", "1": "kernhell", "2": "ausbau", "3": "gruen", "4": "nein"}
+    skala = 1100 / 53
+    x = 40
+    for nr, name, pt, stufe in tbs:
+        b = pt * skala
+        z.rechteck(x, 110, b - 3, 70, farbe[stufe], 6)
+        hell = stufe == "0"
+        z.text(x + 6, 134, f"TB {nr}" if b > 58 else nr, "hw" if hell else "h")
+        if b > 60:
+            z.text(x + 6, 152, name, "tw" if hell else "s")
+        z.text(x + 6, 170, (f"{pt:.1f} PT" if b > 50 else f"{pt:.1f}").replace(".", ","), "tw" if hell else "s")
+        x += b
+    marken = [("Alpha", 40 + (8 + 4 + 3.6 + 3.4) * skala), ("v1.0", 40 + (19 + 14) * skala), ("v1.1", 40 + (33 + 10) * skala), ("v1.2", 40 + 53 * skala)]
+    for name, xm in marken:
+        z.roh(f'<path d="M{xm:.0f} 96 L{xm:.0f} 206" stroke="{AKZENT_RAND}" stroke-width="2" stroke-dasharray="4 3"/>')
+        z.rechteck(xm - 32, 210, 64, 24, "ausbau", 12)
+        z.text(xm, 226, name, "h", "middle")
+    z.legende(40, 280, [("kern", "Stufe 0 Fundament"), ("kernhell", "Stufe 1 Lesen"), ("ausbau", "Stufe 2 Bearbeiten"), ("gruen", "Stufe 3 Verwalten"), ("nein", "Stufe 4 Komfort, Team")])
+    z.kasten(40, 310, 1100, 96, "Must-Anteil im Plan (PRL, nach Punkten)", [
+        "Stufe 0: 90 % (Fundament ohne Rückfallweg, bewusst) · Stufe 1: 57 % · Stufe 2: 45 % · bis v1.0 zusammen: 59 % · Stufen 3 und 4: 0 %",
+        "Neun Must-Anforderungen mit Rückfallweg laufen im Plan als «Should ↓» (z. B. Befehlspalette → Navigator, Import → SQL-Datei im Editor)",
+    ], "neutral", abstand=22, punkt=False)
+    return z
+
+
 DIAGRAMME = {
     "problembild-ist-soll": ("00-change_request/diagrams/problembild-ist-soll.svg", problembild_ist_soll),
     "marktpositionierung": ("00-change_request/diagrams/marktpositionierung.svg", marktpositionierung),
@@ -707,6 +891,12 @@ DIAGRAMME = {
     "messwerte": ("02-feasibility/diagrams/messwerte.svg", messwerte),
     "anwenden-je-treiber": ("02-feasibility/diagrams/anwenden-je-treiber.svg", anwenden_je_treiber),
     "schreibschutz": ("02-feasibility/diagrams/schreibschutz.svg", schreibschutz),
+    "architektur-l2": ("03-foundation/diagrams/architektur-l2.svg", architektur_l2),
+    "anfrageverlauf": ("03-foundation/diagrams/anfrageverlauf.svg", anfrageverlauf),
+    "er-app-datenbank": ("03-foundation/diagrams/er-app-datenbank.svg", er_app_datenbank),
+    "use-cases": ("03-foundation/diagrams/use-cases.svg", use_cases),
+    "export-im-hintergrund": ("03-foundation/diagrams/export-im-hintergrund.svg", export_im_hintergrund),
+    "timebox-plan": ("03-foundation/diagrams/timebox-plan.svg", timebox_plan),
 }
 
 
