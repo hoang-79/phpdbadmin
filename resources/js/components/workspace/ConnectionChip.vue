@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { ChevronDown, Lock, Pencil, Undo2 } from '@lucide/vue';
+import { ChevronDown, Lock, Pencil, Server, Undo2 } from '@lucide/vue';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { t } from '@/lib/i18n';
 import { home } from '@/routes';
 import { edit } from '@/routes/connections';
+import { server } from '@/routes/workspace';
 import type { Workspace } from '@/types';
 
 /** Verbindung im Kopf (V-04, Wireframe 05): Umgebung als Farbe, Symbol und Wort; Schloss bei Schreibschutz. */
@@ -89,6 +91,11 @@ const short = { local: 'LOKAL', test: 'TEST', production: 'PROD' };
             <DropdownMenuItem v-if="connection.canManage" as-child>
                 <Link :href="edit(connection.id)" class="gap-2"
                     ><Pencil class="size-4" />Verbindung bearbeiten</Link
+                >
+            </DropdownMenuItem>
+            <DropdownMenuItem as-child>
+                <Link :href="server(connection.id)" class="gap-2"
+                    ><Server class="size-4" />{{ t('Server') }}</Link
                 >
             </DropdownMenuItem>
             <DropdownMenuItem as-child>

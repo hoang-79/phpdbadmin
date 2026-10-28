@@ -6,6 +6,7 @@ use App\Http\Controllers\Account\OnboardingController;
 use App\Http\Controllers\Connections\ConnectionController;
 use App\Http\Controllers\Connections\TestConnectionController;
 use App\Http\Controllers\Workspace\ConnectionPasswordController;
+use App\Http\Controllers\Workspace\Server;
 use App\Http\Controllers\Workspace\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +29,18 @@ Route::middleware('auth')->group(function () {
         Route::get('password', [ConnectionPasswordController::class, 'show'])->name('workspace.password');
         Route::post('password', [ConnectionPasswordController::class, 'store'])->middleware('throttle:connection-test')->name('workspace.password.store');
         Route::get('s/{schema}', [WorkspaceController::class, 'schema'])->where('schema', '[^/]+')->name('workspace.schema');
+
+        // Server-Verwaltung (W-01 bis W-05): ansehen mit Zugang, ändern nur mit «verwalten» und ohne Schreibschutz.
+        Route::get('server', Server\OverviewController::class)->name('workspace.server');
+        Route::get('server/processes', [Server\ProcessController::class, 'index'])->name('workspace.server.processes');
+        Route::post('server/processes/{process}/end', [Server\ProcessController::class, 'end'])->where('process', '[1-9][0-9]{0,17}')->name('workspace.server.processes.end');
+        Route::get('server/variables', Server\VariableController::class)->name('workspace.server.variables');
+        Route::get('server/accounts', [Server\AccountController::class, 'index'])->name('workspace.server.accounts');
+        Route::post('server/accounts/preview', [Server\AccountController::class, 'preview'])->name('workspace.server.accounts.preview');
+        Route::post('server/accounts', [Server\AccountController::class, 'apply'])->name('workspace.server.accounts.apply');
+        Route::get('server/maintenance', [Server\MaintenanceController::class, 'index'])->name('workspace.server.maintenance');
+        Route::post('server/maintenance/preview', [Server\MaintenanceController::class, 'preview'])->name('workspace.server.maintenance.preview');
+        Route::post('server/maintenance', [Server\MaintenanceController::class, 'run'])->name('workspace.server.maintenance.run');
     });
 
     // Kein Profil (A-05): das Konto zeigt Sicherheit und Darstellung.
