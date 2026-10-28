@@ -101,7 +101,7 @@ Export in Paketen über den Schlüssel (`lazyById(5000)`, gemessen 3 MB je Milli
 
 ## 12. Anmeldung und Konten
 
-Fortify nur noch für die Passkey-Zeremonie; `Fortify::authenticateUsing()` lehnt jede Passwort-Anmeldung ab, die Passwortbestätigung wird durch Bestätigung per Passkey ersetzt (F-6, ADR-008). Code-Anmeldung als eigener Controller nach dem Muster von Basalto: Code mit HMAC gespeichert, benannte Limiter je Adresse und IP, gleiche Antwort für unbekannte Adressen, Sitzung neu. Erstes Konto per `php artisan phpdbadmin:install`, weitere per Einladung. Rollen `admin`/`member`, Rechte je Verbindung über Policies.
+Fortify nur noch für die Passkey-Zeremonie; seit TB 00 registriert Fortify **keine eigenen Routen** (`Fortify::ignoreRoutes()`), `routes/auth.php` trägt nur die Passkey-Wege der Bibliothek — einen Passwort-Endpunkt gibt es damit gar nicht (strenger als das ursprünglich geplante `authenticateUsing()`, das nur abgelehnt hätte). Die Passwortbestätigung (`password.confirm`) wird durch Bestätigung per Passkey oder per Code an die eigene Adresse ersetzt; jede Anmeldung gilt zugleich als Bestätigung (F-6, ADR-008). Code-Anmeldung als eigener Controller nach dem Muster von Basalto: Code mit HMAC gespeichert, benannte Limiter je Adresse und IP, gleiche Antwort für unbekannte Adressen, Sitzung neu. Erstes Konto per `php artisan phpdbadmin:install`, weitere per Einladung. Rollen `admin`/`member`, Rechte je Verbindung über Policies.
 
 ## 13. Protokoll und Maskierung
 

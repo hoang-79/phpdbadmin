@@ -12,8 +12,12 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.ts'],
             refresh: true,
             fonts: [
-                bunny('Instrument Sans', {
+                // G-02: Inter und JetBrains Mono, beim Build heruntergeladen und mit ausgeliefert
+                bunny('Inter', {
                     weights: [400, 500, 600],
+                }),
+                bunny('JetBrains Mono', {
+                    weights: [400, 600],
                 }),
             ],
         }),

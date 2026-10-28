@@ -27,4 +27,8 @@ Vorgabe: kein Passwort, nur Passkey und Code per Mail; kein Dashboard, kein Prof
 - Vor jedem `composer update` Routenliste sichern und vergleichen.
 - Parameter nie `{passkey}` nennen (globale Bindung von `laravel/passkeys`).
 
+## Nachtrag TB 00 (28.10.2026)
+
+Umgesetzt mit einer strengeren Form von Option A: `Fortify::ignoreRoutes()` statt `authenticateUsing()`. Fortify registriert damit **keine** eigenen Routen; `routes/auth.php` trägt die Passkey-Wege der Bibliothek (`Laravel\Passkeys\Http\Controllers`) unter den Namen, die Fortify verwendet hätte. Ein Passwort-Endpunkt existiert gar nicht (`POST /login` → 405). Die Middleware `password.confirm` leitet auf eine eigene Seite (Bestätigen per Passkey oder Code an die eigene Adresse); jede Anmeldung setzt die Bestätigung. Fortify bleibt nur, weil es die Passkey-Konfiguration (`passkeys.*`) aus `config/fortify.php` ableitet.
+
 Siehe [Solution-Architektur](../../03-foundation/solution-architecture.md) · [Feasibility](../../02-feasibility/feasibility.md)

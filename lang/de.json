@@ -1,0 +1,15 @@
+{
+    "All rights reserved.": "Alle Rechte vorbehalten.",
+    "Hello!": "Guten Tag",
+    "If you're having trouble clicking the \":actionText\" button, copy and paste the URL below\ninto your web browser:": "Falls der Knopf «:actionText» nicht funktioniert, kopieren Sie diese Adresse in Ihren Browser:",
+    "Invalid credential format.": "Die Antwort des Passkeys ist unvollständig. Bitte noch einmal versuchen.",
+    "Passkey not recognized. It may have been removed from your account.": "Dieser Passkey ist nicht bekannt — vielleicht wurde er im Konto entfernt. Melden Sie sich mit einem Code per Mail an.",
+    "Passkey registration session expired. Please try again.": "Die Anfrage ist abgelaufen. Bitte noch einmal «Passkey hinzufügen» wählen.",
+    "Passkey verification session expired. Please try again.": "Die Anfrage ist abgelaufen. Bitte noch einmal versuchen.",
+    "Regards,": "Freundliche Grüsse",
+    "Unable to register passkey. Please try again.": "Der Passkey liess sich nicht anlegen. Bitte noch einmal versuchen.",
+    "Unable to register this passkey.": "Dieser Passkey lässt sich nicht anlegen — vielleicht ist er schon im Konto.",
+    "Unable to sign in with this account.": "Mit diesem Konto ist keine Anmeldung möglich.",
+    "Unable to verify passkey. Please try again.": "Der Passkey liess sich nicht prüfen. Bitte noch einmal versuchen.",
+    "Whoops!": "Hoppla!"
+}

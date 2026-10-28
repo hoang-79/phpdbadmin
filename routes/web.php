@@ -1,14 +1,18 @@
 <?php
 
+use App\Http\Controllers\Account\AccountController;
+use App\Http\Controllers\Connections\ConnectionController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'Welcome')->name('home');
+require __DIR__.'/auth.php';
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'Dashboard')->name('dashboard');
+Route::middleware('auth')->group(function () {
+    // Kein Dashboard (A-04): die Startseite ist die Verbindungsübersicht.
+    Route::get('/', [ConnectionController::class, 'index'])->name('home');
+
+    // Kein Profil (A-05): das Konto zeigt Sicherheit und Darstellung.
+    Route::get('account', [AccountController::class, 'show'])->name('account');
 });
-
-require __DIR__.'/settings.php';
 
 // Feasibility-Proben F-3 und F-4, nur lokal (dokumentationen/02-feasibility).
 if (app()->environment('local')) {

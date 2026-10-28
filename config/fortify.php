@@ -73,7 +73,7 @@ return [
     |
     */
 
-    'home' => '/dashboard',
+    'home' => '/',
 
     /*
     |--------------------------------------------------------------------------
@@ -131,7 +131,7 @@ return [
     |
     */
 
-    'views' => true,
+    'views' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -160,15 +160,9 @@ return [
     |
     */
 
+    // Nur Passkeys (ADR-008): keine Registrierung, kein Passwort, kein Zwei-Faktor, keine E-Mail-Bestätigung.
+    // Die Routen registriert die Anwendung selbst (routes/auth.php); Verwalten verlangt eine frische Bestätigung.
     'features' => [
-        Features::registration(),
-        Features::resetPasswords(),
-        Features::emailVerification(),
-        Features::twoFactorAuthentication([
-            'confirm' => true,
-            'confirmPassword' => true,
-            // 'window' => 0
-        ]),
         Features::passkeys([
             'confirmPassword' => true,
         ]),
