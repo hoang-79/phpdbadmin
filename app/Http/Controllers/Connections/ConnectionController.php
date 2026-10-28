@@ -14,8 +14,10 @@ use App\Models\DatabaseConnection;
 use App\Models\User;
 use App\Services\Audit\AuditLog;
 use App\Support\Translations;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -34,6 +36,7 @@ class ConnectionController extends Controller
         // Sortiert nach Gruppe (ohne Gruppe zuletzt), dann Name — in PHP, weil «group» je Treiber anders zu quoten wäre.
         $connections = DatabaseConnection::query()
             ->visibleTo($user)
+            ->with(['memberships' => fn (HasMany $memberships) => $memberships->where('user_id', $user->id)])
             ->get()
             ->sortBy([
                 fn (DatabaseConnection $a, DatabaseConnection $b): int => ($a->group === null) <=> ($b->group === null),
@@ -73,7 +76,7 @@ class ConnectionController extends Controller
     public function edit(Request $request, DatabaseConnection $connection, HostPolicy $policy): Response
     {
         $user = $this->user($request);
-        abort_unless($connection->isManageableBy($user), 403);
+        Gate::authorize('manage', $connection);
 
         return Inertia::render('connections/Form', [
             'connection' => [
@@ -99,8 +102,8 @@ class ConnectionController extends Controller
 
     public function update(ConnectionRequest $request, DatabaseConnection $connection, ConnectionTester $tester): RedirectResponse
     {
+        // Recht «verwalten» prüft schon die ConnectionRequest — vor der Validierung.
         $user = $this->user($request);
-        abort_unless($connection->isManageableBy($user), 403);
 
         $attributes = $this->attributes($request);
 
@@ -122,7 +125,7 @@ class ConnectionController extends Controller
     public function destroy(Request $request, DatabaseConnection $connection): RedirectResponse
     {
         $user = $this->user($request);
-        abort_unless($connection->isManageableBy($user), 403);
+        Gate::authorize('manage', $connection);
 
         $connection->delete();
         $this->audit->record('connection.deleted', $user, $connection->id, ['name' => $connection->name]);

@@ -45,6 +45,7 @@ class TestConnectionController extends Controller
 
         $connection = DatabaseConnection::query()->visibleTo($user)->find($request->string('connection')->toString());
 
-        return $connection !== null && $connection->isManageableBy($user) ? $connection : null;
+        // Das gespeicherte Passwort nur mit dem Recht «verwalten» (wie beim Bearbeiten).
+        return $connection !== null && $user->can('manage', $connection) ? $connection : null;
     }
 }

@@ -267,6 +267,33 @@ class ConnectionControllerTest extends TestCase
 
         $this->actingAs($user)->get(route('connections.edit', $shared))->assertForbidden();
         $this->actingAs($user)->delete(route('connections.destroy', $shared))->assertForbidden();
+        // Die Policy greift vor der Validierung: ein leerer Antrag verrät nichts über die Felder.
+        $this->actingAs($user)->put(route('connections.update', $shared), [])->assertForbidden();
+        $this->assertModelExists($shared);
+    }
+
+    public function test_member_with_manage_permission_updates_shared_connection(): void
+    {
+        $user = User::factory()->create();
+        $shared = DatabaseConnection::factory()->create(['shared' => true]);
+        $shared->members()->attach($user, ['permission' => ConnectionPermission::Manage->value]);
+
+        $this->actingAs($user)->put(route('connections.update', $shared), [
+            'name' => 'gemeinsam', 'driver' => 'mariadb', 'host' => '127.0.0.1', 'port' => '1', 'username' => 'app',
+            'store_password' => true, 'environment' => 'local', 'all_databases' => true,
+        ])->assertRedirect(route('home'));
+
+        $this->assertSame('gemeinsam', $shared->refresh()->name);
+    }
+
+    public function test_admin_sees_every_shared_connection_but_no_personal_connection_of_others(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $shared = DatabaseConnection::factory()->create(['shared' => true]);
+        $personal = DatabaseConnection::factory()->create();
+
+        $this->actingAs($admin)->get(route('connections.edit', $shared))->assertOk();
+        $this->actingAs($admin)->get(route('connections.edit', $personal))->assertNotFound();
     }
 
     public function test_removes_own_connection(): void
