@@ -85,6 +85,29 @@ class SqliteDialect extends BaseDialect
         ), 'name');
     }
 
+    public function routines(Connection $connection, string $schema): ?array
+    {
+        return null;
+    }
+
+    public function schemaTriggers(Connection $connection, string $schema): array
+    {
+        return array_map(fn (array $row): array => ['name' => $row['name'], 'table' => $row['tbl']], $this->records($connection->select(
+            'select name, tbl_name as tbl from '.$this->wrap($connection, $schema).'.sqlite_schema where type = ? order by name',
+            ['trigger'],
+        ), ['name', 'tbl']));
+    }
+
+    public function events(Connection $connection, string $schema): ?array
+    {
+        return null;
+    }
+
+    public function sequences(Connection $connection, string $schema): ?array
+    {
+        return null;
+    }
+
     public function supportsStatementTimeout(): bool
     {
         return false;

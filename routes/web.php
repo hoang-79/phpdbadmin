@@ -4,6 +4,8 @@ use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Account\OnboardingController;
 use App\Http\Controllers\Connections\ConnectionController;
 use App\Http\Controllers\Connections\TestConnectionController;
+use App\Http\Controllers\Workspace\ConnectionPasswordController;
+use App\Http\Controllers\Workspace\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/auth.php';
@@ -18,6 +20,14 @@ Route::middleware('auth')->group(function () {
 
     // Nach der ersten Anmeldung ohne Passkey: gleich einen anlegen.
     Route::get('welcome', [OnboardingController::class, 'show'])->name('onboarding');
+
+    // Arbeitsbildschirm (Wireframe 05): Verbindung → Schema (bei MySQL/MariaDB eine Datenbank) → Objekt.
+    Route::prefix('c/{connection}')->group(function () {
+        Route::get('/', [WorkspaceController::class, 'show'])->name('workspace');
+        Route::get('password', [ConnectionPasswordController::class, 'show'])->name('workspace.password');
+        Route::post('password', [ConnectionPasswordController::class, 'store'])->middleware('throttle:connection-test')->name('workspace.password.store');
+        Route::get('s/{schema}', [WorkspaceController::class, 'schema'])->where('schema', '[^/]+')->name('workspace.schema');
+    });
 
     // Kein Profil (A-05): das Konto zeigt Sicherheit und Darstellung.
     Route::get('account', [AccountController::class, 'show'])->name('account');

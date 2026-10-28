@@ -74,6 +74,22 @@ abstract class BaseDialect implements Dialect
     abstract protected function rowEstimates(Connection $connection, string $schema): array;
 
     /**
+     * Ergebniszeilen als Liste von Arrays mit Texten (fehlende Werte als leerer Text).
+     *
+     * @param  array<int, object>  $rows
+     * @param  list<string>  $columns
+     * @return list<array<string, string>>
+     */
+    protected function records(array $rows, array $columns): array
+    {
+        return array_values(array_map(function (object $row) use ($columns): array {
+            $values = (array) $row;
+
+            return array_combine($columns, array_map(fn (string $column): string => (string) ($values[$column] ?? ''), $columns));
+        }, $rows));
+    }
+
+    /**
      * Eine Spalte aus Ergebniszeilen als Liste von Texten.
      *
      * @param  array<int, object>  $rows

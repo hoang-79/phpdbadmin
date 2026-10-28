@@ -32,6 +32,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { formatRecent } from '@/lib/format';
+import { workspace } from '@/routes';
 import { create, destroy, edit } from '@/routes/connections';
 import type { ConnectionEnvironment, ConnectionSummary } from '@/types';
 
@@ -183,7 +184,7 @@ function remove(connection: ConnectionSummary): void {
                         v-for="connection in items"
                         :key="connection.id"
                         :class="[
-                            'flex min-w-0 flex-col gap-2 rounded-lg border bg-background px-4 py-3.5',
+                            'relative flex min-w-0 flex-col gap-2 rounded-lg border bg-background px-4 py-3.5 focus-within:ring-2 focus-within:ring-ring hover:border-text-secondary',
                             connection.environment === 'production' &&
                                 'border-env-production shadow-[inset_0_3px_0_var(--env-production)]',
                             connection.environment === 'test' &&
@@ -201,7 +202,7 @@ function remove(connection: ConnectionSummary): void {
                             >
                             <DropdownMenu v-if="connection.canManage">
                                 <DropdownMenuTrigger
-                                    class="ml-auto inline-grid size-7 place-items-center rounded-md text-text-secondary outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+                                    class="relative z-10 ml-auto inline-grid size-7 place-items-center rounded-md text-text-secondary outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
                                     :aria-label="`Aktionen für ${connection.name}`"
                                 >
                                     <MoreHorizontal class="size-4" />
@@ -226,9 +227,10 @@ function remove(connection: ConnectionSummary): void {
                             </DropdownMenu>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
-                            <span
-                                class="font-mono text-base font-semibold wrap-break-word"
-                                >{{ connection.name }}</span
+                            <Link
+                                :href="workspace(connection.id)"
+                                class="font-mono text-base font-semibold wrap-break-word after:absolute after:inset-0 after:rounded-lg hover:underline focus-visible:outline-none"
+                                >{{ connection.name }}</Link
                             >
                             <span
                                 class="rounded-sm border px-1.5 py-px text-xs font-medium whitespace-nowrap text-text-secondary"

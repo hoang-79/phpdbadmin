@@ -71,6 +71,34 @@ interface Dialect
      */
     public function triggers(Connection $connection, string $schema, string $table): array;
 
+    /**
+     * Gespeicherte Funktionen und Prozeduren eines Schemas; null, wo der Treiber keine kennt (SQLite).
+     *
+     * @return list<array{name: string, kind: 'function'|'procedure'}>|null
+     */
+    public function routines(Connection $connection, string $schema): ?array;
+
+    /**
+     * Alle Trigger eines Schemas mit ihrer Tabelle.
+     *
+     * @return list<array{name: string, table: string}>
+     */
+    public function schemaTriggers(Connection $connection, string $schema): array;
+
+    /**
+     * Geplante Ereignisse (nur MySQL und MariaDB); null bei den übrigen Treibern.
+     *
+     * @return list<string>|null
+     */
+    public function events(Connection $connection, string $schema): ?array;
+
+    /**
+     * Sequenzen (nur PostgreSQL); null bei den übrigen Treibern.
+     *
+     * @return list<string>|null
+     */
+    public function sequences(Connection $connection, string $schema): ?array;
+
     /** Kann der Treiber eine einzelne Anweisung zeitlich begrenzen? SQLite nicht (F-2, Q-09). */
     public function supportsStatementTimeout(): bool;
 

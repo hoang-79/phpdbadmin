@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Connections\HostPolicy;
+use App\Connections\TargetConnections;
 use App\Models\DatabaseConnection;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -21,6 +22,12 @@ class AppServiceProvider extends ServiceProvider
     {
         // Je Auflösung neu aus der Konfiguration, damit Änderungen (und Tests) sofort gelten.
         $this->app->bind(HostPolicy::class, fn (): HostPolicy => HostPolicy::fromConfig());
+
+        // Eine Sammlung offener Zielverbindungen je Anfrage; am Ende der Anfrage freigegeben.
+        $this->app->scoped(TargetConnections::class);
+        $this->app->terminating(fn () => $this->app->resolved(TargetConnections::class)
+            ? $this->app->make(TargetConnections::class)->releaseAll()
+            : null);
     }
 
     public function boot(): void

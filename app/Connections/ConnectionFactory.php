@@ -20,9 +20,11 @@ final class ConnectionFactory
     public function __construct(private readonly HostPolicy $policy) {}
 
     /**
+     * @param  int|null  $statementTimeoutMs  Zeitlimit je Anweisung (wo der Treiber eines kennt)
+     *
      * @throws ConnectionNotAllowed
      */
-    public function make(ConnectionSettings $settings, ?int $connectTimeout = null, bool $readOnly = false): Connection
+    public function make(ConnectionSettings $settings, ?int $connectTimeout = null, bool $readOnly = false, ?int $statementTimeoutMs = null): Connection
     {
         $dialect = $settings->driver->dialect();
         $address = $this->address($settings);
@@ -33,16 +35,32 @@ final class ConnectionFactory
             $readOnly,
         );
         // Eigener Name je Zweck: eine schreibgeschützte und eine beschreibbare Verbindung teilen sich nie den Zustand.
-        $config['name'] = 'target_'.hash('xxh128', serialize([$config, $readOnly]));
+        $config['name'] = 'target_'.hash('xxh128', serialize([$config, $readOnly, $statementTimeoutMs]));
 
         /** @var Connection $connection */
         $connection = DB::build($config);
 
-        if ($settings->driver === DatabaseDriver::Sqlite) {
-            $this->guardAttach($connection);
-        }
+        $prepare = function (Connection $connection) use ($settings, $dialect, $readOnly, $statementTimeoutMs): void {
+            if ($settings->driver === DatabaseDriver::Sqlite) {
+                $this->guardAttach($connection);
+            }
 
-        $dialect->prepareSession($connection, $readOnly);
+            $dialect->prepareSession($connection, $readOnly);
+
+            if ($statementTimeoutMs !== null) {
+                $dialect->setStatementTimeout($connection, $statementTimeoutMs);
+            }
+        };
+
+        $prepare($connection);
+
+        // Laravel hält «SQLSTATE[25006] Read only sql transaction» für eine verlorene Verbindung (Aurora-Umschaltung),
+        // verbindet neu und wiederholt die Anweisung — auf einer Sitzung ohne Schreibschutz, Authorizer und Zeitlimit.
+        // Deshalb richtet jeder Neuaufbau die Sitzung wieder ein; die Wiederholung scheitert dann wie sie soll.
+        $connection->setReconnector(function (Connection $connection) use ($prepare): void {
+            DB::reconnect((string) $connection->getNameWithReadWriteType());
+            $prepare($connection);
+        });
 
         return $connection;
     }

@@ -2,6 +2,7 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
+import WorkspaceLayout from '@/layouts/WorkspaceLayout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
 
 const appName = import.meta.env.VITE_APP_NAME || 'phpdbadmin';
@@ -14,7 +15,10 @@ void createInertiaApp({
                 return null;
             case name.startsWith('auth/'):
             case name.startsWith('onboarding/'):
+            case name.startsWith('connect/'):
                 return AuthLayout;
+            case name.startsWith('workspace/'):
+                return WorkspaceLayout;
             default:
                 return AppLayout;
         }

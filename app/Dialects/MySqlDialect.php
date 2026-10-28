@@ -110,6 +110,38 @@ class MySqlDialect extends BaseDialect
         ), 'name');
     }
 
+    public function routines(Connection $connection, string $schema): array
+    {
+        return array_map(fn (array $row): array => [
+            'name' => $row['name'],
+            'kind' => strtoupper($row['kind']) === 'PROCEDURE' ? 'procedure' : 'function',
+        ], $this->records($connection->select(
+            'select routine_name as name, routine_type as kind from information_schema.routines where routine_schema = ? order by routine_name',
+            [$schema],
+        ), ['name', 'kind']));
+    }
+
+    public function schemaTriggers(Connection $connection, string $schema): array
+    {
+        return array_map(fn (array $row): array => ['name' => $row['name'], 'table' => $row['tbl']], $this->records($connection->select(
+            'select trigger_name as name, event_object_table as tbl from information_schema.triggers where trigger_schema = ? order by trigger_name',
+            [$schema],
+        ), ['name', 'tbl']));
+    }
+
+    public function events(Connection $connection, string $schema): array
+    {
+        return $this->strings($connection->select(
+            'select event_name as name from information_schema.events where event_schema = ? order by event_name',
+            [$schema],
+        ), 'name');
+    }
+
+    public function sequences(Connection $connection, string $schema): ?array
+    {
+        return null;
+    }
+
     public function supportsStatementTimeout(): bool
     {
         return true;

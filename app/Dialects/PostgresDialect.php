@@ -102,6 +102,49 @@ class PostgresDialect extends BaseDialect
         ), 'name');
     }
 
+    public function routines(Connection $connection, string $schema): array
+    {
+        // Ohne Funktionen, die zu Erweiterungen gehören (pg_depend «e») — die hat niemand selbst geschrieben.
+        return array_map(fn (array $row): array => [
+            'name' => $row['name'],
+            'kind' => $row['kind'] === 'p' ? 'procedure' : 'function',
+        ], $this->records($connection->select(
+            "select p.proname as name, p.prokind as kind
+             from pg_proc p
+             join pg_namespace n on n.oid = p.pronamespace
+             where n.nspname = ? and p.prokind in ('f', 'p')
+               and not exists (select 1 from pg_depend d where d.objid = p.oid and d.deptype = 'e')
+             order by p.proname",
+            [$schema],
+        ), ['name', 'kind']));
+    }
+
+    public function schemaTriggers(Connection $connection, string $schema): array
+    {
+        return array_map(fn (array $row): array => ['name' => $row['name'], 'table' => $row['tbl']], $this->records($connection->select(
+            'select tg.tgname as name, rel.relname as tbl
+             from pg_trigger tg
+             join pg_class rel on rel.oid = tg.tgrelid
+             join pg_namespace nsp on nsp.oid = rel.relnamespace
+             where not tg.tgisinternal and nsp.nspname = ?
+             order by tg.tgname',
+            [$schema],
+        ), ['name', 'tbl']));
+    }
+
+    public function events(Connection $connection, string $schema): ?array
+    {
+        return null;
+    }
+
+    public function sequences(Connection $connection, string $schema): array
+    {
+        return $this->strings($connection->select(
+            "select c.relname as name from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = ? and c.relkind = 'S' order by c.relname",
+            [$schema],
+        ), 'name');
+    }
+
     public function supportsStatementTimeout(): bool
     {
         return true;

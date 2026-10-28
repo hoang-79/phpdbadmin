@@ -5,7 +5,10 @@ namespace Tests\Concerns;
 use App\Connections\ConnectionFactory;
 use App\Connections\ConnectionSettings;
 use App\Enums\DatabaseDriver;
+use App\Models\DatabaseConnection;
+use App\Models\User;
 use Illuminate\Database\Connection;
+use Illuminate\Database\Schema\Blueprint;
 
 /**
  * Die lokalen Datenbank-Server als Ziele für Tests (B-03): MySQL 8.4 auf 3307, MariaDB 10.11 auf 3306, PostgreSQL 18
@@ -92,7 +95,34 @@ trait TargetDatabases
         if ($driver === DatabaseDriver::Postgres) {
             $schema->dropAllTypes();
             $connection->statement('drop function if exists vertrag_orders_note() cascade');
+            $connection->statement('drop function if exists vertrag_netto(numeric)');
+            $connection->statement('drop sequence if exists vertrag_nummern');
         }
+
+        if ($driver === DatabaseDriver::MySql || $driver === DatabaseDriver::MariaDb) {
+            $connection->statement('drop function if exists vertrag_netto');
+            $connection->statement('drop event if exists vertrag_aufraeumen');
+        }
+    }
+
+    /**
+     * Eine gespeicherte Verbindung zu diesen Einstellungen — so, wie der Arbeitsbildschirm sie öffnet.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    protected function savedConnection(ConnectionSettings $settings, ?User $owner = null, array $attributes = []): DatabaseConnection
+    {
+        return DatabaseConnection::factory()->for($owner ?? User::factory()->create(), 'owner')->create([
+            'driver' => $settings->driver,
+            'host' => $settings->host,
+            'port' => $settings->port,
+            'database' => $settings->database,
+            'username' => $settings->username,
+            'password' => $settings->password,
+            'sqlite_path' => $settings->sqlitePath,
+            'options' => $settings->driver->isServer() ? ['sslmode' => 'disable'] : null,
+            ...$attributes,
+        ]);
     }
 
     protected function skipUnlessReachable(DatabaseDriver $driver, string $host, int $port): void
@@ -104,5 +134,100 @@ trait TargetDatabases
         }
 
         fclose($socket);
+    }
+
+    protected function sampleSchemaName(DatabaseDriver $driver): string
+    {
+        return match ($driver) {
+            DatabaseDriver::MySql, DatabaseDriver::MariaDb => 'phpdbadmin_test',
+            DatabaseDriver::Postgres => 'public',
+            DatabaseDriver::Sqlite => 'main',
+        };
+    }
+
+    /**
+     * Lesekonto «phpdbadmin_lesen» mit Leserecht auf die Test-Datenbank — legt es bei Bedarf an (V-10).
+     */
+    protected function readAccount(DatabaseDriver $driver, Connection $root): ConnectionSettings
+    {
+        $password = 'Lesen-Test-4711';
+
+        if ($driver === DatabaseDriver::Postgres) {
+            if ($root->selectOne("select 1 as found from pg_roles where rolname = 'phpdbadmin_lesen'") === null) {
+                $root->statement("create role phpdbadmin_lesen login password '".$password."'");
+            }
+            $root->statement('grant connect on database phpdbadmin_test to phpdbadmin_lesen');
+            $root->statement('grant usage on schema public to phpdbadmin_lesen');
+        } else {
+            foreach (['localhost', '127.0.0.1', '%'] as $host) {
+                $root->statement("create user if not exists 'phpdbadmin_lesen'@'".$host."' identified by '".$password."'");
+                $root->statement("grant select on phpdbadmin_test.* to 'phpdbadmin_lesen'@'".$host."'");
+            }
+        }
+
+        $server = $this->serverSettings($driver);
+
+        return new ConnectionSettings($driver, $server->host, $server->port, 'phpdbadmin_test', 'phpdbadmin_lesen', $password);
+    }
+
+    /**
+     * Beispielschema mit allem, was der Katalog liefern muss (aus der Probe F-1).
+     */
+    protected function createSampleSchema(Connection $connection, DatabaseDriver $driver): void
+    {
+        $connection->getSchemaBuilder()->create('customers', function (Blueprint $table) {
+            $table->id();
+            $table->string('email')->unique();
+        });
+
+        $connection->statement(match ($driver) {
+            DatabaseDriver::MySql, DatabaseDriver::MariaDb => 'create table orders (
+                id bigint unsigned auto_increment primary key,
+                customer_id bigint unsigned not null,
+                total decimal(10,2) not null,
+                note varchar(255) null,
+                constraint orders_total_check check (total >= 0),
+                constraint orders_customer_fk foreign key (customer_id) references customers (id) on delete cascade
+            )',
+            DatabaseDriver::Postgres => 'create table orders (
+                id bigserial primary key,
+                customer_id bigint not null references customers (id) on delete cascade,
+                total numeric(10,2) not null constraint orders_total_check check (total >= 0),
+                note varchar(255) null
+            )',
+            DatabaseDriver::Sqlite => 'create table orders (
+                id integer primary key autoincrement,
+                customer_id integer not null references customers (id) on delete cascade,
+                total numeric not null constraint orders_total_check check (total >= 0),
+                note varchar(255) null
+            )',
+        });
+
+        $connection->statement("create view open_orders as select id, customer_id, total from orders where note is null or note <> 'bezahlt'");
+
+        foreach (match ($driver) {
+            DatabaseDriver::MySql, DatabaseDriver::MariaDb => ["create trigger orders_note_default before insert on orders for each row set new.note = coalesce(new.note, 'offen')"],
+            DatabaseDriver::Postgres => [
+                "create function vertrag_orders_note() returns trigger language plpgsql as \$\$ begin new.note := coalesce(new.note, 'offen'); return new; end \$\$",
+                'create trigger orders_note_default before insert on orders for each row execute function vertrag_orders_note()',
+            ],
+            DatabaseDriver::Sqlite => ["create trigger orders_note_default after insert on orders when new.note is null begin update orders set note = 'offen' where id = new.id; end"],
+        } as $statement) {
+            $connection->unprepared($statement);
+        }
+
+        foreach (match ($driver) {
+            DatabaseDriver::MySql, DatabaseDriver::MariaDb => [
+                'create function vertrag_netto(betrag decimal(10,2)) returns decimal(10,2) deterministic no sql return betrag / 1.081',
+                'create event vertrag_aufraeumen on schedule every 1 day do delete from orders where 1 = 0',
+            ],
+            DatabaseDriver::Postgres => [
+                'create function vertrag_netto(betrag numeric) returns numeric language sql immutable as $$ select betrag / 1.081 $$',
+                'create sequence vertrag_nummern',
+            ],
+            DatabaseDriver::Sqlite => [],
+        } as $statement) {
+            $connection->unprepared($statement);
+        }
     }
 }

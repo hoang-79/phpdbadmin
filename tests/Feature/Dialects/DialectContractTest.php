@@ -3,7 +3,6 @@
 namespace Tests\Feature\Dialects;
 
 use App\Connections\ConnectionFactory;
-use App\Connections\ConnectionSettings;
 use App\Enums\DatabaseDriver;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Schema\Blueprint;
@@ -60,8 +59,8 @@ class DialectContractTest extends TestCase
         $dialect = $driver->dialect();
 
         $this->assertMatchesRegularExpression('/^\d+\.\d+/', $dialect->serverVersion($connection));
-        $this->assertSame($this->schema($driver), $dialect->defaultSchema($connection));
-        $this->assertContains($this->schema($driver), $dialect->schemas($connection));
+        $this->assertSame($this->sampleSchemaName($driver), $dialect->defaultSchema($connection));
+        $this->assertContains($this->sampleSchemaName($driver), $dialect->schemas($connection));
         $this->assertNotContains('information_schema', $dialect->schemas($connection));
     }
 
@@ -77,7 +76,7 @@ class DialectContractTest extends TestCase
             DatabaseDriver::Sqlite => null,
         };
 
-        $tables = array_column($driver->dialect()->tables($connection, $this->schema($driver)), null, 'name');
+        $tables = array_column($driver->dialect()->tables($connection, $this->sampleSchemaName($driver)), null, 'name');
 
         $this->assertSame(['customers', 'open_orders', 'orders'], array_keys($tables));
         $this->assertSame('table', $tables['customers']['type']);
@@ -92,11 +91,11 @@ class DialectContractTest extends TestCase
         $this->createSampleSchema($connection, $driver);
         $dialect = $driver->dialect();
 
-        $checks = $dialect->checkConstraints($connection, $this->schema($driver), 'orders');
+        $checks = $dialect->checkConstraints($connection, $this->sampleSchemaName($driver), 'orders');
 
         $this->assertSame(['orders_total_check'], array_column($checks, 'name'));
         $this->assertStringContainsString('total', $checks[0]['definition']);
-        $this->assertSame(['orders_note_default'], $dialect->triggers($connection, $this->schema($driver), 'orders'));
+        $this->assertSame(['orders_note_default'], $dialect->triggers($connection, $this->sampleSchemaName($driver), 'orders'));
     }
 
     #[DataProvider('serverDrivers')]
@@ -288,86 +287,5 @@ class DialectContractTest extends TestCase
     private function writable(DatabaseDriver $driver): Connection
     {
         return app(ConnectionFactory::class)->make($this->scratchSettings($driver, $this->folder));
-    }
-
-    private function schema(DatabaseDriver $driver): string
-    {
-        return match ($driver) {
-            DatabaseDriver::MySql, DatabaseDriver::MariaDb => 'phpdbadmin_test',
-            DatabaseDriver::Postgres => 'public',
-            DatabaseDriver::Sqlite => 'main',
-        };
-    }
-
-    /**
-     * Lesekonto «phpdbadmin_lesen» mit Leserecht auf die Test-Datenbank — legt es bei Bedarf an (V-10).
-     */
-    private function readAccount(DatabaseDriver $driver, Connection $root): ConnectionSettings
-    {
-        $password = 'Lesen-Test-4711';
-
-        if ($driver === DatabaseDriver::Postgres) {
-            if ($root->selectOne("select 1 as found from pg_roles where rolname = 'phpdbadmin_lesen'") === null) {
-                $root->statement("create role phpdbadmin_lesen login password '".$password."'");
-            }
-            $root->statement('grant connect on database phpdbadmin_test to phpdbadmin_lesen');
-            $root->statement('grant usage on schema public to phpdbadmin_lesen');
-        } else {
-            foreach (['localhost', '127.0.0.1', '%'] as $host) {
-                $root->statement("create user if not exists 'phpdbadmin_lesen'@'".$host."' identified by '".$password."'");
-                $root->statement("grant select on phpdbadmin_test.* to 'phpdbadmin_lesen'@'".$host."'");
-            }
-        }
-
-        $server = $this->serverSettings($driver);
-
-        return new ConnectionSettings($driver, $server->host, $server->port, 'phpdbadmin_test', 'phpdbadmin_lesen', $password);
-    }
-
-    /**
-     * Beispielschema mit allem, was der Katalog liefern muss (aus der Probe F-1).
-     */
-    private function createSampleSchema(Connection $connection, DatabaseDriver $driver): void
-    {
-        $connection->getSchemaBuilder()->create('customers', function (Blueprint $table) {
-            $table->id();
-            $table->string('email')->unique();
-        });
-
-        $connection->statement(match ($driver) {
-            DatabaseDriver::MySql, DatabaseDriver::MariaDb => 'create table orders (
-                id bigint unsigned auto_increment primary key,
-                customer_id bigint unsigned not null,
-                total decimal(10,2) not null,
-                note varchar(255) null,
-                constraint orders_total_check check (total >= 0),
-                constraint orders_customer_fk foreign key (customer_id) references customers (id) on delete cascade
-            )',
-            DatabaseDriver::Postgres => 'create table orders (
-                id bigserial primary key,
-                customer_id bigint not null references customers (id) on delete cascade,
-                total numeric(10,2) not null constraint orders_total_check check (total >= 0),
-                note varchar(255) null
-            )',
-            DatabaseDriver::Sqlite => 'create table orders (
-                id integer primary key autoincrement,
-                customer_id integer not null references customers (id) on delete cascade,
-                total numeric not null constraint orders_total_check check (total >= 0),
-                note varchar(255) null
-            )',
-        });
-
-        $connection->statement("create view open_orders as select id, customer_id, total from orders where note is null or note <> 'bezahlt'");
-
-        foreach (match ($driver) {
-            DatabaseDriver::MySql, DatabaseDriver::MariaDb => ["create trigger orders_note_default before insert on orders for each row set new.note = coalesce(new.note, 'offen')"],
-            DatabaseDriver::Postgres => [
-                "create function vertrag_orders_note() returns trigger language plpgsql as \$\$ begin new.note := coalesce(new.note, 'offen'); return new; end \$\$",
-                'create trigger orders_note_default before insert on orders for each row execute function vertrag_orders_note()',
-            ],
-            DatabaseDriver::Sqlite => ["create trigger orders_note_default after insert on orders when new.note is null begin update orders set note = 'offen' where id = new.id; end"],
-        } as $statement) {
-            $connection->unprepared($statement);
-        }
     }
 }
