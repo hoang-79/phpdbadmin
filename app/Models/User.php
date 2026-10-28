@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\UserRole;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -28,7 +29,7 @@ use Laravel\Fortify\PasskeyAuthenticatable;
  * @property CarbonImmutable|null $updated_at
  */
 #[Fillable(['name', 'email', 'role'])]
-class User extends Authenticatable implements PasskeyUser
+class User extends Authenticatable implements HasLocalePreference, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable;
@@ -49,6 +50,14 @@ class User extends Authenticatable implements PasskeyUser
             'role' => UserRole::class,
             'last_login_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Mails in der Sprache des Kontos (N-06).
+     */
+    public function preferredLocale(): ?string
+    {
+        return $this->locale;
     }
 
     public function isAdmin(): bool

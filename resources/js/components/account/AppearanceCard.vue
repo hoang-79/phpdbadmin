@@ -1,10 +1,17 @@
 <script setup lang="ts">
+import { router } from '@inertiajs/vue3';
 import { Monitor, Moon, Sun } from '@lucide/vue';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
+import { locale as currentLocale, t } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n';
+import { locale as updateLocale } from '@/routes/account';
 import type { Appearance } from '@/types';
 
-/** Darstellung (G-05): Farbschema hell, dunkel oder wie das System — gespeichert im Browser. */
+/**
+ * Darstellung (G-05): Farbschema hell, dunkel oder wie das System — gespeichert im Browser. Sprache (N-06) im Konto,
+ * damit auch Mails sie kennen.
+ */
 const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
 
 // Das System-Schema kennt erst der Browser; serverseitig gerendert bliebe der Hinweis sonst falsch.
@@ -13,15 +20,42 @@ onMounted(() => {
     isMounted.value = true;
 });
 
-const options: {
-    value: Appearance;
-    label: string;
-    icon: typeof Sun;
-}[] = [
-    { value: 'light', label: 'Hell', icon: Sun },
-    { value: 'dark', label: 'Dunkel', icon: Moon },
-    { value: 'system', label: 'System', icon: Monitor },
+const options = computed<
+    {
+        value: Appearance;
+        label: string;
+        icon: typeof Sun;
+    }[]
+>(() => [
+    { value: 'light', label: t('Hell'), icon: Sun },
+    { value: 'dark', label: t('Dunkel'), icon: Moon },
+    { value: 'system', label: t('System'), icon: Monitor },
+]);
+
+// Jede Sprache in ihrer eigenen Schreibweise — wer die andere nicht liest, findet so zurück.
+const languages: { value: Locale; label: string }[] = [
+    { value: 'de', label: 'Deutsch' },
+    { value: 'en', label: 'English' },
 ];
+const isSavingLocale = ref(false);
+
+function chooseLocale(value: Locale): void {
+    if (value === currentLocale()) {
+        return;
+    }
+
+    isSavingLocale.value = true;
+    router.put(
+        updateLocale.url(),
+        { locale: value },
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                isSavingLocale.value = false;
+            },
+        },
+    );
+}
 </script>
 
 <template>
@@ -31,12 +65,12 @@ const options: {
     >
         <div class="flex items-center gap-2 border-b px-4 py-3">
             <Sun class="size-4" />
-            <h2 class="text-[15px] font-semibold">Darstellung</h2>
+            <h2 class="text-[15px] font-semibold">{{ t('Darstellung') }}</h2>
         </div>
         <div class="flex flex-col gap-1.5 p-4">
-            <span id="farbschema" class="text-[13px] font-medium"
-                >Farbschema</span
-            >
+            <span id="farbschema" class="text-[13px] font-medium">{{
+                t('Farbschema')
+            }}</span>
             <div
                 role="radiogroup"
                 aria-labelledby="farbschema"
@@ -98,9 +132,44 @@ const options: {
             <span
                 v-if="isMounted && appearance === 'system'"
                 class="text-xs text-muted-foreground"
-                >Folgt jetzt dem System:
-                {{ resolvedAppearance === 'dark' ? 'dunkel' : 'hell' }}.</span
+                >{{
+                    resolvedAppearance === 'dark'
+                        ? t('Folgt jetzt dem System: dunkel.')
+                        : t('Folgt jetzt dem System: hell.')
+                }}</span
             >
+        </div>
+        <div class="flex flex-col gap-1.5 border-t p-4">
+            <span id="sprache" class="text-[13px] font-medium">{{
+                t('Sprache')
+            }}</span>
+            <div
+                role="radiogroup"
+                aria-labelledby="sprache"
+                class="grid grid-cols-2 gap-2 sm:max-w-xs"
+            >
+                <button
+                    v-for="language in languages"
+                    :key="language.value"
+                    type="button"
+                    role="radio"
+                    :lang="language.value"
+                    :aria-checked="currentLocale() === language.value"
+                    :disabled="isSavingLocale"
+                    :class="[
+                        'h-9 rounded-md border px-3 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60',
+                        currentLocale() === language.value
+                            ? 'border-primary bg-accent font-semibold shadow-[inset_0_0_0_1px_var(--primary)]'
+                            : 'hover:bg-muted',
+                    ]"
+                    @click="chooseLocale(language.value)"
+                >
+                    {{ language.label }}
+                </button>
+            </div>
+            <span class="text-xs text-muted-foreground">{{
+                t('Gilt für die Oberfläche und für Mails an Sie.')
+            }}</span>
         </div>
     </section>
 </template>

@@ -1,21 +1,29 @@
-const dateTime = new Intl.DateTimeFormat('de-CH', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-});
+import { intlLocale, t } from '@/lib/i18n';
 
-const date = new Intl.DateTimeFormat('de-CH', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-});
+function dateTime(): Intl.DateTimeFormat {
+    return new Intl.DateTimeFormat(intlLocale(), {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
 
-const time = new Intl.DateTimeFormat('de-CH', {
-    hour: '2-digit',
-    minute: '2-digit',
-});
+function date(): Intl.DateTimeFormat {
+    return new Intl.DateTimeFormat(intlLocale(), {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    });
+}
+
+function time(): Intl.DateTimeFormat {
+    return new Intl.DateTimeFormat(intlLocale(), {
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
 
 function startOfDay(value: Date): number {
     return new Date(
@@ -27,17 +35,17 @@ function startOfDay(value: Date): number {
 
 /** «28.10.2026» */
 export function formatDate(iso: string | null): string {
-    return iso ? date.format(new Date(iso)) : '';
+    return iso ? date().format(new Date(iso)) : '';
 }
 
 /** «10:41» */
 export function formatTime(iso: string | null): string {
-    return iso ? time.format(new Date(iso)) : '';
+    return iso ? time().format(new Date(iso)) : '';
 }
 
 /** «28.10.2026, 10:31» */
 export function formatDateTime(iso: string | null): string {
-    return iso ? dateTime.format(new Date(iso)) : '';
+    return iso ? dateTime().format(new Date(iso)) : '';
 }
 
 /** Wie in den Wireframes: «heute 09:12», «gestern 17:40», sonst das Datum. */
@@ -53,14 +61,14 @@ export function formatRecent(
     const days = Math.round((startOfDay(now) - startOfDay(value)) / 86_400_000);
 
     if (days === 0) {
-        return `heute ${time.format(value)}`;
+        return t('heute :time', { time: time().format(value) });
     }
 
     if (days === 1) {
-        return `gestern ${time.format(value)}`;
+        return t('gestern :time', { time: time().format(value) });
     }
 
-    return date.format(value);
+    return date().format(value);
 }
 
 /** «0:42» für Wartezeiten. */

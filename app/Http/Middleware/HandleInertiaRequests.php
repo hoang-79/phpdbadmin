@@ -3,7 +3,9 @@
 namespace App\Http\Middleware;
 
 use App\Models\User;
+use App\Support\Translations;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -38,9 +40,14 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
 
+        $locale = app()->getLocale();
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'locale' => $locale,
+            // Einmal je Sprache: der Browser behält die Übersetzungen, bis die Sprache wechselt (N-06).
+            'translations' => Inertia::once(fn (): array => Translations::forFrontend($locale))->as('translations.'.$locale),
             // Nur, was die Oberfläche braucht — nie das ganze Modell (T-03).
             'auth' => [
                 'user' => $user instanceof User ? [

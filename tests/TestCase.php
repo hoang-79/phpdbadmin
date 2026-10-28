@@ -15,5 +15,8 @@ abstract class TestCase extends BaseTestCase
 
         // Tests prüfen Server und Inertia-Props, nicht den Build der Oberfläche.
         $this->withoutVite();
+
+        // Symfony schickt sonst «en-us» mit — die Tests fragen wie das Hauptpublikum an (N-06).
+        $this->withHeader('Accept-Language', 'de-CH,de;q=0.9');
     }
 }

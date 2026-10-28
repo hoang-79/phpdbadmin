@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance']);
 
         $middleware->web(append: [
+            SetLocale::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
@@ -38,6 +40,6 @@ return Application::configure(basePath: dirname(__DIR__))
             $seconds = (int) ($exception->getHeaders()['Retry-After'] ?? 60);
             $field = $request->has('email') ? 'email' : ($request->has('name') ? 'name' : 'code');
 
-            return back()->withErrors([$field => 'Zu viele Versuche. Bitte warten Sie '.$seconds.' Sekunden.']);
+            return back()->withErrors([$field => __('Zu viele Versuche. Bitte warten Sie :seconds Sekunden.', ['seconds' => $seconds])]);
         });
     })->create();

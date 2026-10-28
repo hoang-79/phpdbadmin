@@ -1,4 +1,4 @@
-import { createInertiaApp } from '@inertiajs/vue3';
+import { createInertiaApp, router } from '@inertiajs/vue3';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
@@ -42,3 +42,12 @@ initializeTheme();
 
 // This will listen for flash toast data from the server...
 initializeFlashToast();
+
+// Sprache wechselt ohne neues Laden der Seite (N-06): Vorlesefunktionen und Silbentrennung folgen.
+router.on('navigate', (event) => {
+    const locale = event.detail.page.props.locale;
+
+    if (typeof locale === 'string') {
+        document.documentElement.lang = locale;
+    }
+});

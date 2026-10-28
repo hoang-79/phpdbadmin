@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Account\AccountController;
+use App\Http\Controllers\Account\LocaleController;
 use App\Http\Controllers\Account\OnboardingController;
 use App\Http\Controllers\Connections\ConnectionController;
 use App\Http\Controllers\Connections\TestConnectionController;
@@ -31,6 +32,7 @@ Route::middleware('auth')->group(function () {
 
     // Kein Profil (A-05): das Konto zeigt Sicherheit und Darstellung.
     Route::get('account', [AccountController::class, 'show'])->name('account');
+    Route::put('account/locale', LocaleController::class)->name('account.locale');
 });
 
 // Feasibility-Proben F-3 und F-4, nur lokal und nur angemeldet — bis Raster (TB 01) und SQL-Editor (TB 05) sie ersetzen.
