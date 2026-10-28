@@ -3,7 +3,9 @@
 namespace Tests\Feature\Connections;
 
 use App\Connections\ConnectionFactory;
+use App\Connections\ConnectionSettings;
 use App\Connections\PasswordRequired;
+use App\Connections\ReadOnlyConnection;
 use App\Connections\TargetConnections;
 use App\Enums\DatabaseDriver;
 use Illuminate\Database\Connection;
@@ -177,6 +179,42 @@ class TargetConnectionsTest extends TestCase
 
         $this->assertNotEmpty($driver->dialect()->serverVersion($targets->open($connection)));
         $this->assertStringNotContainsString((string) $reader->password, (string) json_encode(session()->all()));
+    }
+
+    /**
+     * Server-Verwaltung (W-02, W-04, W-05): die beschreibbare Verbindung gibt es nie für eine schreibgeschützte.
+     */
+    public function test_writable_connection_is_refused_for_read_only_connection(): void
+    {
+        $connection = $this->savedConnection($this->scratchSettings(DatabaseDriver::Sqlite, $this->folder), attributes: ['read_only' => true]);
+        $ran = false;
+
+        try {
+            app(TargetConnections::class)->withWritable($connection, function () use (&$ran): void {
+                $ran = true;
+            });
+            $this->fail('Beschreibbare Verbindung trotz Schreibschutz');
+        } catch (ReadOnlyConnection) {
+            // Erwartet.
+        }
+
+        $this->assertFalse($ran);
+    }
+
+    public function test_writable_connection_writes_and_is_released_afterwards(): void
+    {
+        $connection = $this->savedConnection($this->scratchSettings(DatabaseDriver::Sqlite, $this->folder));
+        $used = null;
+
+        app(TargetConnections::class)->withWritable($connection, function (Connection $writable) use (&$used): void {
+            $writable->statement('create table notes (id integer primary key)');
+            $used = $writable;
+        });
+
+        $this->assertInstanceOf(Connection::class, $used);
+        $this->assertNull($used->getRawPdo(), 'Verbindung nach der Aktion nicht freigegeben');
+        $reopened = app(ConnectionFactory::class)->make(new ConnectionSettings(DatabaseDriver::Sqlite, sqlitePath: $connection->sqlite_path));
+        $this->assertTrue($reopened->getSchemaBuilder()->hasTable('notes'));
     }
 
     private function assertAttachOutsideIsDenied(Connection $target): void
