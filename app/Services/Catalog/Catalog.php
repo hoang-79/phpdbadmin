@@ -105,7 +105,7 @@ final class Catalog
                 'key' => 'routines',
                 'label' => __('Routinen'),
                 'items' => array_map(fn (array $routine): array => $item($routine['name'], $routine['kind']), $routines ?? []),
-                'note' => $routines === null ? __('SQLite kennt keine gespeicherten Funktionen und Prozeduren.') : null,
+                'note' => $routines === null ? $this->withoutRoutinesNote() : null,
             ],
             [
                 'key' => 'triggers',
@@ -124,5 +124,10 @@ final class Catalog
         }
 
         return $groups;
+    }
+
+    private function withoutRoutinesNote(): string
+    {
+        return __('SQLite kennt keine gespeicherten Funktionen und Prozeduren.');
     }
 }
