@@ -30,7 +30,7 @@ class AccountControllerTest extends TestCase
             ->missing('passkeys.0.credential_id')
             ->where('canManagePasskeys', false)
             ->where('auth.user.email', $user->email)
-            ->missing('auth.user.remember_token'));
+            ->missing('auth.user.created_at'));
         $this->assertStringNotContainsString('geheim', (string) $response->getContent());
     }
 
