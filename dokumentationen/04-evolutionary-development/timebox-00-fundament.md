@@ -91,7 +91,7 @@ Gegen einen gebauten Stand in einem Herd-Workspace (der eingebaute Browser errei
 
 - **Touch ID von Hand** (A-03): einmal einen Passkey auf dem Mac anlegen und damit anmelden — Hoang.
 - **Workflow auf GitHub:** noch kein Remote; der erste Push zeigt, ob beide Aufträge laufen.
-- **Sicherheitshinweis `symfony/mime`** (CVE-2026-45070, mittel, am 28.10.2026 veröffentlicht): Update der Abhängigkeit braucht Hoangs Freigabe.
+- ~~**Sicherheitshinweis `symfony/mime`** (CVE-2026-45070, mittel)~~ — erledigt 28.10.2026 auf Hoangs Freigabe: 8.1.7 → 8.1.10, `composer audit` ohne Hinweise, Prüfkette auf allen vier App-Datenbanken grün, Testmail über Herd mit Umlauten im Betreff angekommen.
 - Wireframes für Ersteinrichtung und Onboarding im Generator nachziehen.
 - Sichtprüfung der Gestaltung durch Hoang am eigenen Bildschirm (G-01 bis G-08).
 
