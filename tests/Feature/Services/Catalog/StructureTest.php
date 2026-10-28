@@ -67,6 +67,8 @@ class StructureTest extends TestCase
         $this->assertTrue($columns['name']['nullable']);
         $this->assertSame('number', $columns['balance']['kind']);
         $this->assertNotNull($columns['balance']['default']);
+        // Vorgabe als SQL-Literal in allen vier gleich (O-04): ohne «::character varying», MySQL mit Anführungszeichen.
+        $this->assertSame("'aktiv'", $columns['status']['default']);
         $this->assertSame('datetime', $columns['created_at']['kind']);
         // Laravels enum() ist nur in MySQL und MariaDB ein eigener Typ, sonst Text mit Check; JSON hat SQLite nicht.
         $this->assertSame(in_array($driver, [DatabaseDriver::MySql, DatabaseDriver::MariaDb], true) ? 'choice' : 'text', $columns['status']['kind']);

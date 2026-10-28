@@ -61,17 +61,13 @@ watch(
             >
                 <Wordmark />
             </Link>
-            <ConnectionChip
-                v-if="workspace"
-                :connection="workspace.connection"
-                class="sm:hidden"
-                compact
-            />
-            <ConnectionChip
-                v-if="workspace"
-                :connection="workspace.connection"
-                class="hidden sm:inline-flex"
-            />
+            <!-- Das Dropdown rendert kein eigenes Element — die Klassen stehen deshalb aussen. -->
+            <div v-if="workspace" class="min-w-0 sm:hidden">
+                <ConnectionChip :connection="workspace.connection" compact />
+            </div>
+            <div v-if="workspace" class="hidden min-w-0 sm:block">
+                <ConnectionChip :connection="workspace.connection" />
+            </div>
             <div class="flex-1" />
             <AccountMenu />
         </header>

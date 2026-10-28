@@ -64,7 +64,7 @@ final class Structure
                 'kind' => $kind->value,
                 'kindLabel' => $kind->label(),
                 'nullable' => (bool) $column['nullable'],
-                'default' => $column['default'] !== null ? (string) $column['default'] : null,
+                'default' => $column['default'] !== null ? $this->displayDefault((string) $column['default'], $connection->driver, $kind) : null,
                 'autoIncrement' => (bool) $column['auto_increment'],
                 'collation' => $column['collation'] ?? null,
                 'comment' => ($column['comment'] ?? '') !== '' ? $column['comment'] : null,
@@ -106,6 +106,28 @@ final class Structure
             'triggers' => $isView ? [] : $dialect->triggers($target, $schema, $object),
             'ddl' => $dialect->ddl($target, $schema, $object, $isView),
         ];
+    }
+
+    /**
+     * Vorgabe als SQL-Literal, gleich in allen vier Datenbanken (O-04): PostgreSQL hängt eine Typumwandlung an
+     * («'offen'::character varying»), MySQL liefert Text ohne Anführungszeichen («offen»). Ausdrücke wie
+     * CURRENT_TIMESTAMP bleiben, wie sie sind.
+     */
+    private function displayDefault(string $default, DatabaseDriver $driver, ColumnKind $kind): string
+    {
+        if ($driver === DatabaseDriver::Postgres && preg_match("/^('(?:[^']|'')*'|NULL)::[\\w\\s\"\\[\\]().,]+$/i", $default, $match) === 1) {
+            return $match[1];
+        }
+
+        $isLiteralText = in_array($kind, [ColumnKind::Text, ColumnKind::Choice], true)
+            && ! str_starts_with($default, "'")
+            && preg_match('/^[a-z_]+\\(.*\\)$|^current_(timestamp|date|time)/i', $default) !== 1;
+
+        if ($driver === DatabaseDriver::MySql && $isLiteralText) {
+            return "'".str_replace("'", "''", $default)."'";
+        }
+
+        return $default;
     }
 
     /**

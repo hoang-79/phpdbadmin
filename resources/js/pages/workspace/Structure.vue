@@ -49,9 +49,7 @@ const sections = computed(() => [
               {
                   id: 'fremdschluessel',
                   label: t('Fremdschlüssel'),
-                  count:
-                      props.structure.foreignKeys.length +
-                      props.structure.referencedBy.length,
+                  count: props.structure.foreignKeys.length,
               },
               {
                   id: 'checks',
