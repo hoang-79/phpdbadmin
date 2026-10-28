@@ -11,9 +11,11 @@ import {
     Search,
     Trash2,
     TriangleAlert,
+    Users,
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import EnvironmentMark from '@/components/connections/EnvironmentMark.vue';
+import ShareDialog from '@/components/connections/ShareDialog.vue';
 import Interpolate from '@/components/Interpolate.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,7 +38,11 @@ import { formatRecent } from '@/lib/format';
 import { t, tc } from '@/lib/i18n';
 import { workspace } from '@/routes';
 import { create, destroy, edit } from '@/routes/connections';
-import type { ConnectionEnvironment, ConnectionSummary } from '@/types';
+import type {
+    ConnectionEnvironment,
+    ConnectionPermission,
+    ConnectionSummary,
+} from '@/types';
 
 /** Startseite = Verbindungsübersicht (A-04, Wireframe 03): nach Gruppe, Umgebung sichtbar. */
 const props = defineProps<{
@@ -46,6 +52,7 @@ const props = defineProps<{
 const search = ref('');
 const environmentFilter = ref<ConnectionEnvironment | null>(null);
 const removing = ref<ConnectionSummary | null>(null);
+const sharing = ref<ConnectionSummary | null>(null);
 const isRemoving = ref(false);
 
 const filtered = computed(() => {
@@ -85,6 +92,14 @@ const productionCount = computed(
 const groupCount = computed(
     () => new Set(props.connections.map((c) => c.group ?? '')).size,
 );
+
+function permissionLabel(permission: ConnectionPermission): string {
+    return {
+        read: t('lesen'),
+        write: t('schreiben'),
+        manage: t('verwalten'),
+    }[permission];
+}
 
 function remove(connection: ConnectionSummary): void {
     isRemoving.value = true;
@@ -210,6 +225,28 @@ function remove(connection: ConnectionSummary): void {
                                     t('schreibgeschützt')
                                 }}</span
                             >
+                            <span
+                                v-if="connection.shared"
+                                class="inline-flex items-center gap-1 rounded-full border px-2 py-px text-xs text-text-secondary"
+                                :title="
+                                    connection.isOwner || !connection.permission
+                                        ? undefined
+                                        : t('Ihr Recht: :permission', {
+                                              permission: permissionLabel(
+                                                  connection.permission,
+                                              ),
+                                          })
+                                "
+                                ><Users class="size-3" />{{
+                                    connection.isOwner || !connection.permission
+                                        ? t('geteilt')
+                                        : t('geteilt · :permission', {
+                                              permission: permissionLabel(
+                                                  connection.permission,
+                                              ),
+                                          })
+                                }}</span
+                            >
                             <DropdownMenu v-if="connection.canManage">
                                 <DropdownMenuTrigger
                                     class="relative z-10 ml-auto inline-grid size-7 place-items-center rounded-md text-text-secondary outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
@@ -230,6 +267,15 @@ function remove(connection: ConnectionSummary): void {
                                                 t('Bearbeiten')
                                             }}</Link
                                         >
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        v-if="connection.canShare"
+                                        class="gap-2"
+                                        @select="sharing = connection"
+                                    >
+                                        <Users class="size-4" />{{
+                                            t('Teilen …')
+                                        }}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                         class="gap-2 text-destructive"
@@ -341,6 +387,8 @@ function remove(connection: ConnectionSummary): void {
                 }}
             </p>
         </section>
+
+        <ShareDialog :connection="sharing" @close="sharing = null" />
 
         <Dialog
             :open="removing !== null"

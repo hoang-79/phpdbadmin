@@ -4,6 +4,7 @@ use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Account\LocaleController;
 use App\Http\Controllers\Account\OnboardingController;
 use App\Http\Controllers\Connections\ConnectionController;
+use App\Http\Controllers\Connections\SharingController;
 use App\Http\Controllers\Connections\TestConnectionController;
 use App\Http\Controllers\Workspace\ConnectionPasswordController;
 use App\Http\Controllers\Workspace\ObjectController;
@@ -19,6 +20,10 @@ Route::middleware('auth')->group(function () {
     // Zielverbindungen (V-01 bis V-05). {connection} löst nur sichtbare Verbindungen auf (AppServiceProvider).
     Route::post('connections/test', TestConnectionController::class)->middleware('throttle:connection-test')->name('connections.test');
     Route::resource('connections', ConnectionController::class)->except(['index', 'show']);
+
+    // Teilen (V-09): nur Administratoren — die Policy antwortet 403, eine fremde persönliche Verbindung bleibt 404.
+    Route::get('connections/{connection}/sharing', [SharingController::class, 'show'])->name('connections.sharing.show');
+    Route::put('connections/{connection}/sharing', [SharingController::class, 'update'])->name('connections.sharing.update');
 
     // Nach der ersten Anmeldung ohne Passkey: gleich einen anlegen.
     Route::get('welcome', [OnboardingController::class, 'show'])->name('onboarding');

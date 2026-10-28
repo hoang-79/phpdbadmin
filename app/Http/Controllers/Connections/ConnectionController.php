@@ -200,7 +200,11 @@ class ConnectionController extends Controller
             'readOnly' => $connection->read_only,
             'lastTestedAt' => $connection->last_tested_at?->toIso8601String(),
             'accountWarnings' => Translations::accountWarnings($connection->account_warnings ?? []),
+            'shared' => $connection->shared,
+            'isOwner' => $connection->owner_id === $user->id,
+            'permission' => $connection->permissionFor($user)?->value,
             'canManage' => $connection->isManageableBy($user),
+            'canShare' => $user->can('share', $connection),
         ];
     }
 
