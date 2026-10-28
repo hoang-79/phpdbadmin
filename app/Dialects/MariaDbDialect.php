@@ -28,4 +28,31 @@ class MariaDbDialect extends MySqlDialect
 
         return $code === 1969 || $state === '70100';
     }
+
+    /** MariaDB führt Rollen in mysql.user (is_role) und kennt dort kein account_locked. */
+    protected function accountQuery(): string
+    {
+        return 'select user, host, is_role, password_expired from mysql.user order by user, host';
+    }
+
+    protected function accountAttributes(array $values): array
+    {
+        return array_values(array_filter([
+            ($values['is_role'] ?? 'N') === 'Y' ? 'role' : null,
+            ($values['password_expired'] ?? 'N') === 'Y' ? 'expired' : null,
+        ]));
+    }
+
+    /** Rollen haben keinen Host: SHOW GRANTS FOR 'rolle'. */
+    protected function grantsOf(Connection $connection, AccountName $account, array $values): array
+    {
+        if (($values['is_role'] ?? 'N') !== 'Y') {
+            return parent::grantsOf($connection, $account, $values);
+        }
+
+        return array_values(array_map(
+            fn (object $row): string => (string) (array_values((array) $row)[0] ?? ''),
+            $connection->select('show grants for '.$this->quoteString($connection, $account->name)),
+        ));
+    }
 }

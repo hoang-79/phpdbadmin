@@ -12,6 +12,7 @@ Timebox-Protokolle (`timebox-nn-titel.md`) und Architekturentscheide (`adr/ADR-n
 | [**01 Katalog und Navigator**](timebox-01-katalog-navigator.md) | Arbeitsbildschirm mit Navigator für vier Datenbanken, «alle Datenbanken», Strukturansicht mit Art je Spalte, Schreibschutz und Umgebung, Kontowarnung, Deutsch und Englisch | O-01, O-04, S-01, V-04, N-06, V-10, O-06, N-04 | ✅ 29.10.2026 — V-06 mit TB 07; N-04-Matrix noch nie gelaufen |
 | [**02 Datenraster und Filter**](timebox-02-datenraster.md) | Raster mit Blättern über den Schlüssel, NULL zuletzt, Filtern, Suche, Zählen, Fremdschlüssel in beide Richtungen, Zeilen-Detail, Reiter, Kürzel; erste Seite bei 1 Mio. Zeilen unter 20 ms | D-01, D-02, D-03, D-06, N-01, O-03, O-05, O-09 | ✅ 29.10.2026 — «?»-Taste von Hand offen |
 | 03 SQL-Editor und Befehlspalette | siehe [Timebox-Plan](../03-foundation/timebox-plan.md#1-die-dreizehn-timeboxes) | Q-01–Q-04, Q-09, O-02 | als Nächstes |
+| [**09 Server-Verwaltung**](timebox-09-server-verwaltung.md) | Übersicht, Prozesse beenden, Variablen, Konten und Rechte mit Vorschau, Wartung — vier Treiber, Dialekt-Vertrag erweitert, jede Änderung genau ein Eintrag im Protokoll | W-01 bis W-05 | ✅ 29.10.2026 auf eigenem Zweig, vorgezogen — offen: Browser-Durchlauf |
 
 ## Architekturentscheide
 

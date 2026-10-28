@@ -16,13 +16,15 @@ final class AuditLog
 
     /**
      * @param  array<string, mixed>  $context
+     * @param  string|null  $sql  ausgeführte Anweisungen — ohne Geheimnisse (Passwörter maskiert)
      */
-    public function record(string $action, ?User $user = null, ?string $target = null, array $context = []): AuditEntry
+    public function record(string $action, ?User $user = null, ?string $target = null, array $context = [], ?string $sql = null): AuditEntry
     {
         return AuditEntry::query()->create([
             'user_id' => $user?->id,
             'action' => $action,
             'target' => $target,
+            'sql' => $sql,
             'context' => $context === [] ? null : $context,
             'ip_hash' => Fingerprint::ofIp($this->request->ip()),
         ]);

@@ -2,8 +2,10 @@
 
 namespace App\Dialects;
 
+use App\Enums\PrivilegeLevel;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
+use InvalidArgumentException;
 use Throwable;
 
 /**
@@ -118,6 +120,82 @@ abstract class BaseDialect implements Dialect
 
             return ['name' => (string) ($values['name'] ?? ''), 'definition' => (string) ($values['definition'] ?? '')];
         }, $rows));
+    }
+
+    /**
+     * Ein einzelner Bezeichner in Anführungszeichen, das Anführungszeichen darin verdoppelt — wie die Grammatik von
+     * Laravel, aber ohne ihr Zerlegen: wrap() trennt an Punkten und « as » und lässt «*» ungequotet, ein Tabellenname
+     * «*» würde so zu «alle Tabellen».
+     */
+    protected function quoteIdentifier(string $name): string
+    {
+        return '"'.str_replace('"', '""', $name).'"';
+    }
+
+    /** Zeichenkette (Passwort, Host, Kontoname bei MySQL) über PDO::quote — nach den Regeln der Sitzung. */
+    protected function quoteString(Connection $connection, string $value): string
+    {
+        return (string) $connection->getPdo()->quote($value);
+    }
+
+    /**
+     * Basistabellen eines Schemas — für Wartung des ganzen Schemas.
+     *
+     * @return list<string>
+     */
+    protected function baseTables(Connection $connection, string $schema): array
+    {
+        return array_values(array_map(
+            fn (array $table): string => $table['name'],
+            array_filter($this->tables($connection, $schema), fn (array $table): bool => $table['type'] === 'table'),
+        ));
+    }
+
+    /**
+     * Ergebniszeilen mit Name und Wert als Einstellungen (W-03).
+     *
+     * @param  array<int, object>  $rows
+     * @return list<array{name: string, value: string, description: string|null}>
+     */
+    protected function settingRows(array $rows, string $name, string $value, ?string $description = null): array
+    {
+        return array_values(array_map(function (object $row) use ($name, $value, $description): array {
+            $values = (array) $row;
+            $text = $description !== null ? ($values[$description] ?? null) : null;
+
+            return [
+                'name' => (string) ($values[$name] ?? ''),
+                'value' => (string) ($values[$value] ?? ''),
+                'description' => is_string($text) && $text !== '' ? $text : null,
+            ];
+        }, $rows));
+    }
+
+    /**
+     * Nur Rechte aus der festen Liste der Ebene, in deren Reihenfolge — alles andere ist ein Fehler, nie SQL.
+     *
+     * @param  list<string>  $privileges
+     * @return list<string>
+     */
+    protected function allowedPrivileges(PrivilegeLevel $level, array $privileges): array
+    {
+        $choices = $this->privilegeChoices()[$level->value] ?? [];
+
+        if ($privileges === [] || array_diff($privileges, $choices) !== []) {
+            throw new InvalidArgumentException('Recht auf dieser Ebene nicht vorgesehen.');
+        }
+
+        return array_values(array_intersect($choices, $privileges));
+    }
+
+    /** Laufende Anweisung gekürzt (W-02): die Liste bleibt lesbar, auch bei riesigen INSERTs. */
+    protected function shortStatement(mixed $statement): ?string
+    {
+        if (! is_string($statement) || trim($statement) === '') {
+            return null;
+        }
+
+        return mb_strimwidth((string) preg_replace('/\s+/', ' ', trim($statement)), 0, 300, '…');
     }
 
     /**

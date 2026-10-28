@@ -6,8 +6,10 @@ use App\Connections\ConnectionProblem;
 use App\Connections\ConnectionProblemKind;
 use App\Connections\ConnectionSettings;
 use App\Enums\DatabaseDriver;
+use App\Enums\MaintenanceOperation;
 use Closure;
 use Illuminate\Database\Connection;
+use InvalidArgumentException;
 use Pdo\Sqlite;
 use Throwable;
 
@@ -18,6 +20,15 @@ use Throwable;
  */
 class SqliteDialect extends BaseDialect
 {
+    /** PRAGMAs, die nur lesen (W-03). */
+    private const array READABLE_PRAGMAS = [
+        'application_id', 'auto_vacuum', 'automatic_index', 'busy_timeout', 'cache_size', 'cache_spill', 'cell_size_check',
+        'data_version', 'encoding', 'foreign_keys', 'freelist_count', 'journal_mode', 'journal_size_limit',
+        'legacy_alter_table', 'locking_mode', 'max_page_count', 'mmap_size', 'page_count', 'page_size', 'query_only',
+        'recursive_triggers', 'reverse_unordered_selects', 'schema_version', 'secure_delete', 'synchronous', 'temp_store',
+        'trusted_schema', 'user_version', 'wal_autocheckpoint',
+    ];
+
     public function driver(): DatabaseDriver
     {
         return DatabaseDriver::Sqlite;
@@ -180,6 +191,188 @@ class SqliteDialect extends BaseDialect
     public function accountWarnings(Connection $connection): array
     {
         return [];
+    }
+
+    /** Kein Server: Datei, Seiten, Journal und die Version der Bibliothek (W-01). */
+    public function serverOverview(Connection $connection): array
+    {
+        $files = $this->records($connection->select("select name, file from pragma_database_list where name <> 'temp' order by seq"), ['name', 'file']);
+        $main = $files[0]['file'] ?? '';
+        $encoding = $this->pragma($connection, 'encoding');
+        $pageSize = (int) $this->pragma($connection, 'page_size');
+
+        $databases = array_map(fn (array $file): array => [
+            'name' => $file['name'],
+            'size' => (int) $this->pragma($connection, 'page_count', $file['name']) * (int) $this->pragma($connection, 'page_size', $file['name']),
+            'charset' => $encoding,
+            'collation' => 'BINARY',
+        ], $files);
+
+        $autoVacuum = ['0' => 'NONE', '1' => 'FULL', '2' => 'INCREMENTAL'][(string) $this->pragma($connection, 'auto_vacuum')] ?? null;
+
+        return [
+            'version' => $this->serverVersion($connection),
+            'uptime' => null,
+            'charset' => $encoding,
+            'collation' => 'BINARY',
+            'facts' => array_values(array_filter([
+                ['key' => 'file', 'value' => $main, 'kind' => 'text'],
+                is_file($main) ? ['key' => 'file_size', 'value' => (int) filesize($main), 'kind' => 'bytes'] : null,
+                ['key' => 'page_size', 'value' => $pageSize, 'kind' => 'bytes'],
+                ['key' => 'page_count', 'value' => (int) $this->pragma($connection, 'page_count'), 'kind' => 'number'],
+                ['key' => 'freelist_count', 'value' => (int) $this->pragma($connection, 'freelist_count'), 'kind' => 'number'],
+                ['key' => 'journal_mode', 'value' => strtoupper((string) $this->pragma($connection, 'journal_mode')), 'kind' => 'text'],
+                $autoVacuum !== null ? ['key' => 'auto_vacuum', 'value' => $autoVacuum, 'kind' => 'text'] : null,
+            ])),
+            'databases' => $databases,
+            'schemas' => null,
+        ];
+    }
+
+    public function sessionId(Connection $connection): ?int
+    {
+        return null;
+    }
+
+    public function processes(Connection $connection): ?array
+    {
+        return null;
+    }
+
+    public function endProcessStatement(int $id, bool $wholeSession): ?PlannedStatement
+    {
+        return null;
+    }
+
+    public function endProcess(Connection $connection, int $id, bool $wholeSession): bool
+    {
+        return false;
+    }
+
+    /** PRAGMAs, die sich lesen lassen, ohne etwas zu verändern (kein wal_checkpoint, kein optimize). */
+    public function variables(Connection $connection): array
+    {
+        $settings = [];
+
+        foreach (self::READABLE_PRAGMAS as $name) {
+            try {
+                $value = $this->pragma($connection, $name);
+            } catch (Throwable) {
+                continue;
+            }
+
+            if ($value !== null) {
+                $settings[] = ['name' => $name, 'value' => $value, 'description' => null];
+            }
+        }
+
+        return $settings;
+    }
+
+    /** Wie die Bibliothek gebaut ist (compile_options) — einen laufenden Zustand gibt es ohne Server nicht. */
+    public function statusValues(Connection $connection): array
+    {
+        return array_map(function (string $option): array {
+            [$name, $value] = array_pad(explode('=', $option, 2), 2, 'ON');
+
+            return ['name' => $name, 'value' => $value, 'description' => null];
+        }, $this->strings($connection->select('pragma compile_options'), 'compile_options'));
+    }
+
+    public function accountsHaveHosts(): bool
+    {
+        return false;
+    }
+
+    public function accounts(Connection $connection): ?array
+    {
+        return null;
+    }
+
+    public function currentAccount(Connection $connection): ?AccountName
+    {
+        return null;
+    }
+
+    public function privilegeChoices(): array
+    {
+        return [];
+    }
+
+    public function createAccountStatements(Connection $connection, AccountName $account, string $password): array
+    {
+        return [];
+    }
+
+    public function dropAccountStatements(Connection $connection, AccountName $account): array
+    {
+        return [];
+    }
+
+    public function privilegeStatements(Connection $connection, bool $grant, AccountName $account, PrivilegeTarget $target, array $privileges): array
+    {
+        return [];
+    }
+
+    public function maintenanceOperations(): array
+    {
+        return [MaintenanceOperation::Analyze, MaintenanceOperation::Vacuum, MaintenanceOperation::Check];
+    }
+
+    /** VACUUM baut immer die ganze Datei neu auf. */
+    public function maintenanceForTables(MaintenanceOperation $operation): bool
+    {
+        return $operation !== MaintenanceOperation::Vacuum;
+    }
+
+    public function maintenanceStatements(Connection $connection, MaintenanceOperation $operation, string $schema, ?array $tables): array
+    {
+        $prefix = $this->quoteIdentifier($schema);
+
+        return match ($operation) {
+            MaintenanceOperation::Analyze => $tables === null
+                ? [new PlannedStatement('ANALYZE '.$prefix)]
+                : array_map(fn (string $table): PlannedStatement => new PlannedStatement('ANALYZE '.$prefix.'.'.$this->quoteIdentifier($table), objects: [$table]), $tables),
+            MaintenanceOperation::Vacuum => $tables === null
+                ? [new PlannedStatement('VACUUM '.$prefix)]
+                : throw new InvalidArgumentException('VACUUM gilt bei SQLite immer der ganzen Datei.'),
+            MaintenanceOperation::Check => $tables === null
+                ? [new PlannedStatement('PRAGMA '.$prefix.'.integrity_check')]
+                : array_map(fn (string $table): PlannedStatement => new PlannedStatement('PRAGMA '.$prefix.'.integrity_check('.$this->quoteIdentifier($table).')', objects: [$table]), $tables),
+            MaintenanceOperation::Optimize => throw new InvalidArgumentException('OPTIMIZE gibt es nur bei MySQL und MariaDB.'),
+        };
+    }
+
+    /** integrity_check meldet «ok» oder je Fund eine Zeile; ANALYZE und VACUUM melden nichts. */
+    public function runMaintenance(Connection $connection, PlannedStatement $statement): array
+    {
+        $table = $statement->objects[0] ?? null;
+
+        if (! str_starts_with($statement->sql, 'PRAGMA ')) {
+            $connection->statement($statement->sql);
+
+            return [['table' => $table, 'status' => 'ok', 'message' => 'OK']];
+        }
+
+        return array_map(fn (string $line): array => [
+            'table' => $table,
+            'status' => $line === 'ok' ? 'ok' : 'error',
+            'message' => $line,
+        ], $this->strings($connection->select($statement->sql), 'integrity_check'));
+    }
+
+    /** Wert eines PRAGMAs (erste Spalte der ersten Zeile); null, wenn es keinen gibt. */
+    private function pragma(Connection $connection, string $name, string $schema = 'main'): ?string
+    {
+        $row = $connection->selectOne('pragma '.($schema === 'main' ? '' : $this->quoteIdentifier($schema).'.').$name);
+
+        if ($row === null) {
+            return null;
+        }
+
+        $value = array_values((array) $row)[0] ?? null;
+
+        return $value === null ? null : (string) $value;
     }
 
     protected function rowEstimates(Connection $connection, string $schema): array

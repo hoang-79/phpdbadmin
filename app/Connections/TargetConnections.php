@@ -5,6 +5,7 @@ namespace App\Connections;
 use App\Enums\DatabaseDriver;
 use App\Models\DatabaseConnection;
 use App\Services\Catalog\Catalog;
+use Closure;
 use Illuminate\Contracts\Session\Session;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\Crypt;
@@ -31,17 +32,7 @@ final class TargetConnections
      */
     public function open(DatabaseConnection $connection, ?string $database = null): Connection
     {
-        $password = $this->password($connection);
-
-        if ($connection->driver->isServer() && ! $connection->store_password && $password === null) {
-            throw new PasswordRequired($connection);
-        }
-
-        $settings = ConnectionSettings::fromConnection($connection, $password);
-
-        if ($database !== null && $connection->database === null) {
-            $settings = $settings->withDatabase($database);
-        }
+        $settings = $this->settings($connection, $database);
 
         // Eine Verbindung je tatsächlicher Datenbank: PostgreSQL ohne Namen ist dieselbe wie «postgres».
         $key = $connection->id.'#'.($settings->database ?? ($connection->driver === DatabaseDriver::Postgres ? Catalog::POSTGRES_MAINTENANCE_DATABASE : ''));
@@ -55,6 +46,39 @@ final class TargetConnections
             readOnly: $connection->read_only,
             statementTimeoutMs: (int) config('phpdbadmin.connections.statement_timeout_ms', 15000),
         );
+    }
+
+    /**
+     * Eine Verbindung ohne Schreibschutz für genau eine ändernde Aktion (W-02, W-04, W-05): nie für eine
+     * schreibgeschützte Verbindung, getrennt von den Leseverbindungen der Anfrage und gleich danach wieder
+     * freigegeben — auch wenn die Aktion scheitert.
+     *
+     * @template T
+     *
+     * @param  Closure(Connection): T  $action
+     * @param  int|null  $statementTimeoutMs  Zeitlimit je Anweisung; ohne Angabe wie beim Lesen
+     * @return T
+     *
+     * @throws ReadOnlyConnection
+     * @throws PasswordRequired
+     * @throws ConnectionNotAllowed
+     */
+    public function withWritable(DatabaseConnection $connection, Closure $action, ?string $database = null, ?int $statementTimeoutMs = null): mixed
+    {
+        if ($connection->read_only) {
+            throw new ReadOnlyConnection($connection);
+        }
+
+        $writable = $this->factory->make(
+            $this->settings($connection, $database),
+            statementTimeoutMs: $statementTimeoutMs ?? (int) config('phpdbadmin.connections.statement_timeout_ms', 15000),
+        );
+
+        try {
+            return $action($writable);
+        } finally {
+            $this->factory->release($writable);
+        }
     }
 
     /** Passwort für «in jeder Sitzung fragen» merken — verschlüsselt, nur in dieser Sitzung. */
@@ -75,6 +99,22 @@ final class TargetConnections
         }
 
         $this->open = [];
+    }
+
+    /**
+     * @throws PasswordRequired
+     */
+    private function settings(DatabaseConnection $connection, ?string $database): ConnectionSettings
+    {
+        $password = $this->password($connection);
+
+        if ($connection->driver->isServer() && ! $connection->store_password && $password === null) {
+            throw new PasswordRequired($connection);
+        }
+
+        $settings = ConnectionSettings::fromConnection($connection, $password);
+
+        return $database !== null && $connection->database === null ? $settings->withDatabase($database) : $settings;
     }
 
     private function password(DatabaseConnection $connection): ?string
