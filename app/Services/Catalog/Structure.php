@@ -90,7 +90,10 @@ final class Structure
                 'kind' => $kind->value,
                 'kindLabel' => $kind->label(),
                 'nullable' => (bool) $column['nullable'],
-                'default' => $column['default'] !== null ? $this->displayDefault((string) $column['default'], $connection->driver, $kind) : null,
+                // MariaDB meldet «keine Vorgabe» als Text NULL.
+                'default' => $column['default'] !== null && strcasecmp((string) $column['default'], 'NULL') !== 0
+                    ? $this->displayDefault((string) $column['default'], $connection->driver, $kind)
+                    : null,
                 'autoIncrement' => (bool) $column['auto_increment'],
                 'collation' => $column['collation'] ?? null,
                 'comment' => ($column['comment'] ?? '') !== '' ? $column['comment'] : null,
