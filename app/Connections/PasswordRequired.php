@@ -13,6 +13,6 @@ final class PasswordRequired extends RuntimeException
 {
     public function __construct(public readonly DatabaseConnection $connection)
     {
-        parent::__construct('Passwort für diese Sitzung nötig.');
+        parent::__construct(__('Passwort für diese Sitzung nötig.'));
     }
 }

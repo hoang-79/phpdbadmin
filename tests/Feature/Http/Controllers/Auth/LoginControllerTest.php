@@ -118,6 +118,14 @@ class LoginControllerTest extends TestCase
         $this->assertStringNotContainsString($user->email, (string) json_encode($entry->getAttributes()));
     }
 
+    public function test_wrong_code_message_follows_the_language_of_the_browser(): void
+    {
+        $this->post(route('login.code'), ['email' => 'nina@example.com']);
+
+        $this->post(route('login.code.verify'), ['code' => '123456'], ['Accept-Language' => 'en-GB,en;q=0.9'])
+            ->assertSessionHasErrors(['code' => 'The code is wrong or has expired. Request a new one if needed.']);
+    }
+
     public function test_rejects_code_that_is_not_six_digits(): void
     {
         $this->post(route('login.code'), ['email' => 'nina@example.com']);

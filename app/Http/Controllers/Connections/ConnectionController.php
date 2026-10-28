@@ -13,6 +13,7 @@ use App\Http\Requests\Connections\ConnectionRequest;
 use App\Models\DatabaseConnection;
 use App\Models\User;
 use App\Services\Audit\AuditLog;
+use App\Support\Translations;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -64,7 +65,7 @@ class ConnectionController extends Controller
         $this->recordVersion($connection, $tester);
         $this->audit->record('connection.created', $user, $connection->id, ['name' => $connection->name, 'driver' => $connection->driver->value]);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Verbindung «'.$connection->name.'» gespeichert.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Verbindung «:name» gespeichert.', ['name' => $connection->name])]);
 
         return to_route('home');
     }
@@ -113,7 +114,7 @@ class ConnectionController extends Controller
         $this->recordVersion($connection, $tester);
         $this->audit->record('connection.updated', $user, $connection->id, ['name' => $connection->name]);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Verbindung «'.$connection->name.'» gespeichert.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Verbindung «:name» gespeichert.', ['name' => $connection->name])]);
 
         return to_route('home');
     }
@@ -126,7 +127,7 @@ class ConnectionController extends Controller
         $connection->delete();
         $this->audit->record('connection.deleted', $user, $connection->id, ['name' => $connection->name]);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Verbindung «'.$connection->name.'» entfernt.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Verbindung «:name» entfernt.', ['name' => $connection->name])]);
 
         return to_route('home');
     }
@@ -195,7 +196,7 @@ class ConnectionController extends Controller
             'environment' => $connection->environment->value,
             'readOnly' => $connection->read_only,
             'lastTestedAt' => $connection->last_tested_at?->toIso8601String(),
-            'accountWarnings' => $connection->account_warnings ?? [],
+            'accountWarnings' => Translations::accountWarnings($connection->account_warnings ?? []),
             'canManage' => $connection->isManageableBy($user),
         ];
     }

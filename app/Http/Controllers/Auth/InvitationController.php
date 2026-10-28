@@ -56,7 +56,7 @@ class InvitationController extends Controller
 
         if ($user === null) {
             throw ValidationException::withMessages([
-                'name' => 'Diese Einladung ist abgelaufen oder wurde schon angenommen.',
+                'name' => __('Diese Einladung ist abgelaufen oder wurde schon angenommen.'),
             ]);
         }
 

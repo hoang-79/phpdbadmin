@@ -16,9 +16,9 @@ enum SslMode: string
     public function label(): string
     {
         return match ($this) {
-            self::Disable => 'Aus',
-            self::Prefer => 'Wenn möglich',
-            self::Require => 'Erforderlich',
+            self::Disable => __('Aus'),
+            self::Prefer => __('Wenn möglich'),
+            self::Require => __('Erforderlich'),
         };
     }
 

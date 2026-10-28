@@ -34,6 +34,6 @@ class ConnectionRequest extends FormRequest
      */
     public function attributes(): array
     {
-        return ['group' => 'Gruppe', 'environment' => 'Umgebung', ...$this->settingsAttributes()];
+        return ['group' => __('Gruppe'), 'environment' => __('Umgebung'), ...$this->settingsAttributes()];
     }
 }

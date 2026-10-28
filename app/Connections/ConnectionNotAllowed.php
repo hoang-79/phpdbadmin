@@ -6,11 +6,12 @@ use RuntimeException;
 
 /**
  * Host oder Datei liegt ausserhalb dessen, was diese Installation erlaubt (V-05) — oder lässt sich nicht finden.
+ * Die Meldung der Ausnahme ist für Protokolle und sprachneutral (Art und Detail); für Menschen gibt es `problem`.
  */
 final class ConnectionNotAllowed extends RuntimeException
 {
     public function __construct(public readonly ConnectionProblem $problem)
     {
-        parent::__construct($problem->title());
+        parent::__construct($problem->kind->value.($problem->detail !== null ? ' ('.$problem->detail.')' : ''));
     }
 }

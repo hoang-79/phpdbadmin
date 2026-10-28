@@ -61,6 +61,15 @@ class TestConnectionControllerTest extends TestCase
         $this->assertStringNotContainsString('Geheim-Test-6', (string) $response->getContent());
     }
 
+    public function test_reports_problem_in_the_language_of_the_account(): void
+    {
+        $this->actingAs(User::factory()->create(['locale' => 'en']))
+            ->postJson(route('connections.test'), ['driver' => 'mysql', 'host' => '127.0.0.1', 'port' => 1, 'username' => 'app', 'all_databases' => true])
+            ->assertOk()
+            ->assertJsonPath('problem.title', 'Server unreachable')
+            ->assertJsonPath('problem.explanation', 'No database server answers at this address and port. Check host and port and whether the service is running.');
+    }
+
     public function test_rejects_host_outside_allowed_list_at_the_field(): void
     {
         $this->actingAs(User::factory()->create())

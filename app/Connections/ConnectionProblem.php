@@ -8,6 +8,12 @@ namespace App\Connections;
  */
 final readonly class ConnectionProblem
 {
+    /**
+     * Detail statt eines Pfads, wenn jemand die App-Datenbank von phpdbadmin selbst öffnen will (HostPolicy). Steht
+     * hier auf Deutsch und unübersetzt, weil HostPolicy ohne Laravel auskommt; übersetzt wird bei der Ausgabe.
+     */
+    public const string APP_DATABASE = 'Das ist die eigene Datenbank von phpdbadmin.';
+
     public function __construct(
         public ConnectionProblemKind $kind,
         public ?string $code = null,
@@ -18,6 +24,11 @@ final readonly class ConnectionProblem
     public static function of(ConnectionProblemKind $kind, ?string $detail = null): self
     {
         return new self($kind, detail: $detail);
+    }
+
+    public function isAppDatabase(): bool
+    {
+        return $this->detail === self::APP_DATABASE;
     }
 
     public function title(): string
@@ -34,9 +45,14 @@ final readonly class ConnectionProblem
             'kind' => $this->kind->value,
             'title' => $this->title(),
             'explanation' => $this->kind->explanation(),
-            'detail' => $this->detail,
+            'detail' => $this->isAppDatabase() ? $this->appDatabaseNote() : $this->detail,
             'code' => $this->code,
             'serverMessage' => $this->serverMessage,
         ];
+    }
+
+    private function appDatabaseNote(): string
+    {
+        return __('Das ist die eigene Datenbank von phpdbadmin.');
     }
 }

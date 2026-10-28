@@ -47,8 +47,9 @@ final class SetupKey
 
         $key = implode('-', [$this->block(), $this->block(), $this->block()]);
 
-        fwrite($handle, "Einrichtungsschlüssel für phpdbadmin\n\n{$key}\n\n"
-            ."Im Formular der Ersteinrichtung eingeben. Die Datei wird danach gelöscht.\n");
+        // In der Sprache der Person, die die Ersteinrichtung öffnet — sie liest die Datei als Nächstes.
+        fwrite($handle, __('Einrichtungsschlüssel für phpdbadmin')."\n\n{$key}\n\n"
+            .__('Im Formular der Ersteinrichtung eingeben. Die Datei wird danach gelöscht.')."\n");
         fclose($handle);
         @chmod($this->path(), 0600);
     }
