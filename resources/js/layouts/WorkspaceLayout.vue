@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { PanelLeft } from '@lucide/vue';
-import { computed, ref, watch } from 'vue';
+import { Keyboard, PanelLeft } from '@lucide/vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import AccountMenu from '@/components/AccountMenu.vue';
 import Wordmark from '@/components/Wordmark.vue';
 import ConnectionChip from '@/components/workspace/ConnectionChip.vue';
 import Navigator from '@/components/workspace/Navigator.vue';
+import ShortcutsDialog from '@/components/workspace/ShortcutsDialog.vue';
+import TabBar from '@/components/workspace/TabBar.vue';
 import {
     Sheet,
     SheetContent,
@@ -25,6 +27,24 @@ const page = usePage<{ workspace?: Workspace; selected?: string | null }>();
 const workspace = computed(() => page.props.workspace ?? null);
 const selected = computed(() => page.props.selected ?? null);
 const navigatorOpen = ref(false);
+const shortcutsOpen = ref(false);
+
+// «?» öffnet die Kürzel-Übersicht (O-05) — nicht, während man tippt.
+function onKey(event: KeyboardEvent): void {
+    const target = event.target as HTMLElement | null;
+
+    if (
+        event.key === '?' &&
+        !['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName ?? '') &&
+        !target?.isContentEditable
+    ) {
+        event.preventDefault();
+        shortcutsOpen.value = true;
+    }
+}
+
+onMounted(() => window.addEventListener('keydown', onKey));
+onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
 
 // Nach jedem Seitenwechsel die Schublade schliessen.
 watch(
@@ -69,6 +89,15 @@ watch(
                 <ConnectionChip :connection="workspace.connection" />
             </div>
             <div class="flex-1" />
+            <button
+                type="button"
+                class="hidden size-9 place-items-center rounded-md text-text-secondary outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring sm:inline-grid"
+                :aria-label="t('Tastenkürzel')"
+                :title="t('Tastenkürzel (?)')"
+                @click="shortcutsOpen = true"
+            >
+                <Keyboard class="size-4" />
+            </button>
             <AccountMenu />
         </header>
 
@@ -79,8 +108,11 @@ watch(
             >
                 <Navigator :workspace="workspace" :selected="selected" />
             </aside>
-            <main class="min-w-0 flex-1 overflow-auto">
-                <slot />
+            <main class="flex min-w-0 flex-1 flex-col overflow-hidden">
+                <TabBar v-if="workspace" :workspace="workspace" />
+                <div class="min-h-0 flex-1 overflow-auto">
+                    <slot />
+                </div>
             </main>
         </div>
 
@@ -100,6 +132,7 @@ watch(
             </SheetContent>
         </Sheet>
 
+        <ShortcutsDialog v-model:open="shortcutsOpen" />
         <Toaster position="bottom-right" />
     </div>
 </template>
