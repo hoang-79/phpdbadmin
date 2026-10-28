@@ -56,38 +56,38 @@
   <text x="370" y="134" class="h" text-anchor="start">TB 03</text>
   <text x="370" y="152" class="s" text-anchor="start">SQL-Editor</text>
   <text x="370" y="170" class="s" text-anchor="start">3,4 PT</text>
-  <rect x="434" y="110" width="88" height="70" rx="6" class="ausbau"/>
+  <rect x="434" y="110" width="95" height="70" rx="6" class="ausbau"/>
   <text x="440" y="134" class="h" text-anchor="start">TB 04</text>
   <text x="440" y="152" class="s" text-anchor="start">Bearbeiten</text>
-  <text x="440" y="170" class="s" text-anchor="start">4,4 PT</text>
-  <rect x="526" y="110" width="55" height="70" rx="6" class="ausbau"/>
-  <text x="532" y="134" class="h" text-anchor="start">TB 05</text>
-  <text x="532" y="170" class="s" text-anchor="start">2,8 PT</text>
-  <rect x="584" y="110" width="41" height="70" rx="6" class="ausbau"/>
-  <text x="590" y="134" class="h" text-anchor="start">06</text>
-  <text x="590" y="170" class="s" text-anchor="start">2,1</text>
-  <rect x="627" y="110" width="36" height="70" rx="6" class="ausbau"/>
-  <text x="633" y="134" class="h" text-anchor="start">07</text>
-  <text x="633" y="170" class="s" text-anchor="start">1,9</text>
-  <rect x="667" y="110" width="55" height="70" rx="6" class="ausbau"/>
-  <text x="673" y="134" class="h" text-anchor="start">TB 08</text>
-  <text x="673" y="170" class="s" text-anchor="start">2,8 PT</text>
-  <rect x="725" y="110" width="65" height="70" rx="6" class="gruen"/>
-  <text x="731" y="134" class="h" text-anchor="start">TB 09</text>
-  <text x="731" y="152" class="s" text-anchor="start">Server</text>
-  <text x="731" y="170" class="s" text-anchor="start">3,3 PT</text>
-  <rect x="793" y="110" width="136" height="70" rx="6" class="gruen"/>
-  <text x="799" y="134" class="h" text-anchor="start">TB 10</text>
-  <text x="799" y="152" class="s" text-anchor="start">Objekte</text>
-  <text x="799" y="170" class="s" text-anchor="start">6,7 PT</text>
-  <rect x="932" y="110" width="144" height="70" rx="6" class="nein"/>
-  <text x="938" y="134" class="h" text-anchor="start">TB 11</text>
-  <text x="938" y="152" class="s" text-anchor="start">Komfort</text>
-  <text x="938" y="170" class="s" text-anchor="start">7,1 PT</text>
-  <rect x="1080" y="110" width="57" height="70" rx="6" class="nein"/>
-  <text x="1086" y="134" class="h" text-anchor="start">TB 12</text>
-  <text x="1086" y="152" class="s" text-anchor="start">Team, KI</text>
-  <text x="1086" y="170" class="s" text-anchor="start">2,9 PT</text>
+  <text x="440" y="170" class="s" text-anchor="start">4,7 PT</text>
+  <rect x="532" y="110" width="53" height="70" rx="6" class="ausbau"/>
+  <text x="538" y="134" class="h" text-anchor="start">05</text>
+  <text x="538" y="170" class="s" text-anchor="start">2,7 PT</text>
+  <rect x="588" y="110" width="39" height="70" rx="6" class="ausbau"/>
+  <text x="594" y="134" class="h" text-anchor="start">06</text>
+  <text x="594" y="170" class="s" text-anchor="start">2,0</text>
+  <rect x="629" y="110" width="34" height="70" rx="6" class="ausbau"/>
+  <text x="635" y="134" class="h" text-anchor="start">07</text>
+  <text x="635" y="170" class="s" text-anchor="start">1,8</text>
+  <rect x="667" y="110" width="53" height="70" rx="6" class="ausbau"/>
+  <text x="673" y="134" class="h" text-anchor="start">08</text>
+  <text x="673" y="170" class="s" text-anchor="start">2,7 PT</text>
+  <rect x="723" y="110" width="65" height="70" rx="6" class="gruen"/>
+  <text x="729" y="134" class="h" text-anchor="start">TB 09</text>
+  <text x="729" y="152" class="s" text-anchor="start">Server</text>
+  <text x="729" y="170" class="s" text-anchor="start">3,3 PT</text>
+  <rect x="791" y="110" width="136" height="70" rx="6" class="gruen"/>
+  <text x="797" y="134" class="h" text-anchor="start">TB 10</text>
+  <text x="797" y="152" class="s" text-anchor="start">Objekte</text>
+  <text x="797" y="170" class="s" text-anchor="start">6,7 PT</text>
+  <rect x="930" y="110" width="144" height="70" rx="6" class="nein"/>
+  <text x="936" y="134" class="h" text-anchor="start">TB 11</text>
+  <text x="936" y="152" class="s" text-anchor="start">Komfort</text>
+  <text x="936" y="170" class="s" text-anchor="start">7,1 PT</text>
+  <rect x="1078" y="110" width="57" height="70" rx="6" class="nein"/>
+  <text x="1084" y="134" class="h" text-anchor="start">TB 12</text>
+  <text x="1084" y="152" class="s" text-anchor="start">Team, KI</text>
+  <text x="1084" y="170" class="s" text-anchor="start">2,9 PT</text>
   <path d="M434 96 L434 206" stroke="#0e7490" stroke-width="2" stroke-dasharray="4 3"/>
   <rect x="402" y="210" width="64" height="24" rx="12" class="ausbau"/>
   <text x="434" y="226" class="h" text-anchor="middle">Alpha</text>
@@ -112,6 +112,6 @@
   <text x="697" y="280" class="s" text-anchor="start">Stufe 4 Komfort, Team</text>
   <rect x="40" y="310" width="1100" height="96" rx="10" class="neutral"/>
   <text x="54" y="336" class="h" text-anchor="start">Must-Anteil im Plan (PRL, nach Punkten)</text>
-  <text x="54" y="360" class="t" text-anchor="start">Stufe 0: 90 % (Fundament ohne Rückfallweg, bewusst) · Stufe 1: 57 % · Stufe 2: 45 % · bis v1.0 zusammen: 59 % · Stufen 3 und 4: 0 %</text>
+  <text x="54" y="360" class="t" text-anchor="start">Stufe 0: 90 % (Fundament ohne Rückfallweg, bewusst) · Stufe 1: 57 % · Stufe 2: 44 % · bis v1.0 zusammen: 58 % · Stufen 3 und 4: 0 %</text>
   <text x="54" y="382" class="t" text-anchor="start">Neun Must-Anforderungen mit Rückfallweg laufen im Plan als «Should ↓» (z. B. Befehlspalette → Navigator, Import → SQL-Datei im Editor)</text>
 </svg>

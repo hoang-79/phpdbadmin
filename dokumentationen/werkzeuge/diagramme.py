@@ -851,7 +851,7 @@ def timebox_plan() -> Zeichnung:
     z = Zeichnung(1180, 430, "phpdbadmin — Timebox-Plan",
                   "Dreizehn Timeboxes in fünf Stufen; Personentage aus der PRL (obere Schätzung 53 PT). Reihenfolge, keine Termine (neben Basalto, R-03)")
     tbs = [("00", "Fundament", 8.0, "0"), ("01", "Katalog", 4.0, "1"), ("02", "Raster", 3.6, "1"), ("03", "SQL-Editor", 3.4, "1"),
-           ("04", "Bearbeiten", 4.4, "2"), ("05", "Struktur", 2.8, "2"), ("06", "Austausch", 2.1, "2"), ("07", "Rechte", 1.9, "2"), ("08", "Prüfung", 2.8, "2"),
+           ("04", "Bearbeiten", 4.7, "2"), ("05", "Struktur", 2.7, "2"), ("06", "Austausch", 2.0, "2"), ("07", "Rechte", 1.8, "2"), ("08", "Prüfung", 2.7, "2"),
            ("09", "Server", 3.3, "3"), ("10", "Objekte", 6.7, "3"), ("11", "Komfort", 7.1, "4"), ("12", "Team, KI", 2.9, "4")]
     farbe = {"0": "kern", "1": "kernhell", "2": "ausbau", "3": "gruen", "4": "nein"}
     skala = 1100 / 53
@@ -872,7 +872,7 @@ def timebox_plan() -> Zeichnung:
         z.text(xm, 226, name, "h", "middle")
     z.legende(40, 280, [("kern", "Stufe 0 Fundament"), ("kernhell", "Stufe 1 Lesen"), ("ausbau", "Stufe 2 Bearbeiten"), ("gruen", "Stufe 3 Verwalten"), ("nein", "Stufe 4 Komfort, Team")])
     z.kasten(40, 310, 1100, 96, "Must-Anteil im Plan (PRL, nach Punkten)", [
-        "Stufe 0: 90 % (Fundament ohne Rückfallweg, bewusst) · Stufe 1: 57 % · Stufe 2: 45 % · bis v1.0 zusammen: 59 % · Stufen 3 und 4: 0 %",
+        "Stufe 0: 90 % (Fundament ohne Rückfallweg, bewusst) · Stufe 1: 57 % · Stufe 2: 44 % · bis v1.0 zusammen: 58 % · Stufen 3 und 4: 0 %",
         "Neun Must-Anforderungen mit Rückfallweg laufen im Plan als «Should ↓» (z. B. Befehlspalette → Navigator, Import → SQL-Datei im Editor)",
     ], "neutral", abstand=22, punkt=False)
     return z

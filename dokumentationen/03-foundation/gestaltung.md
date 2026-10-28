@@ -1,6 +1,6 @@
 # Gestaltung — phpdbadmin
 
-**Stand:** 28.10.2026 · v0.1 — Vorschlag der Foundation; die Entscheide G-01 bis G-08 gelten als Annahme, bis Hoang sie im Wireframe-Review bestätigt oder ändert. Farben und Kontraste stehen nur in `werkzeuge/kontraste.py`; die Tabelle in § 2 wird daraus eingesetzt (`python3 dokumentationen/werkzeuge/kontraste.py --schreiben`).
+**Stand:** 28.10.2026 · v0.1 — Vorschlag der Foundation; die Entscheide G-01 bis G-08 gelten als Annahme bis zur Sichtprüfung am echten Bildschirm mit TB 00 (die Fragen aus den Wireframes hat Hoang am 28.10.2026 wie empfohlen entschieden). Farben und Kontraste stehen nur in `werkzeuge/kontraste.py`; die Tabelle in § 2 wird daraus eingesetzt (`python3 dokumentationen/werkzeuge/kontraste.py --schreiben`).
 
 ## 1. Haltung
 
@@ -133,7 +133,7 @@ Beide Schriften werden wie heute Instrument Sans über `laravel-vite-plugin/font
 
 Kurz und funktional: 120–160 ms für Schubladen und Menüs, keine Animation im Raster; `prefers-reduced-motion` schaltet alles ab.
 
-## 10. Entscheide (Vorschlag, Annahme bis zum Review)
+## 10. Entscheide (Annahme bis zur Sichtprüfung mit TB 00)
 
 | Nr. | Frage | Vorschlag |
 |---|---|---|

@@ -6,7 +6,7 @@
 | Titel | phpdbadmin — ein Werkzeug für vier Datenbanken, intuitiver als phpMyAdmin und phpPgAdmin |
 | Antragsteller | Hoang Nguyen |
 | Datum | 28.10.2026 |
-| Fassung | 3 |
+| Fassung | 4 |
 | Status | ✅ **Weiterführen** entschieden 28.10.2026 (Hoang: «Feasibility starten») · Feasibility abgeschlossen 28.10.2026: 6 bestanden, 4 bedingt — Auflagen als V-10, Q-09, E-06 und geänderte Abnahmen eingearbeitet |
 | Grundlagen | [Ideensammlung](ideensammlung.md) · [Marktbild](marktbild.md) · [Funktionsraster](funktionsraster.md) · [Ausgangslage und Rückfragen](../01-pre-project/ausgangslage-und-rueckfragen.md) · [Ideen-Backlog](../01-pre-project/ideen-backlog.md) |
 | Folgt | [Terms of Reference](../01-pre-project/terms-of-reference.md) (Entwurf v0.1) → Feasibility |
@@ -18,6 +18,7 @@
 | 1 | 28.10.2026 | Erste Fassung aus Hoangs Auftrag, Recherche und Funktionsraster; Anforderungen A, V, O, D, S, Q, E, W, B, N mit Abnahme |
 | 2 | 28.10.2026 | Interaktive Rückfragen: R-01 und R-40 (Nguyen Development, MIT), R-11 (lokal und selbst gehostet), R-03 (neben Basalto), R-04 (Name phpdbadmin endgültig) — § 6, § 10, § 11, § 14 nachgeführt |
 | 3 | 28.10.2026 | Entscheid Weiterführen; Ergebnisse der [Feasibility](../02-feasibility/feasibility.md): neu V-10, Q-09, E-06; Abnahmen von V-02, V-04, O-01, D-04, S-02, S-03, Q-02, Q-03, E-01, B-04, N-02, N-03 geschärft; Schätzung 42–53 PT |
+| 4 | 28.10.2026 | Review der Foundation (Hoang): neu **V-11** Schreibschutz auf Zeit aufheben; D-04 zählt die Folgen über `ON DELETE CASCADE` in der Vorschau (aus den Wireframes) |
 
 ## 1. Ausgangslage und Problem
 
@@ -105,6 +106,7 @@ Priorität nach MoSCoW: **M** Must · **S** Should · **C** Could · **W** Won't
 | V-08 | SSH-Tunnel | C | 4 | Test gegen einen lokalen SSH-Dienst |
 | V-09 | Verbindungen persönlich oder geteilt (Administrator teilt mit Rechten) | S | 2 | Test: persönliche Verbindung ist für andere 404 |
 | V-10 | **Warnung bei Konten mit zu vielen Rechten:** Superuser (PostgreSQL), Dateirechte (`FILE`, `LOAD_FILE` ohne `secure_file_priv`) — sichtbar an der Verbindung, mit Empfehlung eines eigenen Kontos | S | 1 | Test gegen Herd-`root` auf MariaDB und PostgreSQL (warnt) und ein Lesekonto (warnt nicht) — F-7 |
+| V-11 | **Schreibschutz auf Zeit aufheben:** eine schreibgeschützte Verbindung lässt sich für 15 Minuten freigeben — nur mit Recht «schreiben», mit Pflichtgrund, im Protokoll, in Kopfleiste und Reiter sichtbar («Schreiben erlaubt bis …»), jederzeit wieder sperrbar | S | 2 | Test: Freigabe läuft nach 15 Minuten ab (Uhr gestellt), Grund und Ende im Protokoll, ohne Recht 403 — Wireframes 5–7 |
 
 ### 4.3 O — Oberfläche und Bedienung
 
@@ -127,7 +129,7 @@ Priorität nach MoSCoW: **M** Must · **S** Should · **C** Could · **W** Won't
 | D-01 | **Datenraster:** blättern (über den Schlüssel, sonst Seitenversatz), Seitengrösse, sortieren, Spalten ein- und ausblenden, Breite merken | M | 1 | Tests je Treiber mit Sortierung inkl. NULL (Reihenfolge ausdrücklich, nicht treiberabhängig) |
 | D-02 | **Filtern** geführt (Spalte, Operator, Wert, und/oder) und als freies WHERE; Suche über die Textspalten der Tabelle, ohne Rücksicht auf Gross- und Kleinschreibung und Umlaute, wo der Treiber es zulässt | M | 1 | Tests je Treiber, auch mit Umlauten und Werten, die wie SQL aussehen |
 | D-03 | Fremdschlüssel folgen (→ Datensatz) und rückwärts (verweisende Zeilen) | S | 1 | Test je Treiber |
-| D-04 | **Bearbeiten:** Zellen ändern, Zeilen einfügen, duplizieren, löschen; Änderungen sammeln; **SQL-Vorschau**; Anwenden in einer Transaktion; Verwerfen | M | 2 | Test je Treiber: nichts geschrieben vor «Anwenden»; Fehler in der zweiten Anweisung rollt die erste zurück; Vorschau der DML über `pretend()` mit Bindungen — F-5 |
+| D-04 | **Bearbeiten:** Zellen ändern, Zeilen einfügen, duplizieren, löschen; Änderungen sammeln; **SQL-Vorschau**; Anwenden in einer Transaktion; Verwerfen | M | 2 | Test je Treiber: nichts geschrieben vor «Anwenden»; Fehler in der zweiten Anweisung rollt die erste zurück; Vorschau der DML über `pretend()` mit Bindungen; die Vorschau zählt die Zeilen, die über `ON DELETE CASCADE` mitgelöscht würden — F-5, Wireframe 6 |
 | D-05 | Werte typgerecht: NULL gegen leer, JSON (formatiert und geprüft), Datum und Zeit mit Zeitzone, Binärdaten (Grösse, Herunterladen, Bildvorschau), Enum und Set als Auswahl, Boolean | M | 2 | Tests je Typ und Treiber, Werte nach dem Speichern byte-genau verglichen |
 | D-06 | Zeilen zählen: genau bei kleinen Tabellen, geschätzt bei grossen, «genau zählen» auf Wunsch | S | 1 | Test mit Schwelle |
 | D-07 | Tabellen ohne Primärschlüssel: Bearbeiten nur mit Warnung und eindeutigem Treffer | M | 2 | Test: mehrdeutige Zeile wird nicht geändert |
@@ -207,7 +209,7 @@ Priorität nach MoSCoW: **M** Must · **S** Should · **C** Could · **W** Won't
 | N-05 | Kurze Hilfe in der Oberfläche; Projekt-Doku nach DSDM, bei jedem Commit nachgeführt | S | 2 | Doku-Prüfung im Commit |
 | N-06 | Sprache: Deutsch und Englisch, Sie-Form, Bezeichner im Code englisch | M | 1 | Test über Sprachdateien |
 
-**Zählung** (per Skript aus den Tabellen, Fassung 3, 28.10.2026): 80 Anforderungen — M 42, S 27, C 11. Must-Anteil gesamt 52 %; **bis v1.0 (Stufen 0–2, 62 Anforderungen) 68 %** (Fassung 2: 77 Anforderungen, bis v1.0 71 %) — über der DSDM-Richtgrösse von 60 %. Die PRL in der Foundation muss deshalb Musts in Kern und Bequemlichkeit teilen oder zurückstufen; Kandidaten mit Rückfallweg «bis dahin über den Navigator bzw. den SQL-Editor»: O-02 Befehlspalette, O-09 Zustände (Kern: Fehler; Rest: Leer- und Ladezustände), D-05 (Kern: NULL, JSON, Datum; Bildvorschau später), E-02 (Kern: CSV; SQL-Datei später), Q-01 (Kern: Hervorhebung und Vervollständigung; Formatieren später).
+**Zählung** (per Skript aus den Tabellen, Fassung 4, 28.10.2026): 81 Anforderungen — M 42, S 28, C 11. Must-Anteil gesamt 52 %; **bis v1.0 (Stufen 0–2, 63 Anforderungen) 67 %** (Fassung 3: 80 und 68 %, Fassung 2: 77 und 71 %); im Plan der [PRL](../03-foundation/prl.md) mit Rückfallwegen 58 % — über der DSDM-Richtgrösse von 60 %. Die PRL in der Foundation muss deshalb Musts in Kern und Bequemlichkeit teilen oder zurückstufen; Kandidaten mit Rückfallweg «bis dahin über den Navigator bzw. den SQL-Editor»: O-02 Befehlspalette, O-09 Zustände (Kern: Fehler; Rest: Leer- und Ladezustände), D-05 (Kern: NULL, JSON, Datum; Bildvorschau später), E-02 (Kern: CSV; SQL-Datei später), Q-01 (Kern: Hervorhebung und Vervollständigung; Formatieren später).
 
 ## 5. Lösungsansatz und technischer Rahmen
 

@@ -101,3 +101,13 @@
 | R-04 | Name | **phpdbadmin ist der Name** (statt Arbeitstitel mit späterer Namensfindung) | `phpdbadmin.ch` sichern (Hoang); Markenrecherche zur Nähe zu «phpMyAdmin» und eigenständiger Auftritt vor dem ersten öffentlichen Auftritt (F-10, Risiko R6) |
 
 Neue Rückfragen ergeben sich daraus keine; die übrigen Fragen laufen mit ihrer Annahme weiter.
+
+## 5. Entscheide aus dem Review der Foundation vom 28.10.2026
+
+| Nr. | Gefragt | Gewählt | Folge |
+|---|---|---|---|
+| R-27 | Schreibschutz einer Produktions-Verbindung auf Zeit aufheben (Wireframe E-05) | ja, als neue Anforderung (Empfehlung) | **V-11** in CR-001 Fassung 4, TB 04 |
+| R-28 | Raster: endlos scrollen oder Seiten zu 50 (Wireframe zeigte Seiten) | endlos scrollen (Empfehlung) | ADR-006 bestätigt; Wireframe-Fusszeile auf Positionsanzeige umgestellt |
+| R-29 | PHP 8.5 als Mindestversion (ADR-011) | PHP 8.5 (Empfehlung) | ADR-011 angenommen; `composer.json` `^8.5` in TB 00 |
+| R-30 | Übrige Wireframe-Fragen F-2 bis F-6 (Anwenden-Knopf rot, Detail-Schublade breit, neue Zeilen oben, Name am Fremdschlüssel, Startseite) | wie empfohlen | in der Wireframe-README als entschieden geführt |
+

@@ -1218,10 +1218,9 @@ def aenderungsleiste() -> str:
 def statusleiste() -> str:
     return (
         '<div class="mk-statusleiste mk-zahl">'
-        '<span>Zeilen 1–50 von 212</span>'
-        f'<span class="mk-zeile" style="gap:4px">50 je Seite{ic("chevron-down", "mk-ic-14")}</span>'
-        f'<span class="mk-zeile" style="gap:2px">{ic("chevron-left", "mk-ic-14")}Zurück</span>'
-        f'<span class="mk-zeile" style="gap:2px;color:var(--text)">Weiter{ic("chevron-right", "mk-ic-14")}</span>'
+        # Endlos scrollen (ADR-006, Entscheid Hoang 28.10.2026): nur Position, keine Seitenknöpfe
+        '<span>sichtbar Zeilen 1–16 von 212</span>'
+        '<span>geladen 200 · die restlichen 12 werden beim Scrollen vorgeladen</span>'
         '<span class="mk-trenner" style="height:16px;align-self:center"></span>'
         '<span>10 von 10 Spalten</span>'
         f'<span class="mk-rechts-weg mk-zeile" style="gap:6px">{ic("undo", "mk-ic-14")}Zuletzt angewendet 09:58 · 1 Zeile · <a>Rückgängig machen</a></span>'

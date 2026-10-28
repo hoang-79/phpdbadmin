@@ -1,6 +1,6 @@
 # Wireframes — phpdbadmin
 
-**Stand:** 28.10.2026 · v0.1 — Vorschlag der Foundation zum Review durch Hoang. Grundlage: [Gestaltung](../gestaltung.md) (verbindlich), [CR-001 § 3.3 und § 4](../../00-change_request/CR-001-phpdbadmin.md), [Produktprinzipien P-01 bis P-11](../../00-change_request/ideensammlung.md#6-wie--produktprinzipien-vorschlag), Befunde der [Feasibility](../../02-feasibility/feasibility.md) und die Skizze [Bedienkonzept](../../00-change_request/diagrams/bedienkonzept.svg).
+**Stand:** 28.10.2026 · v0.1 — Fragen F-1 bis F-6 von Hoang am 28.10.2026 entschieden (siehe unten), Raster auf Endlos-Scrollen umgestellt; die Sichtprüfung am echten Bildschirm folgt mit TB 00. Grundlage: [Gestaltung](../gestaltung.md) (verbindlich), [CR-001 § 3.3 und § 4](../../00-change_request/CR-001-phpdbadmin.md), [Produktprinzipien P-01 bis P-11](../../00-change_request/ideensammlung.md#6-wie--produktprinzipien-vorschlag), Befunde der [Feasibility](../../02-feasibility/feasibility.md) und die Skizze [Bedienkonzept](../../00-change_request/diagrams/bedienkonzept.svg).
 
 ## Zweck
 
@@ -106,7 +106,7 @@ Die 14 Desktop-Bilder in Originalgrösse 1440 × 900; mobile Fassungen und Zusat
 
 ## Entscheide
 
-Gestaltende Entscheide dieser Wireframes — Annahme bis zum Review, wie G-01 bis G-08 der Gestaltung.
+Gestaltende Entscheide dieser Wireframes — gelten als Annahme bis zur Sichtprüfung mit TB 00, wie G-01 bis G-08 der Gestaltung; die Fragen F-1 bis F-6 sind entschieden.
 
 | Nr. | Entscheid | Begründung |
 |---|---|---|
@@ -133,9 +133,11 @@ Gestaltende Entscheide dieser Wireframes — Annahme bis zum Review, wie G-01 bi
 | E-21 | **Mobil:** Raster als Kartenliste (id im Kopf, dann `customer_id`, `status`, `total`), Änderungsleiste unten fest, Navigator als Schublade von links mit Verbindungswechsel oben, Vorschau und Export als Blatt von unten, Palette als ganze Seite. | Gestaltung § 8 und G-07; Bearbeiten bleibt möglich, Struktur ändern ist ausdrücklich «für den Desktop ausgelegt». |
 | E-22 | **Fett ist 600**, nur die Zeilenzeichen «+» und «−» und Treffer in der Palette sind 700. Die Palette kommt ausschliesslich aus `kontraste.py`; abgeleitet sind nur Schleier und Schatten. | Ruhige Oberfläche (§ 1); eine Quelle der Farben, damit die gerechneten Kontraste gelten. |
 
-## Offene Fragen an Hoang
+## Fragen an Hoang — entschieden 28.10.2026
 
-| Nr. | Frage | Empfehlung |
+Alle sechs wie empfohlen entschieden (Hoang, interaktiv: F-1 als neue Anforderung **V-11**, F-2 bis F-6 «wie empfohlen»). Dazu entschied Hoang, dass das Raster **endlos scrollt** (ADR-006) — die Fusszeile des Arbeitsbildschirms zeigt seither nur die Position («sichtbar Zeilen 1–16 von 212 · geladen 200»), keine Seitenknöpfe mehr.
+
+| Nr. | Frage | Empfehlung = Entscheid |
 |---|---|---|
 | F-1 | Wie schreibt man auf eine schreibgeschützte Produktion? (a) Schreibschutz **auf Zeit aufheben** wie gezeigt (E-05), (b) nur über eine zweite, nicht geschützte Verbindung, (c) gar nicht. | **(a)** mit 15 Minuten, Pflichtgrund, nur mit Recht «schreiben», im Protokoll — als neue Anforderung V-11 in CR-001 aufnehmen. |
 | F-2 | Soll «Anwenden» auf Produktion **rot** (Gefahr) sein oder im Akzent bleiben wie überall sonst? | **Rot** — die Gestaltung erlaubt Gefahr für die Umgebung Produktion, und die Namenseingabe davor macht den Schritt bewusst. |

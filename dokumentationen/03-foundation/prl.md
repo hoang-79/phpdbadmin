@@ -1,6 +1,6 @@
 # PRL — Prioritised Requirements List (phpdbadmin)
 
-> **Status:** v1.0 (28.10.2026) — erzeugt aus [CR-001 § 4](../00-change_request/CR-001-phpdbadmin.md) (80 Anforderungen) mit `werkzeuge/prl-bauen.py`; **nicht von Hand bearbeiten**, Zuordnung und Grössen stehen im Skript. Jede Anforderung hat eine Timebox ([Timebox-Plan](timebox-plan.md)), eine Grösse (S 1 · M 2 · L 3 · XL 5 Punkte) und eine **Priorität im Plan**: Must-Anforderungen des CR mit einem Rückfallweg laufen als *Should ↓* und rutschen bei Zeitnot in die nächste Stufe. Spalte «Feasibility» nennt, was schon belegt ist.
+> **Status:** v1.0 (28.10.2026) — erzeugt aus [CR-001 § 4](../00-change_request/CR-001-phpdbadmin.md) (81 Anforderungen) mit `werkzeuge/prl-bauen.py`; **nicht von Hand bearbeiten**, Zuordnung und Grössen stehen im Skript. Jede Anforderung hat eine Timebox ([Timebox-Plan](timebox-plan.md)), eine Grösse (S 1 · M 2 · L 3 · XL 5 Punkte) und eine **Priorität im Plan**: Must-Anforderungen des CR mit einem Rückfallweg laufen als *Should ↓* und rutschen bei Zeitnot in die nächste Stufe. Spalte «Feasibility» nennt, was schon belegt ist.
 
 ## 1. Kennzahlen je Stufe
 
@@ -8,10 +8,10 @@
 |---|---|---|---|---|---|
 | 0 Fundament | 16 | 31 | 28 | **90 %** ⚠️ | 15 von 16 |
 | 1 Lesen (Alpha) | 23 | 49 | 28 | **57 %** ✅ | 15 von 23 |
-| 2 Bearbeiten (v1.0) | 23 | 60 | 27 | **45 %** ✅ | 12 von 23 |
+| 2 Bearbeiten (v1.0) | 24 | 62 | 27 | **44 %** ✅ | 12 von 24 |
 | 3 Verwalten (v1.1) | 12 | 27 | 0 | **0 %** ✅ | 0 von 12 |
 | 4 Komfort und Team (v1.2) | 6 | 14 | 0 | **0 %** ✅ | 0 von 6 |
-| **bis v1.0 (Stufen 0–2)** | 62 | 140 | 83 | **59 %** ✅ | 42 von 62 |
+| **bis v1.0 (Stufen 0–2)** | 63 | 142 | 83 | **58 %** ✅ | 42 von 63 |
 
 **Stufe 0 bleibt über 60 Prozent — bewusst:** Das Fundament hat keinen Rückfallweg. Ohne Anmeldung, Verbindungen, Dialekt-Schicht und Tests auf vier Datenbanken gibt es keine Stufe 1; die Entfernung von Passwort, Dashboard und Profil ist eine ausdrückliche Vorgabe. Der Puffer liegt deshalb in den Stufen 1 und 2; bis v1.0 zusammen bleibt der Must-Anteil unter 60 Prozent.
 
@@ -23,11 +23,11 @@
 | 01 | Katalog und Navigator | 1 | 9 | 18 | 11 | ~4,0 |
 | 02 | Datenraster und Filter | 1 | 8 | 16 | 8 | ~3,6 |
 | 03 | SQL-Editor und Befehlspalette → Alpha | 1 | 6 | 15 | 9 | ~3,4 |
-| 04 | Bearbeiten mit Vorschau und Rückgängig | 2 | 7 | 19 | 10 | ~4,4 |
-| 05 | Struktur ändern | 2 | 4 | 12 | 8 | ~2,8 |
-| 06 | Export und Import | 2 | 4 | 9 | 3 | ~2,1 |
-| 07 | Konten, Rechte, Teilen, Protokoll | 2 | 3 | 8 | 3 | ~1,9 |
-| 08 | Sicherheit, Barrierefreiheit, Installation → v1.0 | 2 | 5 | 12 | 3 | ~2,8 |
+| 04 | Bearbeiten mit Vorschau und Rückgängig | 2 | 8 | 21 | 10 | ~4,7 |
+| 05 | Struktur ändern | 2 | 4 | 12 | 8 | ~2,7 |
+| 06 | Export und Import | 2 | 4 | 9 | 3 | ~2,0 |
+| 07 | Konten, Rechte, Teilen, Protokoll | 2 | 3 | 8 | 3 | ~1,8 |
+| 08 | Sicherheit, Barrierefreiheit, Installation → v1.0 | 2 | 5 | 12 | 3 | ~2,7 |
 | 09 | Server-Verwaltung | 3 | 5 | 9 | 0 | ~3,3 |
 | 10 | Weitere Objekte, Analyse, Sicherung → v1.1 | 3 | 7 | 18 | 0 | ~6,7 |
 | 11 | Komfort: Schemavergleich, Laravel, Herd, SSH | 4 | 4 | 10 | 0 | ~7,1 |
@@ -94,10 +94,11 @@
 | Q-04 | Verlauf je Konto und Verbindung | Should | Should | M | — | Test |
 | Q-09 | SQLite-Abfragen aus dem SQL-Editor in einem Arbeitsprozess mit Zeitgrenze | Should | Should | M | F-2: SQLite ohne Zeitlimit gemessen | Test: eine Abfrage über die Grenze wird beendet, die Oberfläche meldet es — F-2 |
 
-### TB 04 — Bearbeiten mit Vorschau und Rückgängig (Stufe 2; 7 Anforderungen, 19 Punkte, Must 10)
+### TB 04 — Bearbeiten mit Vorschau und Rückgängig (Stufe 2; 8 Anforderungen, 21 Punkte, Must 10)
 
 | Nr. | Anforderung | CR | Plan | Grösse | Feasibility / Rückfall | Abnahme (Kurzform, vollständig im CR) |
 |---|---|---|---|---|---|---|
+| V-11 | Schreibschutz auf Zeit aufheben | Should | Should | M | Wireframes 5–7; Rückfall: Schreibschutz in der Verbindung ausschalten | Test: Freigabe läuft nach 15 Minuten ab (Uhr gestellt), Grund und Ende im Protokoll, ohne Recht 403… |
 | D-04 | Bearbeiten | Must | **Must** | XL | F-5: pretend() für DML belegt | Test je Treiber: nichts geschrieben vor «Anwenden» |
 | D-05 | Werte typgerecht | Must | Should ↓ | L | Rückfall: Werte als Text bearbeiten, Bildvorschau später | Tests je Typ und Treiber, Werte nach dem Speichern byte-genau verglichen |
 | D-07 | Tabellen ohne Primärschlüssel | Must | Should ↓ | M | Rückfall: Tabellen ohne Primärschlüssel nur lesen | Test: mehrdeutige Zeile wird nicht geändert |

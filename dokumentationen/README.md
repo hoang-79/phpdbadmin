@@ -43,7 +43,7 @@ Jede Phase hat zusätzlich einen Ordner `diagrams/`.
 
 | Phase | PDF | Leitdokument und Anhänge |
 |---|---|---|
-| 00 | [CR-001-phpdbadmin.pdf](00-change_request/CR-001-phpdbadmin.pdf) | CR-001 Fassung 3 + Ideensammlung, Rückfragen, Marktbild, Funktionsraster, Ideen-Backlog |
+| 00 | [CR-001-phpdbadmin.pdf](00-change_request/CR-001-phpdbadmin.pdf) | CR-001 Fassung 4 + Ideensammlung, Rückfragen, Marktbild, Funktionsraster, Ideen-Backlog |
 | 01 | [terms-of-reference.pdf](01-pre-project/terms-of-reference.pdf) | Terms of Reference v1.0 (verabschiedet 28.10.2026) + Übersicht, Rückfragen, Ideen-Backlog |
 | 02 | [feasibility.pdf](02-feasibility/feasibility.pdf) | Feasibility-Bericht v1.0 + Sicherheit und Bedrohungen, Name und Marke |
 | 03 | [foundation.pdf](03-foundation/foundation.pdf) | Gestaltung, Wireframes, Solution-Architektur, Datenmodell, PRL, Timebox-Plan |
@@ -70,13 +70,13 @@ Jede Phase hat zusätzlich einen Ordner `diagrams/`.
 | 00 | [Ideensammlung](00-change_request/ideensammlung.md) | 🔨 v0.1 — W-Fragen, Prinzipien P-01 bis P-11 |
 | 00 | [Marktbild](00-change_request/marktbild.md) | 🔨 v0.1 — acht Befunde, Positionierung A + C, Quellen mit Prüfart |
 | 00 | [Funktionsraster](00-change_request/funktionsraster.md) | 🔨 v0.1 — drei Vorbilder → v1.0 / v1.1 / v1.2 / Nein |
-| 00 | [CR-001 phpdbadmin](00-change_request/CR-001-phpdbadmin.md) · [PDF-Dossier](00-change_request/CR-001-phpdbadmin.pdf) | ✅ Fassung 3 — **Weiterführen** entschieden 28.10.2026; 80 Anforderungen nach der Feasibility |
+| 00 | [CR-001 phpdbadmin](00-change_request/CR-001-phpdbadmin.md) · [PDF-Dossier](00-change_request/CR-001-phpdbadmin.pdf) | ✅ Fassung 4 — **Weiterführen** entschieden 28.10.2026; 81 Anforderungen nach Feasibility und Foundation-Review |
 | 01 | [Ausgangslage und Rückfragen](01-pre-project/ausgangslage-und-rueckfragen.md) | 🔨 erste Runde — R-01, R-03, R-04, R-11, R-40 entschieden; übrige mit Annahmen |
 | 01 | [Ideen-Backlog](01-pre-project/ideen-backlog.md) | 🔨 erste Sammlung |
 | 01 | [Terms of Reference](01-pre-project/terms-of-reference.md) · [PDF](01-pre-project/terms-of-reference.pdf) | ✅ v1.0 verabschiedet 28.10.2026 |
 | 02 | [Feasibility](02-feasibility/README.md) | ✅ abgeschlossen 28.10.2026 — 6 bestanden, 4 bedingt, Empfehlung Weiterführen; Proben in `tests/Feature/Feasibility` |
-| 03 | [Foundation](03-foundation/README.md) | 🟡 v1.0 zum Review 28.10.2026 — Gestaltung, Wireframes, Architektur, Datenmodell, PRL (bis v1.0 59 % Must), Timebox-Plan (13 TB, ≈ 53 PT); offen: Review, ADR-011 |
-| 04 | [Evolutionary Development](04-evolutionary-development/README.md) | 📋 TB 00 Fundament in fünf Scheiben geplant; ADR-001 bis ADR-010 angenommen, ADR-011 vorgeschlagen |
+| 03 | [Foundation](03-foundation/README.md) | ✅ v1.0 abgeschlossen 28.10.2026 — Gestaltung, Wireframes, Architektur, Datenmodell, PRL (bis v1.0 58 % Must), Timebox-Plan (13 TB, ≈ 53 PT); Review-Fragen entschieden, ADR-011 angenommen |
+| 04 | [Evolutionary Development](04-evolutionary-development/README.md) | 📋 bereit: TB 00 Fundament in fünf Scheiben als Nächstes; ADR-001 bis ADR-011 angenommen |
 | 05 | [Deployment](05-deployment/README.md) | 📋 Zielbild |
 | 06 | [Post-Project](06-post-project/README.md) | 📋 Platzhalter |
 

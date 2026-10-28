@@ -2,7 +2,7 @@
 
 | Feld | Wert |
 |---|---|
-| Status | Vorgeschlagen — Entscheid Hoang |
+| Status | Angenommen (Hoang, 28.10.2026) |
 | Datum | 28.10.2026 (Foundation) |
 | Betrifft | Installation, Hosting, `composer.json` |
 
@@ -20,11 +20,10 @@ Der Schutz von SQLite gegen `ATTACH` fremder Dateien braucht `Pdo\Sqlite::setAut
 
 ## Entscheid
 
-**Vorschlag A.** `composer.json` auf `^8.5` in TB 00; Herd läuft bereits mit 8.5.
+**Option A** (entschieden von Hoang am 28.10.2026). `composer.json` auf `^8.5` in TB 00; Herd läuft bereits mit 8.5.
 
 ## Konsequenzen
 
-- Hoang entscheidet; bis dahin gilt A als Annahme.
 - Die Installationsanleitung nennt PHP 8.5 und `pdo_sqlite`, `pdo_mysql`, `pdo_pgsql`.
 
 Siehe [Solution-Architektur](../../03-foundation/solution-architecture.md) · [Feasibility](../../02-feasibility/feasibility.md)

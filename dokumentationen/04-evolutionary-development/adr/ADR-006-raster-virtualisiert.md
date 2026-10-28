@@ -2,7 +2,7 @@
 
 | Feld | Wert |
 |---|---|
-| Status | Angenommen |
+| Status | Angenommen — bestätigt von Hoang am 28.10.2026 (Endlos scrollen statt Seiten zu 50) |
 | Datum | 28.10.2026 (Foundation; F-3) |
 | Betrifft | Datenraster |
 

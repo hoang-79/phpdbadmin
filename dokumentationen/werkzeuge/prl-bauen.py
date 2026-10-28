@@ -67,6 +67,7 @@ ZUORDNUNG: dict[str, tuple[str, str, str | None, str]] = {
     "V-08": ("11", "L", None, ""),
     "V-09": ("07", "M", None, ""),
     "V-10": ("01", "M", None, "F-7: Kontorechte gelesen (MariaDB, PostgreSQL)"),
+    "V-11": ("04", "M", None, "Wireframes 5–7; Rückfall: Schreibschutz in der Verbindung ausschalten"),
     # O — Oberfläche
     "O-01": ("01", "L", None, "F-3: Katalog mit 1'000 Tabellen 1–13 ms"),
     "O-02": ("03", "M", "Should", "Rückfall: Navigator"),

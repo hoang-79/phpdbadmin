@@ -63,7 +63,7 @@ SQL Server und Oracle (vorerst) · NoSQL · SaaS mit fremden Zugangsdaten · Des
 4. **Stufe 3 — Verwalten:** Server-Verwaltung, weitere Objekte, Beziehungsdiagramm, EXPLAIN, Sicherung → **v1.1**
 5. **Stufe 4 — Komfort und Team:** Schemavergleich, Laravel-Migration, Herd, SSH-Tunnel, KI optional → **v1.2**
 
-Der Must-Anteil bis v1.0 liegt nach CR-001 Fassung 3 bei 68 % (62 Anforderungen, davon 42 Must); die PRL bringt ihn unter 60 %.
+Der Must-Anteil bis v1.0 liegt nach CR-001 Fassung 4 bei 67 % (63 Anforderungen, davon 42 Must); die [PRL](../03-foundation/prl.md) bringt ihn mit Rückfallwegen auf 58 % der Punkte.
 
 ## 7. Fahrplan und Meilensteine
 

@@ -26,6 +26,6 @@ Ausformuliert in der Foundation am 28.10.2026 (Kontext → Optionen → Entschei
 | [ADR-008](adr/ADR-008-anmeldung-ohne-passwort.md) | Anmeldung ohne Passwort | angenommen |
 | [ADR-009](adr/ADR-009-app-datenbank-sqlite.md) | App-Datenbank SQLite als Vorgabe | angenommen |
 | [ADR-010](adr/ADR-010-lizenz-mit.md) | Lizenz MIT | angenommen |
-| [ADR-011](adr/ADR-011-php-85-mindestversion.md) | PHP 8.5 als Mindestversion | **vorgeschlagen — Entscheid Hoang** |
+| [ADR-011](adr/ADR-011-php-85-mindestversion.md) | PHP 8.5 als Mindestversion | angenommen (Hoang 28.10.2026) |
 
 **Übernahme aus der Feasibility in TB 00:** Probe-Seiten `routes/probe.php`, `resources/js/pages/probe/*` übernehmen oder entfernen; die Proben in `tests/Feature/Feasibility` werden zu Vertragstests der Dialekt-Schicht.
