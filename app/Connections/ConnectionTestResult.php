@@ -2,8 +2,11 @@
 
 namespace App\Connections;
 
+use App\Support\Translations;
+
 /**
- * Ergebnis von «Verbindung testen»: Prüfschritte, Dauer, Version oder Fehler.
+ * Ergebnis von «Verbindung testen»: Prüfschritte, Dauer, Version oder Fehler. Die Warnungen zum Konto bleiben hier
+ * deutsch (so werden sie gespeichert) und werden erst in toArray() übersetzt.
  */
 final readonly class ConnectionTestResult
 {
@@ -31,7 +34,7 @@ final readonly class ConnectionTestResult
             'durationMs' => $this->durationMs,
             'version' => $this->version,
             'problem' => $this->problem?->toArray(),
-            'warnings' => $this->warnings,
+            'warnings' => Translations::accountWarnings($this->warnings),
             'testedAt' => now()->toIso8601String(),
         ];
     }

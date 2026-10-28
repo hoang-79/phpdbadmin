@@ -19,7 +19,7 @@ class PasskeyController extends Controller
 
         $passkey->update(['name' => $request->string('name')->trim()->toString()]);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Passkey umbenannt.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Passkey umbenannt.')]);
 
         return to_route('account');
     }

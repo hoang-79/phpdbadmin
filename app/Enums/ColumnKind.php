@@ -23,17 +23,17 @@ enum ColumnKind: string
     public function label(): string
     {
         return match ($this) {
-            self::Number => 'Zahl',
-            self::Text => 'Text',
-            self::Choice => 'Auswahl',
-            self::Boolean => 'Wahrheitswert',
-            self::DateTime => 'Datum und Zeit',
+            self::Number => __('Zahl'),
+            self::Text => __('Text'),
+            self::Choice => __('Auswahl'),
+            self::Boolean => __('Wahrheitswert'),
+            self::DateTime => __('Datum und Zeit'),
             self::Json => 'JSON',
-            self::Binary => 'Binär',
-            self::Identifier => 'Kennung',
-            self::Geometry => 'Geometrie',
-            self::List => 'Liste',
-            self::Other => 'Sonstiges',
+            self::Binary => __('Binär'),
+            self::Identifier => __('Kennung'),
+            self::Geometry => __('Geometrie'),
+            self::List => __('Liste'),
+            self::Other => __('Sonstiges'),
         };
     }
 

@@ -4,11 +4,13 @@ import { usePasskeyVerify } from '@laravel/passkeys/vue';
 import { KeyRound, Mail } from '@lucide/vue';
 import { computed } from 'vue';
 import InputError from '@/components/InputError.vue';
+import Interpolate from '@/components/Interpolate.vue';
 import Notice from '@/components/Notice.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { t } from '@/lib/i18n';
 import { passkeyMessage } from '@/lib/passkeyMessage';
 import { account } from '@/routes';
 import { code } from '@/routes/confirm';
@@ -25,7 +27,7 @@ defineProps<{
     codeSent: boolean;
 }>();
 
-setLayoutProps({ back: { href: account.url(), label: 'Zurück zum Konto' } });
+setLayoutProps({ back: { href: account.url(), label: t('Zurück zum Konto') } });
 
 const passkey = usePasskeyVerify({
     routes: { options: confirmOptions.url(), submit: confirm.url() },
@@ -38,13 +40,18 @@ const passkeyError = computed(() =>
 </script>
 
 <template>
-    <Head title="Bestätigen" />
+    <Head :title="t('Bestätigen')" />
 
     <div class="flex flex-col gap-1">
-        <h1 class="text-xl font-semibold">Bestätigen, dass Sie es sind</h1>
+        <h1 class="text-xl font-semibold">
+            {{ t('Bestätigen, dass Sie es sind') }}
+        </h1>
         <p class="text-text-secondary">
-            Bevor Sie Passkeys hinzufügen oder entfernen, bestätigen Sie kurz
-            Ihre Anmeldung.
+            {{
+                t(
+                    'Bevor Sie Passkeys hinzufügen oder entfernen, bestätigen Sie kurz Ihre Anmeldung.',
+                )
+            }}
         </p>
     </div>
 
@@ -61,20 +68,25 @@ const passkeyError = computed(() =>
         >
             <Spinner v-if="passkey.isLoading.value" />
             <KeyRound v-else />
-            Mit Passkey bestätigen
+            {{ t('Mit Passkey bestätigen') }}
         </Button>
         <InputError :message="passkeyError" />
         <div
             class="mt-3 flex items-center gap-3 text-[13px] text-muted-foreground before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border"
         >
-            oder mit Code per Mail
+            {{ t('oder mit Code per Mail') }}
         </div>
     </div>
 
     <template v-if="codeSent">
         <Notice :icon="Mail">
-            Wir haben einen Code an
-            <b class="font-semibold wrap-break-word">{{ email }}</b> gesendet.
+            <Interpolate :text="t('Wir haben einen Code an :email gesendet.')">
+                <template #email
+                    ><b class="font-semibold wrap-break-word">{{
+                        email
+                    }}</b></template
+                >
+            </Interpolate>
         </Notice>
         <Form
             v-bind="verify.form()"
@@ -82,7 +94,9 @@ const passkeyError = computed(() =>
             #default="{ errors, processing }"
         >
             <div class="flex flex-col gap-1.5">
-                <Label for="code" class="text-[13px]">Code aus der Mail</Label>
+                <Label for="code" class="text-[13px]">{{
+                    t('Code aus der Mail')
+                }}</Label>
                 <Input
                     id="code"
                     name="code"
@@ -104,7 +118,7 @@ const passkeyError = computed(() =>
                 :disabled="processing"
             >
                 <Spinner v-if="processing" />
-                Bestätigen
+                {{ t('Bestätigen') }}
             </Button>
         </Form>
     </template>
@@ -119,7 +133,11 @@ const passkeyError = computed(() =>
         >
             <Spinner v-if="processing" />
             <Mail v-else />
-            {{ codeSent ? 'Neuen Code senden' : `Code an ${email} senden` }}
+            {{
+                codeSent
+                    ? t('Neuen Code senden')
+                    : t('Code an :email senden', { email })
+            }}
         </Button>
         <InputError :message="errors.code" class="mt-2" />
     </Form>

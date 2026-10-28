@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DatabaseConnection;
 use App\Models\User;
 use App\Services\Catalog\Catalog;
+use App\Support\Translations;
 use Closure;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
@@ -115,7 +116,7 @@ class WorkspaceController extends Controller
                     'serverVersion' => $connection->server_version,
                     'environment' => $connection->environment->value,
                     'readOnly' => $connection->read_only,
-                    'accountWarnings' => $connection->account_warnings ?? [],
+                    'accountWarnings' => Translations::accountWarnings($connection->account_warnings ?? []),
                     'canManage' => $connection->isManageableBy($user),
                 ],
                 // PostgreSQL mit «alle Datenbanken»: Auswahl im Navigator, die gewählte in der Adresse (?db=).

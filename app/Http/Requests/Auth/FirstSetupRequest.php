@@ -24,6 +24,6 @@ class FirstSetupRequest extends FormRequest
      */
     public function attributes(): array
     {
-        return ['key' => 'Einrichtungsschlüssel'];
+        return ['key' => __('Einrichtungsschlüssel')];
     }
 }

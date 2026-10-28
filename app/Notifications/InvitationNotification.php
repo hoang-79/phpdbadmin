@@ -8,6 +8,8 @@ use Illuminate\Notifications\Notification;
 
 /**
  * Einladung zu einem Konto (A-06). Der Link führt zur Annahme; danach meldet sich die Person per Code oder Passkey an.
+ * Die Adresse hat noch kein Konto und damit keine gewählte Sprache: Die Mail geht in der Sprache der Anfrage hinaus
+ * (über die Konsole in der Sprache der Installation).
  */
 class InvitationNotification extends Notification
 {
@@ -30,11 +32,13 @@ class InvitationNotification extends Notification
         $appName = (string) config('app.name');
 
         return (new MailMessage)
-            ->subject('Einladung zu '.$appName)
-            ->greeting('Guten Tag')
-            ->line(($this->inviterName ?? 'Die Administration').' lädt Sie zu '.$appName.' ein.')
-            ->action('Einladung annehmen', $this->url)
-            ->line('Der Link gilt bis '.$this->expiresAt->timezone((string) config('app.timezone'))->format('d.m.Y, H:i').' Uhr.')
-            ->line('Ein Passwort gibt es nicht: Sie melden sich mit einem Code per Mail oder mit einem Passkey an.');
+            ->subject(__('Einladung zu :app', ['app' => $appName]))
+            ->greeting(__('Guten Tag'))
+            ->line($this->inviterName === null
+                ? __('Die Administration lädt Sie zu :app ein.', ['app' => $appName])
+                : __(':name lädt Sie zu :app ein.', ['name' => $this->inviterName, 'app' => $appName]))
+            ->action(__('Einladung annehmen'), $this->url)
+            ->line(__('Der Link gilt bis :time Uhr.', ['time' => $this->expiresAt->timezone((string) config('app.timezone'))->format('d.m.Y, H:i')]))
+            ->line(__('Ein Passwort gibt es nicht: Sie melden sich mit einem Code per Mail oder mit einem Passkey an.'));
     }
 }

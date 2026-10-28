@@ -2,6 +2,7 @@
 
 namespace App\Connections;
 
+use App\Support\Translations;
 use Throwable;
 
 /**
@@ -21,7 +22,7 @@ final class ConnectionTester
 
         try {
             $address = $this->factory->address($settings);
-            $steps[] = $this->step('allowed', $isServer ? 'Host erlaubt' : 'Datei erlaubt', 'ok', $isServer
+            $steps[] = $this->step('allowed', $isServer ? __('Host erlaubt') : __('Datei erlaubt'), 'ok', $isServer
                 ? ($address === strtolower((string) $settings->host) ? $address : $settings->host.' → '.$address)
                 : $address);
         } catch (ConnectionNotAllowed $exception) {
@@ -35,7 +36,7 @@ final class ConnectionTester
                 return $this->failed($steps, 'reachable', $reachable, $isServer, $start);
             }
 
-            $steps[] = $this->step('reachable', 'Server erreichbar', 'ok', 'Port '.$settings->port().' offen');
+            $steps[] = $this->step('reachable', __('Server erreichbar'), 'ok', __('Port :port offen', ['port' => (string) $settings->port()]));
         }
 
         $dialect = $settings->driver->dialect();
@@ -49,7 +50,7 @@ final class ConnectionTester
             return $this->failed($steps, 'login', $this->withoutPassword($problem, $settings->password), $isServer, $start);
         }
 
-        $steps[] = $this->step('login', $isServer ? 'Anmeldung' : 'Datenbank geöffnet', 'ok', $settings->driver->label().' '.$version);
+        $steps[] = $this->step('login', $isServer ? __('Anmeldung') : __('Datenbank geöffnet'), 'ok', $settings->driver->label().' '.$version);
         $warnings = [];
 
         if ($isServer) {
@@ -57,10 +58,10 @@ final class ConnectionTester
             try {
                 $warnings = $dialect->accountWarnings($connection);
                 $steps[] = $warnings === []
-                    ? $this->step('account', 'Rechte des Kontos', 'ok', 'keine Rechte über die Datenbank hinaus')
-                    : $this->step('account', 'Rechte des Kontos', 'warning', implode(' ', array_column($warnings, 'title')));
+                    ? $this->step('account', __('Rechte des Kontos'), 'ok', __('keine Rechte über die Datenbank hinaus'))
+                    : $this->step('account', __('Rechte des Kontos'), 'warning', implode(' ', array_column(Translations::accountWarnings($warnings), 'title')));
             } catch (Throwable) {
-                $steps[] = $this->step('account', 'Rechte des Kontos', 'skipped', 'liess sich nicht lesen');
+                $steps[] = $this->step('account', __('Rechte des Kontos'), 'skipped', __('liess sich nicht lesen'));
             }
         }
 
@@ -102,8 +103,8 @@ final class ConnectionTester
     private function failed(array $steps, string $at, ConnectionProblem $problem, bool $isServer, int|float $start): ConnectionTestResult
     {
         $labels = $isServer
-            ? ['allowed' => 'Host erlaubt', 'reachable' => 'Server erreichbar', 'login' => 'Anmeldung', 'account' => 'Rechte des Kontos']
-            : ['allowed' => 'Datei erlaubt', 'login' => 'Datenbank geöffnet'];
+            ? ['allowed' => __('Host erlaubt'), 'reachable' => __('Server erreichbar'), 'login' => __('Anmeldung'), 'account' => __('Rechte des Kontos')]
+            : ['allowed' => __('Datei erlaubt'), 'login' => __('Datenbank geöffnet')];
 
         $reached = false;
         foreach ($labels as $key => $label) {
@@ -111,7 +112,7 @@ final class ConnectionTester
                 $steps[] = $this->step($key, $label, 'failed', $problem->title());
                 $reached = true;
             } elseif ($reached) {
-                $steps[] = $this->step($key, $label, 'skipped', 'nicht geprüft');
+                $steps[] = $this->step($key, $label, 'skipped', __('nicht geprüft'));
             }
         }
 

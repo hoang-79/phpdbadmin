@@ -1,8 +1,10 @@
 import type { PasskeyError } from '@laravel/passkeys';
+import { t } from '@/lib/i18n';
 
 /**
- * Meldungen der Passkey-Bibliothek im Browser auf Deutsch. Meldungen des Servers kommen schon übersetzt
- * (lang/de.json) und bleiben, wie sie sind. Abbrechen durch die Person ist kein Fehler.
+ * Meldungen der Passkey-Bibliothek im Browser in der Sprache der Oberfläche. Meldungen des Servers kommen schon
+ * übersetzt (Deutsch aus lang/de.json, Englisch im Original) und bleiben, wie sie sind. Abbrechen durch die Person
+ * ist kein Fehler.
  */
 export function passkeyMessage(error: PasskeyError | null): string | null {
     if (!error) {
@@ -13,15 +15,21 @@ export function passkeyMessage(error: PasskeyError | null): string | null {
         case 'UserCancelledError':
             return null;
         case 'NotSupportedError':
-            return 'Dieser Browser unterstützt keine Passkeys. Melden Sie sich mit einem Code per Mail an.';
+            return t(
+                'Dieser Browser unterstützt keine Passkeys. Melden Sie sich mit einem Code per Mail an.',
+            );
         case 'PasskeyExistsError':
-            return 'Dieser Passkey ist schon in Ihrem Konto.';
+            return t('Dieser Passkey ist schon in Ihrem Konto.');
         case 'InvalidDomainError':
-            return 'Passkeys funktionieren nur unter der Adresse dieser Installation.';
+            return t(
+                'Passkeys funktionieren nur unter der Adresse dieser Installation.',
+            );
         default:
             // 423 der Middleware password.confirm: die Bestätigung ist abgelaufen.
             return error.message.includes('confirmation required')
-                ? 'Bitte bestätigen Sie zuerst kurz Ihre Anmeldung — per Passkey oder Code.'
+                ? t(
+                      'Bitte bestätigen Sie zuerst kurz Ihre Anmeldung — per Passkey oder Code.',
+                  )
                 : error.message;
     }
 }
@@ -45,5 +53,7 @@ export function suggestedPasskeyName(userAgent: string): string {
         { pattern: /Linux/, name: 'Linux' },
     ].find(({ pattern }) => pattern.test(userAgent))?.name;
 
-    return [browser, device].filter(Boolean).join(' auf ');
+    return browser && device
+        ? t(':browser auf :device', { browser, device })
+        : (browser ?? device ?? '');
 }

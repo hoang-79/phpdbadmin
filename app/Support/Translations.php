@@ -35,4 +35,29 @@ final class Translations
 
         return $messages;
     }
+
+    /**
+     * Warnungen zu den Rechten eines Kontos (V-10) in der Sprache der Anfrage. Die Dialekte liefern sie auf Deutsch,
+     * und so stehen sie auch in der Spalte `account_warnings` — gleich, in welcher Sprache getestet wurde. Übersetzt
+     * wird erst bei der Ausgabe.
+     *
+     * @param  list<array<string, string>>  $warnings
+     * @return list<array<string, string>>
+     */
+    public static function accountWarnings(array $warnings): array
+    {
+        return array_map(fn (array $warning): array => [
+            ...$warning,
+            'title' => self::line($warning['title'] ?? ''),
+            'recommendation' => self::line($warning['recommendation'] ?? ''),
+        ], $warnings);
+    }
+
+    /** Ein gespeicherter deutscher Text in der Sprache der Anfrage. */
+    private static function line(string $german): string
+    {
+        $line = __($german);
+
+        return is_string($line) ? $line : $german;
+    }
 }

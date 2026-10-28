@@ -44,7 +44,7 @@ class FirstSetupController extends Controller
             $this->audit->record('setup.failed', context: ['method' => 'browser']);
 
             throw ValidationException::withMessages([
-                'key' => 'Der Einrichtungsschlüssel stimmt nicht. Er steht in der Datei '.$this->setupKey->displayPath().'.',
+                'key' => __('Der Einrichtungsschlüssel stimmt nicht. Er steht in der Datei :path.', ['path' => $this->setupKey->displayPath()]),
             ]);
         }
 

@@ -80,7 +80,7 @@ class LoginController extends Controller
             ]);
 
             throw ValidationException::withMessages([
-                'code' => 'Der Code stimmt nicht oder ist abgelaufen. Fordern Sie bei Bedarf einen neuen an.',
+                'code' => __('Der Code stimmt nicht oder ist abgelaufen. Fordern Sie bei Bedarf einen neuen an.'),
             ]);
         }
 
@@ -105,13 +105,13 @@ class LoginController extends Controller
 
         if ($this->secondsUntilResend($request) > 0) {
             throw ValidationException::withMessages([
-                'code' => 'Ein neuer Code lässt sich erst in '.$this->secondsUntilResend($request).' Sekunden senden.',
+                'code' => __('Ein neuer Code lässt sich erst in :seconds Sekunden senden.', ['seconds' => $this->secondsUntilResend($request)]),
             ]);
         }
 
         $this->sendCode($request, $email);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Neuer Code gesendet.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Neuer Code gesendet.')]);
 
         return to_route('login.code.show');
     }

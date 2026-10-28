@@ -73,6 +73,21 @@ class ConnectionControllerTest extends TestCase
         $this->assertStringNotContainsString('Geheim-Uebersicht-1', (string) $response->getContent());
     }
 
+    public function test_overview_shows_stored_account_warnings_in_the_language_of_the_account(): void
+    {
+        $user = User::factory()->create(['locale' => 'en']);
+        DatabaseConnection::factory()->for($user, 'owner')->create(['account_warnings' => [[
+            'key' => 'superuser',
+            'title' => 'Dieses Konto ist Superuser.',
+            'recommendation' => 'Empfehlung: ein eigenes Konto ohne Superuser-Recht — für Produktion nur mit Leserechten.',
+        ]]]);
+
+        $this->actingAs($user)->get(route('home'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('connections.0.accountWarnings.0.title', 'This account is a superuser.')
+                ->where('connections.0.accountWarnings.0.recommendation', 'Recommendation: a separate account without superuser privileges — for production, with read privileges only.'));
+    }
+
     public function test_stores_server_connection_with_encrypted_password(): void
     {
         $user = User::factory()->create();

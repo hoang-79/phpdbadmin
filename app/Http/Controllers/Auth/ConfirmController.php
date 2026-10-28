@@ -62,7 +62,7 @@ class ConfirmController extends Controller
             $this->audit->record('auth.failed', $user, context: ['method' => 'confirm-code']);
 
             throw ValidationException::withMessages([
-                'code' => 'Der Code stimmt nicht oder ist abgelaufen.',
+                'code' => __('Der Code stimmt nicht oder ist abgelaufen.'),
             ]);
         }
 

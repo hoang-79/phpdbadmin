@@ -34,13 +34,13 @@ class ConnectionPasswordController extends Controller
 
     public function store(Request $request, DatabaseConnection $connection, ConnectionTester $tester, TargetConnections $targets): RedirectResponse
     {
-        $password = (string) $request->validate(['password' => ['required', 'string', 'max:1024']])['password'];
+        $password = (string) $request->validate(['password' => ['required', 'string', 'max:1024']], [], ['password' => __('Passwort')])['password'];
 
         $result = $tester->test(ConnectionSettings::fromConnection($connection, $password), connectTimeout: 3);
 
         if (! $result->ok) {
             throw ValidationException::withMessages([
-                'password' => ($result->problem?->title() ?? 'Verbindung gescheitert').' — '.($result->problem?->kind->explanation() ?? ''),
+                'password' => ($result->problem?->title() ?? __('Verbindung gescheitert')).' — '.($result->problem?->kind->explanation() ?? ''),
             ]);
         }
 

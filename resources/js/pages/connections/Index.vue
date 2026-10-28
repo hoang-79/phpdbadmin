@@ -14,6 +14,7 @@ import {
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import EnvironmentMark from '@/components/connections/EnvironmentMark.vue';
+import Interpolate from '@/components/Interpolate.vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -32,6 +33,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { formatRecent } from '@/lib/format';
+import { t, tc } from '@/lib/i18n';
 import { workspace } from '@/routes';
 import { create, destroy, edit } from '@/routes/connections';
 import type { ConnectionEnvironment, ConnectionSummary } from '@/types';
@@ -68,7 +70,7 @@ const groups = computed(() => {
     const map = new Map<string, ConnectionSummary[]>();
 
     for (const connection of filtered.value) {
-        const key = connection.group ?? 'Ohne Gruppe';
+        const key = connection.group ?? t('Ohne Gruppe');
         map.set(key, [...(map.get(key) ?? []), connection]);
     }
 
@@ -98,30 +100,36 @@ function remove(connection: ConnectionSummary): void {
 </script>
 
 <template>
-    <Head title="Verbindungen" />
+    <Head :title="t('Verbindungen')" />
 
     <div class="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 sm:px-8">
         <div class="flex flex-wrap items-start gap-3">
             <div class="flex flex-col gap-1">
-                <h1 class="text-xl font-semibold">Verbindungen</h1>
+                <h1 class="text-xl font-semibold">{{ t('Verbindungen') }}</h1>
                 <p class="text-text-secondary">
                     <template v-if="connections.length">
-                        {{ connections.length }}
                         {{
-                            connections.length === 1
-                                ? 'Verbindung'
-                                : 'Verbindungen'
+                            tc(
+                                ':count Verbindung in :groups|:count Verbindungen in :groups',
+                                connections.length,
+                                {
+                                    groups: tc(
+                                        ':count Gruppe|:count Gruppen',
+                                        groupCount,
+                                    ),
+                                },
+                            )
                         }}
-                        in {{ groupCount }}
-                        {{ groupCount === 1 ? 'Gruppe' : 'Gruppen' }}
                     </template>
-                    <template v-else
-                        >Ihre Datenbanken auf einen Blick.</template
-                    >
+                    <template v-else>{{
+                        t('Ihre Datenbanken auf einen Blick.')
+                    }}</template>
                 </p>
             </div>
             <Button class="w-full sm:ml-auto sm:w-auto" as-child>
-                <Link :href="create()"><Plus />Verbindung anlegen</Link>
+                <Link :href="create()"
+                    ><Plus />{{ t('Verbindung anlegen') }}</Link
+                >
             </Button>
         </div>
 
@@ -134,8 +142,8 @@ function remove(connection: ConnectionSummary): void {
                     <Input
                         v-model="search"
                         type="search"
-                        placeholder="Verbindungen suchen"
-                        aria-label="Verbindungen suchen"
+                        :placeholder="t('Verbindungen suchen')"
+                        :aria-label="t('Verbindungen suchen')"
                         class="pl-8"
                     />
                 </div>
@@ -150,7 +158,7 @@ function remove(connection: ConnectionSummary): void {
                     :aria-pressed="environmentFilter === null"
                     @click="environmentFilter = null"
                 >
-                    Alle {{ connections.length }}
+                    {{ t('Alle :count', { count: connections.length }) }}
                 </button>
                 <button
                     v-if="productionCount"
@@ -198,12 +206,18 @@ function remove(connection: ConnectionSummary): void {
                             <span
                                 v-if="connection.readOnly"
                                 class="inline-flex items-center gap-1 rounded-full border border-destructive bg-destructive-soft px-2 py-px text-xs font-medium text-destructive"
-                                ><Lock class="size-3" />schreibgeschützt</span
+                                ><Lock class="size-3" />{{
+                                    t('schreibgeschützt')
+                                }}</span
                             >
                             <DropdownMenu v-if="connection.canManage">
                                 <DropdownMenuTrigger
                                     class="relative z-10 ml-auto inline-grid size-7 place-items-center rounded-md text-text-secondary outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
-                                    :aria-label="`Aktionen für ${connection.name}`"
+                                    :aria-label="
+                                        t('Aktionen für :name', {
+                                            name: connection.name,
+                                        })
+                                    "
                                 >
                                     <MoreHorizontal class="size-4" />
                                 </DropdownMenuTrigger>
@@ -212,16 +226,18 @@ function remove(connection: ConnectionSummary): void {
                                         <Link
                                             :href="edit(connection.id)"
                                             class="gap-2"
-                                            ><Pencil
-                                                class="size-4"
-                                            />Bearbeiten</Link
+                                            ><Pencil class="size-4" />{{
+                                                t('Bearbeiten')
+                                            }}</Link
                                         >
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                         class="gap-2 text-destructive"
                                         @select="removing = connection"
                                     >
-                                        <Trash2 class="size-4" />Entfernen
+                                        <Trash2 class="size-4" />{{
+                                            t('Entfernen')
+                                        }}
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -250,16 +266,22 @@ function remove(connection: ConnectionSummary): void {
                                 "
                             >
                                 <br />
-                                <template v-if="connection.database"
-                                    >Datenbank
-                                    {{ connection.database }}</template
-                                >
+                                <template v-if="connection.database">{{
+                                    t('Datenbank :name', {
+                                        name: connection.database,
+                                    })
+                                }}</template>
                                 <template v-if="connection.username">
                                     <template v-if="connection.database">
                                         ·
                                     </template>
-                                    Konto
-                                    <code>{{ connection.username }}</code>
+                                    <Interpolate :text="t('Konto :username')">
+                                        <template #username
+                                            ><code>{{
+                                                connection.username
+                                            }}</code></template
+                                        >
+                                    </Interpolate>
                                 </template>
                             </template>
                         </div>
@@ -284,8 +306,12 @@ function remove(connection: ConnectionSummary): void {
                             <Clock class="size-3.5" />
                             {{
                                 connection.lastTestedAt
-                                    ? `zuletzt getestet ${formatRecent(connection.lastTestedAt)}`
-                                    : 'noch nicht getestet'
+                                    ? t('zuletzt getestet :time', {
+                                          time: formatRecent(
+                                              connection.lastTestedAt,
+                                          ),
+                                      })
+                                    : t('noch nicht getestet')
                             }}
                         </div>
                     </article>
@@ -293,7 +319,7 @@ function remove(connection: ConnectionSummary): void {
             </section>
 
             <p v-if="!filtered.length" class="text-sm text-text-secondary">
-                Keine Verbindung passt zur Suche.
+                {{ t('Keine Verbindung passt zur Suche.') }}
             </p>
         </template>
 
@@ -306,10 +332,13 @@ function remove(connection: ConnectionSummary): void {
             >
                 <Database class="size-6" />
             </span>
-            <h2 class="font-semibold">Noch keine Verbindung</h2>
+            <h2 class="font-semibold">{{ t('Noch keine Verbindung') }}</h2>
             <p class="max-w-md text-sm text-text-secondary">
-                Legen Sie Ihre erste Verbindung an — MariaDB, MySQL, PostgreSQL
-                oder eine SQLite-Datei.
+                {{
+                    t(
+                        'Legen Sie Ihre erste Verbindung an — MariaDB, MySQL, PostgreSQL oder eine SQLite-Datei.',
+                    )
+                }}
             </p>
         </section>
 
@@ -318,25 +347,28 @@ function remove(connection: ConnectionSummary): void {
             @update:open="(open) => !open && (removing = null)"
         >
             <DialogContent v-if="removing">
-                <DialogTitle
-                    >Verbindung «{{ removing.name }}» entfernen?</DialogTitle
-                >
+                <DialogTitle>{{
+                    t('Verbindung «:name» entfernen?', { name: removing.name })
+                }}</DialogTitle>
                 <DialogDescription>
-                    Entfernt nur den Eintrag in phpdbadmin mit gespeichertem
-                    Passwort. Die Datenbank selbst bleibt unberührt.
+                    {{
+                        t(
+                            'Entfernt nur den Eintrag in phpdbadmin mit gespeichertem Passwort. Die Datenbank selbst bleibt unberührt.',
+                        )
+                    }}
                 </DialogDescription>
                 <DialogFooter class="gap-2">
                     <DialogClose as-child>
-                        <Button type="button" variant="outline"
-                            >Abbrechen</Button
-                        >
+                        <Button type="button" variant="outline">{{
+                            t('Abbrechen')
+                        }}</Button>
                     </DialogClose>
                     <Button
                         variant="destructive"
                         :disabled="isRemoving"
                         @click="remove(removing)"
                     >
-                        <Spinner v-if="isRemoving" />Entfernen
+                        <Spinner v-if="isRemoving" />{{ t('Entfernen') }}
                     </Button>
                 </DialogFooter>
             </DialogContent>

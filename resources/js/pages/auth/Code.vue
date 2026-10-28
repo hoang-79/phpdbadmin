@@ -4,12 +4,14 @@ import { Mail, RefreshCw } from '@lucide/vue';
 import { useIntervalFn } from '@vueuse/core';
 import { ref } from 'vue';
 import InputError from '@/components/InputError.vue';
+import Interpolate from '@/components/Interpolate.vue';
 import Notice from '@/components/Notice.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { formatCountdown, formatTime } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import { login } from '@/routes';
 import { resend, verify } from '@/routes/login/code';
 
@@ -21,7 +23,9 @@ const props = defineProps<{
     resendInSeconds: number;
 }>();
 
-setLayoutProps({ back: { href: login.url(), label: 'Zurück zur Anmeldung' } });
+setLayoutProps({
+    back: { href: login.url(), label: t('Zurück zur Anmeldung') },
+});
 
 const waitSeconds = ref(props.resendInSeconds);
 useIntervalFn(() => {
@@ -30,15 +34,25 @@ useIntervalFn(() => {
 </script>
 
 <template>
-    <Head title="Code eingeben" />
+    <Head :title="t('Code eingeben')" />
 
-    <h1 class="text-xl font-semibold">Code eingeben</h1>
+    <h1 class="text-xl font-semibold">{{ t('Code eingeben') }}</h1>
 
     <Notice :icon="Mail">
-        Wir haben einen Code an
-        <b class="font-semibold wrap-break-word">{{ email }}</b> gesendet,
-        sofern es dazu ein Konto gibt. Er ist {{ validMinutes }} Minuten gültig,
-        bis {{ formatTime(expiresAt) }} Uhr.
+        <Interpolate
+            :text="
+                t(
+                    'Wir haben einen Code an :email gesendet, sofern es dazu ein Konto gibt. Er ist :minutes Minuten gültig, bis :time Uhr.',
+                    { minutes: validMinutes, time: formatTime(expiresAt) },
+                )
+            "
+        >
+            <template #email
+                ><b class="font-semibold wrap-break-word">{{
+                    email
+                }}</b></template
+            >
+        </Interpolate>
     </Notice>
 
     <Form
@@ -47,7 +61,9 @@ useIntervalFn(() => {
         #default="{ errors, processing }"
     >
         <div class="flex flex-col gap-1.5">
-            <Label for="code" class="text-[13px]">Code aus der Mail</Label>
+            <Label for="code" class="text-[13px]">{{
+                t('Code aus der Mail')
+            }}</Label>
             <Input
                 id="code"
                 name="code"
@@ -62,8 +78,11 @@ useIntervalFn(() => {
             />
             <InputError :message="errors.code" />
             <p id="code-hint" class="text-xs text-muted-foreground">
-                Sechs Ziffern. Sie können den Code auch aus der Mail einfügen —
-                Ihr Gerät schlägt ihn oft schon vor.
+                {{
+                    t(
+                        'Sechs Ziffern. Sie können den Code auch aus der Mail einfügen — Ihr Gerät schlägt ihn oft schon vor.',
+                    )
+                }}
             </p>
         </div>
 
@@ -74,7 +93,7 @@ useIntervalFn(() => {
             :disabled="processing"
         >
             <Spinner v-if="processing" />
-            Anmelden
+            {{ t('Anmelden') }}
         </Button>
     </Form>
 
@@ -90,17 +109,17 @@ useIntervalFn(() => {
                 :disabled="processing || waitSeconds > 0"
             >
                 <RefreshCw class="size-3.5" />
-                Code erneut senden
-                <span v-if="waitSeconds > 0" class="tabular-nums"
-                    >(in {{ formatCountdown(waitSeconds) }})</span
-                >
+                {{ t('Code erneut senden') }}
+                <span v-if="waitSeconds > 0" class="tabular-nums">{{
+                    t('(in :time)', { time: formatCountdown(waitSeconds) })
+                }}</span>
             </button>
         </Form>
         <Link
             :href="login()"
             class="inline-flex items-center gap-1.5 text-primary underline underline-offset-2"
         >
-            <Mail class="size-3.5" />Andere Adresse verwenden
+            <Mail class="size-3.5" />{{ t('Andere Adresse verwenden') }}
         </Link>
     </div>
 </template>

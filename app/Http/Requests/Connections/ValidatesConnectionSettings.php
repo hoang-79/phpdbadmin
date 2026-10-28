@@ -45,15 +45,15 @@ trait ValidatesConnectionSettings
     protected function settingsAttributes(): array
     {
         return [
-            'host' => 'Host',
-            'port' => 'Port',
-            'database' => 'Datenbank',
-            'all_databases' => 'Alle Datenbanken',
-            'username' => 'Benutzer',
-            'password' => 'Passwort',
-            'sslmode' => 'SSL',
-            'sqlite_path' => 'Datei',
-            'driver' => 'Treiber',
+            'host' => __('Host'),
+            'port' => __('Port'),
+            'database' => __('Datenbank'),
+            'all_databases' => __('Alle Datenbanken'),
+            'username' => __('Benutzer'),
+            'password' => __('Passwort'),
+            'sslmode' => __('SSL'),
+            'sqlite_path' => __('Datei'),
+            'driver' => __('Treiber'),
         ];
     }
 
@@ -63,8 +63,8 @@ trait ValidatesConnectionSettings
             app(HostPolicy::class)->resolveHost((string) $value);
         } catch (ConnectionNotAllowed $exception) {
             $fail($exception->problem->kind === ConnectionProblemKind::HostUnknown
-                ? 'Dieser Name lässt sich nicht auflösen.'
-                : 'Dieser Host ist in dieser Installation nicht erlaubt.');
+                ? __('Dieser Name lässt sich nicht auflösen.')
+                : __('Dieser Host ist in dieser Installation nicht erlaubt.'));
         }
     }
 
@@ -74,10 +74,10 @@ trait ValidatesConnectionSettings
             app(HostPolicy::class)->resolveSqlitePath((string) $value);
         } catch (ConnectionNotAllowed $exception) {
             $fail(match ($exception->problem->kind) {
-                ConnectionProblemKind::FileMissing => 'Unter diesem Pfad liegt keine Datei.',
-                default => $exception->problem->detail === 'Das ist die eigene Datenbank von phpdbadmin.'
-                    ? 'Die eigene Datenbank von phpdbadmin ist hier nicht erreichbar.'
-                    : 'Diese Datei liegt nicht in einem erlaubten Ordner.',
+                ConnectionProblemKind::FileMissing => __('Unter diesem Pfad liegt keine Datei.'),
+                default => $exception->problem->isAppDatabase()
+                    ? __('Die eigene Datenbank von phpdbadmin ist hier nicht erreichbar.')
+                    : __('Diese Datei liegt nicht in einem erlaubten Ordner.'),
             });
         }
     }

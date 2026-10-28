@@ -239,16 +239,18 @@ class MySqlDialect extends BaseDialect
         if ($all) {
             $warnings[] = [
                 'key' => 'superuser',
-                'title' => 'Dieses Konto hat alle Rechte auf dem Server.',
-                'recommendation' => 'Empfehlung: ein eigenes Konto nur mit Rechten auf die nötige Datenbank — für Produktion nur SELECT.',
+                'title' => __('Dieses Konto hat alle Rechte auf dem Server.', locale: 'de'),
+                'recommendation' => __('Empfehlung: ein eigenes Konto nur mit Rechten auf die nötige Datenbank — für Produktion nur SELECT.', locale: 'de'),
             ];
         }
 
         if ($file && $secureFilePriv !== null) {
             $warnings[] = [
                 'key' => 'file_read',
-                'title' => 'Dieses Konto darf Dateien auf dem Server lesen.',
-                'recommendation' => 'Empfehlung: ein eigenes Konto ohne FILE-Recht'.($secureFilePriv === '' ? ' — secure_file_priv ist leer, also jeder Ordner.' : '.'),
+                'title' => __('Dieses Konto darf Dateien auf dem Server lesen.', locale: 'de'),
+                'recommendation' => $secureFilePriv === ''
+                    ? __('Empfehlung: ein eigenes Konto ohne FILE-Recht — secure_file_priv ist leer, also jeder Ordner.', locale: 'de')
+                    : __('Empfehlung: ein eigenes Konto ohne FILE-Recht.', locale: 'de'),
             ];
         }
 

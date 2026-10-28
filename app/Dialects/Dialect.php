@@ -145,6 +145,8 @@ interface Dialect
 
     /**
      * Rechte des Kontos, die über die Arbeit mit Daten hinausgehen (V-10, F-7): Superuser, Dateien auf dem Server.
+     * Titel und Empfehlung immer auf Deutsch (`__('…', locale: 'de')`): So werden sie mit der Verbindung gespeichert;
+     * übersetzt wird bei der Ausgabe (Translations::accountWarnings).
      *
      * @return list<AccountWarning>
      */

@@ -89,7 +89,7 @@ final class HostPolicy
         if ($appDatabase !== false && $real === $appDatabase) {
             throw new ConnectionNotAllowed(ConnectionProblem::of(
                 ConnectionProblemKind::FileNotAllowed,
-                'Das ist die eigene Datenbank von phpdbadmin.',
+                ConnectionProblem::APP_DATABASE,
             ));
         }
 

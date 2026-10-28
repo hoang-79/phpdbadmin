@@ -331,16 +331,16 @@ class PostgresDialect extends BaseDialect
         if ((bool) ($role->superuser ?? false)) {
             $warnings[] = [
                 'key' => 'superuser',
-                'title' => 'Dieses Konto ist Superuser.',
-                'recommendation' => 'Empfehlung: ein eigenes Konto ohne Superuser-Recht — für Produktion nur mit Leserechten.',
+                'title' => __('Dieses Konto ist Superuser.', locale: 'de'),
+                'recommendation' => __('Empfehlung: ein eigenes Konto ohne Superuser-Recht — für Produktion nur mit Leserechten.', locale: 'de'),
             ];
         }
 
         if ((bool) ($role->superuser ?? false) || (bool) ($role->files ?? false)) {
             $warnings[] = [
                 'key' => 'file_read',
-                'title' => 'Dieses Konto darf Dateien auf dem Server lesen.',
-                'recommendation' => 'Empfehlung: ein eigenes Konto ohne pg_read_server_files.',
+                'title' => __('Dieses Konto darf Dateien auf dem Server lesen.', locale: 'de'),
+                'recommendation' => __('Empfehlung: ein eigenes Konto ohne pg_read_server_files.', locale: 'de'),
             ];
         }
 

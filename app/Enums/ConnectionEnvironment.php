@@ -14,9 +14,9 @@ enum ConnectionEnvironment: string
     public function label(): string
     {
         return match ($this) {
-            self::Local => 'lokal',
-            self::Test => 'Test',
-            self::Production => 'Produktion',
+            self::Local => __('lokal'),
+            self::Test => __('Test'),
+            self::Production => __('Produktion'),
         };
     }
 

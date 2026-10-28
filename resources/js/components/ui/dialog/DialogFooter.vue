@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from "vue"
 import { DialogClose } from "reka-ui"
+import { t } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { Button } from '@/components/ui/button'
 
@@ -20,7 +21,7 @@ const props = withDefaults(defineProps<{
     <slot />
     <DialogClose v-if="showCloseButton" as-child>
       <Button variant="outline">
-        Close
+        {{ t('Schliessen') }}
       </Button>
     </DialogClose>
   </div>
