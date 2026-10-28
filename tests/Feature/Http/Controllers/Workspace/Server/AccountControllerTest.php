@@ -203,10 +203,10 @@ class AccountControllerTest extends TestCase
         return [
             'Kontoname' => [['action' => 'create', 'name' => "x'; DROP USER root; --", 'host' => '%', 'password' => 'Geheim-1234'], 'name'],
             'Host' => [['action' => 'create', 'name' => 'phpdbadmin_w04_x', 'host' => "%' IDENTIFIED BY 'x", 'password' => 'Geheim-1234'], 'host'],
-            'Recht' => [[...$grant, 'database' => 'phpdbadmin_test_server', 'table' => 'x', 'privileges' => ['SELECT ON *.* TO root; --']], 'privileges.0'],
+            'Recht' => [[...$grant, 'database' => '{testdatenbank}', 'table' => 'x', 'privileges' => ['SELECT ON *.* TO root; --']], 'privileges.0'],
             'Recht ausserhalb der Liste' => [[...$grant, 'level' => 'server', 'privileges' => ['FILE']], 'privileges.0'],
             'Datenbank' => [[...$grant, 'level' => 'database', 'database' => 'x`.* TO root; --'], 'database'],
-            'Tabelle' => [[...$grant, 'database' => 'phpdbadmin_test_server', 'table' => '*'], 'table'],
+            'Tabelle' => [[...$grant, 'database' => '{testdatenbank}', 'table' => '*'], 'table'],
             'Ebene' => [[...$grant, 'level' => 'schema'], 'level'],
         ];
     }
@@ -218,6 +218,8 @@ class AccountControllerTest extends TestCase
     public function test_input_that_looks_like_sql_is_rejected_before_any_statement(array $payload, string $field): void
     {
         $connection = $this->savedConnection($this->scratchSettings(DatabaseDriver::MariaDb, $this->folder), $this->user);
+        // Der Datenprovider kennt den Namen der Testdatenbank noch nicht (PHPDBADMIN_TEST_DATABASE).
+        $payload = array_map(fn (mixed $value): mixed => $value === '{testdatenbank}' ? $this->targetTestDatabase() : $value, $payload);
 
         $this->actingAs($this->user)->postJson(route('workspace.server.accounts.preview', $connection), $payload)
             ->assertUnprocessable()
