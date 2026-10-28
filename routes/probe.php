@@ -1,13 +1,11 @@
 <?php
 
 /*
- * Feasibility F-3 und F-4 (dokumentationen/02-feasibility): Probeseiten für Raster und SQL-Editor.
- * Nur in der lokalen Umgebung geladen (routes/web.php); werden in TB 00 übernommen oder entfernt.
+ * Feasibility F-4 (dokumentationen/02-feasibility): Probeseite für den SQL-Editor, bis TB 03 ihn ersetzt.
+ * Nur in der lokalen Umgebung geladen (routes/web.php). Die Raster-Probe (F-3) ersetzt seit TB 02 das echte Raster.
  */
 
 use Illuminate\Database\Connection;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -56,24 +54,3 @@ Route::get('probe/editor', function () use ($probeConnection): Response {
 
     return Inertia::render('probe/Editor', ['schema' => $tables]);
 })->name('probe.editor');
-
-Route::get('probe/raster', function () use ($probeConnection): Response {
-    $connection = $probeConnection();
-    $estimate = (int) strtok((string) $connection->selectOne("SELECT stat FROM sqlite_stat1 WHERE tbl = 'orders' LIMIT 1")?->stat, ' ');
-
-    return Inertia::render('probe/Raster', [
-        'columns' => array_column($connection->getSchemaBuilder()->getColumns('orders'), 'name'),
-        'estimate' => $estimate,
-    ]);
-})->name('probe.raster');
-
-Route::get('probe/raster/rows', function (Request $request) use ($probeConnection): JsonResponse {
-    $after = max(0, (int) $request->query('after', '0'));
-    $start = hrtime(true);
-    $rows = $probeConnection()->table('orders')->where('id', '>', $after)->orderBy('id')->limit(200)->get();
-
-    return response()->json([
-        'rows' => $rows,
-        'server_ms' => round((hrtime(true) - $start) / 1e6, 1),
-    ]);
-})->name('probe.raster.rows');

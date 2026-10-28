@@ -47,6 +47,8 @@
 
 ## 4. Reihenfolge und Abhängigkeiten
 
+> **Umsetzung ab 28.10.2026 abends** (Hoangs Auftrag «mache alle TB durch»): Timeboxes ohne gegenseitige Abhängigkeit laufen parallel in eigenen Arbeitskopien mit eigener Testdatenbank (`PHPDBADMIN_TEST_DATABASE`) — Server-Verwaltung (TB 09), Export und Import (TB 06), Konten, Rechte und Protokoll (TB 07, mit V-06) — und werden nach Prüfung zusammengeführt; der Hauptstrang folgt der Reihenfolge TB 01 → 02 → 03 → 04 → 05 → 08. Stand je Timebox im [README der Phase 04](../04-evolutionary-development/README.md).
+
 TB 00 trägt alles. TB 02 (Raster) und TB 03 (Editor) hängen beide nur an TB 01 und können in beliebiger Reihenfolge folgen; Bearbeiten (TB 04) braucht beide, weil die Vorschau im Editor geöffnet werden kann. Rechte und Protokoll (TB 07) kommen nach dem Bearbeiten, weil erst dann schreibende Aktionen protokolliert werden. Die Sicherheitsprüfung (TB 08) steht vor v1.0, nicht danach. phpdbadmin läuft neben Basalto (R-03): eine Timebox wird angefangen und fertig gemacht, nicht unterbrochen.
 
 ## 5. Was aus der Feasibility übernommen wird

@@ -9,7 +9,9 @@ Timebox-Protokolle (`timebox-nn-titel.md`) und Architekturentscheide (`adr/ADR-n
 | TB | Inhalt | Anforderungen | Stand |
 |---|---|---|---|
 | [**00 Fundament**](timebox-00-fundament.md) | Starter-Kit bereinigt (kein Passwort, kein Dashboard, kein Profil); Anmeldung mit Code per Mail und Passkey; Einladung; Ersteinrichtung per Konsole mit Link und Passkey-Onboarding; App-Datenbank; Verbindungen mit Test, Verschlüsselung und erlaubten Hosts; Dialekt-Schicht mit Vertragstest auf vier Datenbanken; lokales Prüfskript, Workflow sparsam | A-01 bis A-06, A-09, V-01 bis V-03, V-05, B-01 bis B-03, B-06, B-08 | ✅ 28.10.2026 — offen: Touch ID von Hand (A-03), erster Lauf des Workflows auf GitHub |
-| 01 Katalog und Navigator | siehe [Timebox-Plan](../03-foundation/timebox-plan.md#1-die-dreizehn-timeboxes) | O-01, O-04, S-01, V-04, N-06, V-06, V-10, O-06, N-04 | als Nächstes |
+| [**01 Katalog und Navigator**](timebox-01-katalog-navigator.md) | Arbeitsbildschirm mit Navigator für vier Datenbanken, «alle Datenbanken», Strukturansicht mit Art je Spalte, Schreibschutz und Umgebung, Kontowarnung, Deutsch und Englisch | O-01, O-04, S-01, V-04, N-06, V-10, O-06, N-04 | ✅ 29.10.2026 — V-06 mit TB 07; N-04-Matrix noch nie gelaufen |
+| [**02 Datenraster und Filter**](timebox-02-datenraster.md) | Raster mit Blättern über den Schlüssel, NULL zuletzt, Filtern, Suche, Zählen, Fremdschlüssel in beide Richtungen, Zeilen-Detail, Reiter, Kürzel; erste Seite bei 1 Mio. Zeilen unter 20 ms | D-01, D-02, D-03, D-06, N-01, O-03, O-05, O-09 | ✅ 29.10.2026 — «?»-Taste von Hand offen |
+| 03 SQL-Editor und Befehlspalette | siehe [Timebox-Plan](../03-foundation/timebox-plan.md#1-die-dreizehn-timeboxes) | Q-01–Q-04, Q-09, O-02 | als Nächstes |
 
 ## Architekturentscheide
 
@@ -29,4 +31,4 @@ Ausformuliert in der Foundation am 28.10.2026 (Kontext → Optionen → Entschei
 | [ADR-010](adr/ADR-010-lizenz-mit.md) | Lizenz MIT | angenommen |
 | [ADR-011](adr/ADR-011-php-85-mindestversion.md) | PHP 8.5 als Mindestversion | angenommen (Hoang 28.10.2026) |
 
-**Übernahme aus der Feasibility (erledigt in TB 00):** Die Proben F-1, F-7 und Teile von F-2 sind Vertragstests der Dialekt-Schicht (`tests/Feature/Dialects`); die Probe-Seiten `routes/probe.php`, `resources/js/pages/probe/*` bleiben lokal hinter der Anmeldung, bis Raster (TB 01) und SQL-Editor (TB 05) sie ersetzen.
+**Übernahme aus der Feasibility (erledigt in TB 00):** Die Proben F-1, F-7 und Teile von F-2 sind Vertragstests der Dialekt-Schicht (`tests/Feature/Dialects`); die Probe-Seiten `routes/probe.php`, `resources/js/pages/probe/*` bleiben lokal hinter der Anmeldung, bis Raster und SQL-Editor sie ersetzen — die Raster-Probe ist seit TB 02 entfernt, die Editor-Probe folgt mit TB 03.
