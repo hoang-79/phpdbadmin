@@ -2,11 +2,13 @@
 import { Form, Head, setLayoutProps } from '@inertiajs/vue3';
 import { FileKey, UserPlus } from '@lucide/vue';
 import InputError from '@/components/InputError.vue';
+import Interpolate from '@/components/Interpolate.vue';
 import Notice from '@/components/Notice.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { t } from '@/lib/i18n';
 import { login } from '@/routes';
 import { store } from '@/routes/setup';
 
@@ -18,17 +20,20 @@ defineProps<{
     keyPath: string;
 }>();
 
-setLayoutProps({ back: { href: login.url(), label: 'Zurück' } });
+setLayoutProps({ back: { href: login.url(), label: t('Zurück') } });
 </script>
 
 <template>
-    <Head title="Ersteinrichtung" />
+    <Head :title="t('Ersteinrichtung')" />
 
     <div class="flex flex-col gap-1">
-        <h1 class="text-xl font-semibold">Ersteinrichtung</h1>
+        <h1 class="text-xl font-semibold">{{ t('Ersteinrichtung') }}</h1>
         <p class="text-text-secondary">
-            Das erste Konto wird Administrator. Als Nächstes legen Sie Ihren
-            Passkey an.
+            {{
+                t(
+                    'Das erste Konto wird Administrator. Als Nächstes legen Sie Ihren Passkey an.',
+                )
+            }}
         </p>
     </div>
 
@@ -38,7 +43,7 @@ setLayoutProps({ back: { href: login.url(), label: 'Zurück' } });
         #default="{ errors, processing }"
     >
         <div class="flex flex-col gap-1.5">
-            <Label for="name" class="text-[13px]">Ihr Name</Label>
+            <Label for="name" class="text-[13px]">{{ t('Ihr Name') }}</Label>
             <Input
                 id="name"
                 name="name"
@@ -51,7 +56,9 @@ setLayoutProps({ back: { href: login.url(), label: 'Zurück' } });
         </div>
 
         <div class="flex flex-col gap-1.5">
-            <Label for="email" class="text-[13px]">E-Mail-Adresse</Label>
+            <Label for="email" class="text-[13px]">{{
+                t('E-Mail-Adresse')
+            }}</Label>
             <Input
                 id="email"
                 type="email"
@@ -63,13 +70,18 @@ setLayoutProps({ back: { href: login.url(), label: 'Zurück' } });
             />
             <InputError :message="errors.email" />
             <p id="email-hint" class="text-xs text-muted-foreground">
-                Ohne Passkey melden Sie sich mit einem Code an diese Adresse an
-                — bitte genau prüfen.
+                {{
+                    t(
+                        'Ohne Passkey melden Sie sich mit einem Code an diese Adresse an — bitte genau prüfen.',
+                    )
+                }}
             </p>
         </div>
 
         <div class="flex flex-col gap-1.5">
-            <Label for="key" class="text-[13px]">Einrichtungsschlüssel</Label>
+            <Label for="key" class="text-[13px]">{{
+                t('Einrichtungsschlüssel')
+            }}</Label>
             <Input
                 id="key"
                 name="key"
@@ -85,11 +97,19 @@ setLayoutProps({ back: { href: login.url(), label: 'Zurück' } });
         </div>
 
         <Notice id="key-hint" :icon="FileKey">
-            phpdbadmin hat den Schlüssel eben auf dem Server abgelegt, in der
-            Datei <code class="font-mono wrap-break-word">{{ keyPath }}</code>
-            im Ordner der Installation. Öffnen Sie sie über den Dateimanager
-            Ihres Hostings, per FTP oder im Editor — so zeigen Sie, dass Sie
-            Zugriff auf den Server haben.
+            <Interpolate
+                :text="
+                    t(
+                        'phpdbadmin hat den Schlüssel eben auf dem Server abgelegt, in der Datei :path im Ordner der Installation. Öffnen Sie sie über den Dateimanager Ihres Hostings, per FTP oder im Editor — so zeigen Sie, dass Sie Zugriff auf den Server haben.',
+                    )
+                "
+            >
+                <template #path
+                    ><code class="font-mono wrap-break-word">{{
+                        keyPath
+                    }}</code></template
+                >
+            </Interpolate>
         </Notice>
 
         <Button
@@ -100,7 +120,7 @@ setLayoutProps({ back: { href: login.url(), label: 'Zurück' } });
         >
             <Spinner v-if="processing" />
             <UserPlus v-else />
-            Konto anlegen
+            {{ t('Konto anlegen') }}
         </Button>
     </Form>
 </template>

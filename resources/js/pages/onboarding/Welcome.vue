@@ -4,11 +4,13 @@ import { usePasskeyRegister } from '@laravel/passkeys/vue';
 import { ArrowRight, KeyRound, Plus } from '@lucide/vue';
 import { computed, onMounted, ref } from 'vue';
 import InputError from '@/components/InputError.vue';
+import Interpolate from '@/components/Interpolate.vue';
 import Notice from '@/components/Notice.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { t } from '@/lib/i18n';
 import { passkeyMessage, suggestedPasskeyName } from '@/lib/passkeyMessage';
 import { create } from '@/routes/connections';
 import { registrationOptions, store } from '@/routes/passkey';
@@ -49,35 +51,52 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head :title="isFirstUser ? 'Ersteinrichtung' : 'Willkommen'" />
+    <Head :title="isFirstUser ? t('Ersteinrichtung') : t('Willkommen')" />
 
     <template v-if="!done">
         <div class="flex flex-col gap-1">
             <h1 class="text-xl font-semibold">
                 {{
-                    isFirstUser ? 'Ersteinrichtung' : `Willkommen, ${firstName}`
+                    isFirstUser
+                        ? t('Ersteinrichtung')
+                        : t('Willkommen, :name', { name: firstName })
                 }}
             </h1>
             <p class="text-text-secondary">
                 <template v-if="isFirstUser"
-                    >Sie sind das erste Konto dieser Installation und damit
-                    Administrator.
+                    >{{
+                        t(
+                            'Sie sind das erste Konto dieser Installation und damit Administrator.',
+                        )
+                    }}
                 </template>
-                Legen Sie jetzt Ihren Passkey an — danach melden Sie sich per
-                Fingerabdruck, Gesicht oder Geräte-PIN an, ohne Code per Mail.
+                {{
+                    t(
+                        'Legen Sie jetzt Ihren Passkey an — danach melden Sie sich per Fingerabdruck, Gesicht oder Geräte-PIN an, ohne Code per Mail.',
+                    )
+                }}
             </p>
         </div>
 
         <template v-if="!canRegister">
             <Notice>
-                Zum Anlegen bestätigen Sie zuerst kurz, dass Sie es sind — mit
-                einem Code an
-                <span class="wrap-break-word">{{ email }}</span
-                >.
+                <Interpolate
+                    :text="
+                        t(
+                            'Zum Anlegen bestätigen Sie zuerst kurz, dass Sie es sind — mit einem Code an :email.',
+                        )
+                    "
+                >
+                    <template #email
+                        ><span class="wrap-break-word">{{
+                            email
+                        }}</span></template
+                    >
+                </Interpolate>
             </Notice>
             <Button size="lg" class="w-full text-[15px]" as-child>
                 <Link :href="confirm()"
-                    ><KeyRound />Bestätigen und Passkey anlegen</Link
+                    ><KeyRound />{{ t('Bestätigen und Passkey anlegen') }}</Link
                 >
             </Button>
         </template>
@@ -88,9 +107,9 @@ onMounted(() => {
             @submit.prevent="registration.register(passkeyName.trim())"
         >
             <div class="flex flex-col gap-1.5">
-                <Label for="passkey-name" class="text-[13px]"
-                    >Name des Passkeys</Label
-                >
+                <Label for="passkey-name" class="text-[13px]">{{
+                    t('Name des Passkeys')
+                }}</Label>
                 <Input
                     id="passkey-name"
                     v-model="passkeyName"
@@ -99,8 +118,11 @@ onMounted(() => {
                     aria-describedby="passkey-name-hint"
                 />
                 <p id="passkey-name-hint" class="text-xs text-muted-foreground">
-                    Damit Sie ihn später wiedererkennen, z. B. «MacBook» oder
-                    «iPhone».
+                    {{
+                        t(
+                            'Damit Sie ihn später wiedererkennen, z. B. «MacBook» oder «iPhone».',
+                        )
+                    }}
                 </p>
             </div>
             <InputError :message="error" />
@@ -112,37 +134,48 @@ onMounted(() => {
             >
                 <Spinner v-if="registration.isLoading.value" />
                 <KeyRound v-else />
-                Passkey jetzt anlegen
+                {{ t('Passkey jetzt anlegen') }}
             </Button>
         </form>
 
         <Notice v-else variant="warning">
-            Dieser Browser unterstützt keine Passkeys. Sie melden sich weiter
-            mit einem Code an
-            <span class="wrap-break-word">{{ email }}</span> an und können den
-            Passkey später unter «Konto» anlegen.
+            <Interpolate
+                :text="
+                    t(
+                        'Dieser Browser unterstützt keine Passkeys. Sie melden sich weiter mit einem Code an :email an und können den Passkey später unter «Konto» anlegen.',
+                    )
+                "
+            >
+                <template #email
+                    ><span class="wrap-break-word">{{ email }}</span></template
+                >
+            </Interpolate>
         </Notice>
 
         <Link
             :href="continueUrl"
             class="self-center text-sm text-text-secondary underline underline-offset-2 hover:text-foreground"
         >
-            Später — weiter mit Code per Mail
+            {{ t('Später — weiter mit Code per Mail') }}
         </Link>
     </template>
 
     <template v-else>
         <div class="flex flex-col gap-1">
             <h1 class="text-xl font-semibold">
-                {{ isFirstUser ? 'Eingerichtet' : 'Alles bereit' }}
+                {{ isFirstUser ? t('Eingerichtet') : t('Alles bereit') }}
             </h1>
             <p class="text-text-secondary">
-                Ab jetzt melden Sie sich mit Ihrem Passkey an.
+                {{ t('Ab jetzt melden Sie sich mit Ihrem Passkey an.') }}
             </p>
         </div>
 
         <Notice v-if="created" variant="success">
-            Passkey <b class="font-semibold">«{{ created }}»</b> angelegt.
+            <Interpolate :text="t('Passkey «:name» angelegt.')">
+                <template #name
+                    ><b class="font-semibold">{{ created }}</b></template
+                >
+            </Interpolate>
         </Notice>
 
         <template v-if="isFirstUser">
@@ -152,10 +185,11 @@ onMounted(() => {
                         class="inline-grid size-5 shrink-0 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground"
                         >1</span
                     >
-                    <span
-                        >Erste Verbindung anlegen — MariaDB, MySQL, PostgreSQL
-                        oder eine SQLite-Datei.</span
-                    >
+                    <span>{{
+                        t(
+                            'Erste Verbindung anlegen — MariaDB, MySQL, PostgreSQL oder eine SQLite-Datei.',
+                        )
+                    }}</span>
                 </li>
                 <li class="flex gap-2">
                     <span
@@ -163,7 +197,7 @@ onMounted(() => {
                         >2</span
                     >
                     <span
-                        >Weitere Personen einladen:
+                        >{{ t('Weitere Personen einladen:') }}
                         <code class="font-mono text-xs"
                             >php artisan phpdbadmin:invite name@example.ch</code
                         ></span
@@ -171,19 +205,21 @@ onMounted(() => {
                 </li>
             </ol>
             <Button size="lg" class="w-full text-[15px]" as-child>
-                <Link :href="create()"><Plus />Erste Verbindung anlegen</Link>
+                <Link :href="create()"
+                    ><Plus />{{ t('Erste Verbindung anlegen') }}</Link
+                >
             </Button>
             <Link
                 :href="continueUrl"
                 class="self-center text-sm text-text-secondary underline underline-offset-2 hover:text-foreground"
             >
-                Zur Verbindungsübersicht
+                {{ t('Zur Verbindungsübersicht') }}
             </Link>
         </template>
 
         <Button v-else size="lg" class="w-full text-[15px]" as-child>
             <Link :href="continueUrl"
-                >Weiter zu den Verbindungen<ArrowRight
+                >{{ t('Weiter zu den Verbindungen') }}<ArrowRight
             /></Link>
         </Button>
     </template>

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { t } from '@/lib/i18n';
 import { passkeyMessage } from '@/lib/passkeyMessage';
 import { home, setup } from '@/routes';
 import { code } from '@/routes/login';
@@ -41,18 +42,25 @@ const passkeyError = computed(
 
 <template>
     <template v-if="needsSetup">
-        <Head title="Ersteinrichtung" />
+        <Head :title="t('Ersteinrichtung')" />
 
         <div class="flex flex-col gap-1">
-            <h1 class="text-xl font-semibold">Willkommen bei phpdbadmin</h1>
+            <h1 class="text-xl font-semibold">
+                {{ t('Willkommen bei phpdbadmin') }}
+            </h1>
             <p class="text-text-secondary">
-                Diese Installation hat noch kein Konto. Legen Sie das erste an —
-                es wird Administrator und meldet sich mit einem Passkey an.
+                {{
+                    t(
+                        'Diese Installation hat noch kein Konto. Legen Sie das erste an — es wird Administrator und meldet sich mit einem Passkey an.',
+                    )
+                }}
             </p>
         </div>
 
         <Button size="lg" class="w-full text-[15px]" as-child>
-            <Link :href="setup()"><Rocket />Einrichtung starten</Link>
+            <Link :href="setup()"
+                ><Rocket />{{ t('Einrichtung starten') }}</Link
+            >
         </Button>
 
         <details class="group text-sm">
@@ -61,30 +69,36 @@ const passkeyError = computed(
             >
                 <ChevronRight
                     class="size-3.5 transition-transform group-open:rotate-90"
-                />Lieber im Terminal?
+                />{{ t('Lieber im Terminal?') }}
             </summary>
             <pre
                 class="mt-2 rounded-md border bg-muted px-3 py-2.5 font-mono text-[13px] whitespace-pre-wrap"
             ><span class="text-muted-foreground select-none">$ </span>php artisan phpdbadmin:install</pre>
             <p class="mt-1.5 text-xs text-muted-foreground">
-                Der Befehl gibt einen Link zur Ersteinrichtung aus.
+                {{ t('Der Befehl gibt einen Link zur Ersteinrichtung aus.') }}
             </p>
         </details>
 
         <p class="text-xs text-muted-foreground">
-            Danach laden Sie weitere Personen ein; offene Registrierung gibt es
-            nicht.
+            {{
+                t(
+                    'Danach laden Sie weitere Personen ein; offene Registrierung gibt es nicht.',
+                )
+            }}
         </p>
     </template>
 
     <template v-else>
-        <Head title="Anmelden" />
+        <Head :title="t('Anmelden')" />
 
         <div class="flex flex-col gap-1">
-            <h1 class="text-xl font-semibold">Anmelden</h1>
+            <h1 class="text-xl font-semibold">{{ t('Anmelden') }}</h1>
             <p class="text-text-secondary">
-                Mit Ihrem Passkey oder mit einem Code, den wir Ihnen per Mail
-                senden.
+                {{
+                    t(
+                        'Mit Ihrem Passkey oder mit einem Code, den wir Ihnen per Mail senden.',
+                    )
+                }}
             </p>
         </div>
 
@@ -98,7 +112,7 @@ const passkeyError = computed(
             >
                 <Spinner v-if="button.isLoading.value" />
                 <KeyRound v-else />
-                Mit Passkey anmelden
+                {{ t('Mit Passkey anmelden') }}
             </Button>
             <InputError :message="passkeyError" />
         </div>
@@ -107,7 +121,7 @@ const passkeyError = computed(
             v-if="button.isSupported.value"
             class="flex items-center gap-3 text-[13px] text-muted-foreground before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border"
         >
-            oder mit Code per Mail
+            {{ t('oder mit Code per Mail') }}
         </div>
 
         <Form
@@ -116,7 +130,9 @@ const passkeyError = computed(
             #default="{ errors, processing }"
         >
             <div class="flex flex-col gap-1.5">
-                <Label for="email" class="text-[13px]">E-Mail-Adresse</Label>
+                <Label for="email" class="text-[13px]">{{
+                    t('E-Mail-Adresse')
+                }}</Label>
                 <Input
                     id="email"
                     type="email"
@@ -130,7 +146,11 @@ const passkeyError = computed(
                 />
                 <InputError :message="errors.email" />
                 <p id="email-hint" class="text-xs text-muted-foreground">
-                    Ihr Browser schlägt hier auch gespeicherte Passkeys vor.
+                    {{
+                        t(
+                            'Ihr Browser schlägt hier auch gespeicherte Passkeys vor.',
+                        )
+                    }}
                 </p>
             </div>
 
@@ -143,13 +163,16 @@ const passkeyError = computed(
             >
                 <Spinner v-if="processing" />
                 <Mail v-else />
-                Code senden
+                {{ t('Code senden') }}
             </Button>
         </Form>
 
         <p class="text-xs text-muted-foreground">
-            Neue Konten entstehen nur per Einladung durch eine Administratorin
-            oder einen Administrator.
+            {{
+                t(
+                    'Neue Konten entstehen nur per Einladung durch eine Administratorin oder einen Administrator.',
+                )
+            }}
         </p>
     </template>
 </template>
