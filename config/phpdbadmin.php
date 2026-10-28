@@ -21,6 +21,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Ersteinrichtung im Browser (A-06)
+    |--------------------------------------------------------------------------
+    |
+    | Datei mit dem Einrichtungsschlüssel. Sie entsteht beim ersten Aufruf der Einrichtung und wird danach gelöscht;
+    | nur wer Zugriff auf den Server hat, kann sie lesen.
+    |
+    */
+
+    'setup' => [
+        'key_path' => storage_path('app/private/einrichtungsschluessel.txt'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Zielverbindungen (V-05, T-05, T-08)
     |--------------------------------------------------------------------------
     |

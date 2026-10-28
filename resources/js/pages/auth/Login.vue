@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { Form, Head, router, setLayoutProps } from '@inertiajs/vue3';
+import { Form, Head, Link, router, setLayoutProps } from '@inertiajs/vue3';
 import { usePasskeyVerify } from '@laravel/passkeys/vue';
-import { KeyRound, Mail } from '@lucide/vue';
+import { ChevronRight, KeyRound, Mail, Rocket } from '@lucide/vue';
 import { computed } from 'vue';
 import InputError from '@/components/InputError.vue';
-import Notice from '@/components/Notice.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { passkeyMessage } from '@/lib/passkeyMessage';
-import { home } from '@/routes';
+import { home, setup } from '@/routes';
 import { code } from '@/routes/login';
 import { login as passkeyLogin, loginOptions } from '@/routes/passkey';
 
@@ -47,20 +46,30 @@ const passkeyError = computed(
         <div class="flex flex-col gap-1">
             <h1 class="text-xl font-semibold">Willkommen bei phpdbadmin</h1>
             <p class="text-text-secondary">
-                Diese Installation hat noch kein Konto. Das erste Konto — ein
-                Administrator — legen Sie auf dem Server an:
+                Diese Installation hat noch kein Konto. Legen Sie das erste an —
+                es wird Administrator und meldet sich mit einem Passkey an.
             </p>
         </div>
 
-        <pre
-            class="rounded-md border bg-muted px-3 py-2.5 font-mono text-[13px] whitespace-pre-wrap"
-        ><span class="text-muted-foreground select-none">$ </span>php artisan phpdbadmin:install</pre>
+        <Button size="lg" class="w-full text-[15px]" as-child>
+            <Link :href="setup()"><Rocket />Einrichtung starten</Link>
+        </Button>
 
-        <Notice :icon="KeyRound">
-            Der Befehl zeigt einen Link zur Ersteinrichtung. Darüber melden Sie
-            sich an und legen gleich Ihren Passkey an — ein Passwort gibt es
-            nicht.
-        </Notice>
+        <details class="group text-sm">
+            <summary
+                class="flex cursor-pointer list-none items-center gap-1 text-text-secondary hover:text-foreground"
+            >
+                <ChevronRight
+                    class="size-3.5 transition-transform group-open:rotate-90"
+                />Lieber im Terminal?
+            </summary>
+            <pre
+                class="mt-2 rounded-md border bg-muted px-3 py-2.5 font-mono text-[13px] whitespace-pre-wrap"
+            ><span class="text-muted-foreground select-none">$ </span>php artisan phpdbadmin:install</pre>
+            <p class="mt-1.5 text-xs text-muted-foreground">
+                Der Befehl gibt einen Link zur Ersteinrichtung aus.
+            </p>
+        </details>
 
         <p class="text-xs text-muted-foreground">
             Danach laden Sie weitere Personen ein; offene Registrierung gibt es

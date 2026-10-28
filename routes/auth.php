@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Account\PasskeyController;
 use App\Http\Controllers\Auth\ConfirmController;
+use App\Http\Controllers\Auth\FirstSetupController;
 use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasskeyLoginController;
@@ -25,7 +26,11 @@ Route::middleware('guest')->group(function () {
     Route::get('passkeys/login/options', [PasskeyLoginController::class, 'index'])->middleware('throttle:passkeys')->name('passkey.login-options');
     Route::post('passkeys/login', [PasskeyLoginController::class, 'store'])->middleware('throttle:passkeys')->name('passkey.login');
 
-    // Ersteinrichtung: signierter Link aus phpdbadmin:install, gültig bis zur ersten Anmeldung.
+    // Ersteinrichtung im Browser, abgesichert über den Einrichtungsschlüssel auf dem Server (nur ohne Konto).
+    Route::get('setup', [FirstSetupController::class, 'show'])->name('setup');
+    Route::post('setup', [FirstSetupController::class, 'store'])->middleware('throttle:login-verify')->name('setup.store');
+
+    // Ersteinrichtung per Konsole: signierter Link aus phpdbadmin:install, gültig bis zur ersten Anmeldung.
     Route::get('setup/{user}', [SetupController::class, 'show'])->name('setup.show');
     Route::post('setup/{user}', [SetupController::class, 'start'])->middleware('throttle:login-verify')->name('setup.start');
 
