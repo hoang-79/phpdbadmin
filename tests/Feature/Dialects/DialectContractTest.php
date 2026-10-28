@@ -297,6 +297,21 @@ class DialectContractTest extends TestCase
         $this->assertContains('innen', DatabaseDriver::Sqlite->dialect()->schemas($connection));
     }
 
+    /**
+     * VACUUM hängt intern eine leere temporäre Datenbank an — der ATTACH-Wächter darf das nicht blockieren (W-05).
+     */
+    public function test_sqlite_vacuum_and_attach_without_file_are_allowed(): void
+    {
+        $connection = $this->writable(DatabaseDriver::Sqlite);
+        $connection->statement('create table notes (id integer primary key)');
+
+        $connection->statement('vacuum');
+        $connection->statement("attach database '' as zwischen");
+        $connection->statement("attach database ':memory:' as speicher");
+
+        $this->assertContains('speicher', DatabaseDriver::Sqlite->dialect()->schemas($connection));
+    }
+
     #[DataProvider('serverDrivers')]
     public function test_multiple_statements_in_one_call_are_refused(DatabaseDriver $driver): void
     {

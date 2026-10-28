@@ -112,7 +112,8 @@ final class ConnectionFactory
 
     /**
      * ATTACH nur für Dateien in erlaubten Ordnern (T-08, F-7). Ohne Dateinamen beim Vorbereiten («ATTACH ?») wird
-     * abgewiesen — der Authorizer kann gebundene Werte nicht sehen.
+     * abgewiesen — der Authorizer kann gebundene Werte nicht sehen. Erlaubt sind dagegen eine leere temporäre und
+     * eine Datenbank im Speicher: Sie öffnen keine Datei, und VACUUM hängt intern genau so eine an («ATTACH ''»).
      */
     private function guardAttach(Connection $connection): void
     {
@@ -123,7 +124,7 @@ final class ConnectionFactory
         }
 
         $pdo->setAuthorizer(function (int $action, ?string $file): int {
-            if ($action !== self::SQLITE_ATTACH) {
+            if ($action !== self::SQLITE_ATTACH || $file === '' || $file === ':memory:') {
                 return Sqlite::OK;
             }
 
