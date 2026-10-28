@@ -15,8 +15,9 @@ import {
 } from '@lucide/vue';
 import { onBeforeUnmount, onMounted, ref, computed } from 'vue';
 import { formatRows } from '@/lib/environment';
+import { t } from '@/lib/i18n';
+import { objectHref, schemaHref } from '@/lib/workspace';
 import { workspace as workspaceRoute } from '@/routes';
-import { schema as schemaRoute } from '@/routes/workspace';
 import type { NavigatorGroup, NavigatorItem, Workspace } from '@/types';
 
 /**
@@ -26,7 +27,6 @@ import type { NavigatorGroup, NavigatorItem, Workspace } from '@/types';
 const props = defineProps<{
     workspace: Workspace;
     selected?: string | null;
-    linkFor?: (item: NavigatorItem) => string | null;
 }>();
 
 const filter = ref('');
@@ -54,9 +54,6 @@ const databasesAfter = computed(() =>
     currentIndex.value < 0
         ? []
         : (props.workspace.databases ?? []).slice(currentIndex.value + 1),
-);
-const dbQuery = computed(() =>
-    props.workspace.database ? { query: { db: props.workspace.database } } : {},
 );
 
 const groups = computed<(NavigatorGroup & { visible: NavigatorItem[] })[]>(() =>
@@ -107,10 +104,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
 </script>
 
 <template>
-    <nav class="flex min-h-0 flex-1 flex-col" aria-label="Navigator">
+    <nav class="flex min-h-0 flex-1 flex-col" :aria-label="t('Navigator')">
         <div class="p-3">
             <label class="relative block">
-                <span class="sr-only">Objekte filtern</span>
+                <span class="sr-only">{{ t('Objekte filtern') }}</span>
                 <Search
                     class="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
                 />
@@ -118,7 +115,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                     ref="input"
                     v-model="filter"
                     type="search"
-                    placeholder="Objekte filtern"
+                    :placeholder="t('Objekte filtern')"
                     class="h-9 w-full rounded-md border bg-background pr-8 pl-8 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 />
                 <kbd
@@ -164,12 +161,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
             <ul :class="workspace.databaseLabel ? 'pl-3' : ''">
                 <li v-for="name in workspace.schemas" :key="name">
                     <Link
-                        :href="
-                            schemaRoute(
-                                [workspace.connection.id, name],
-                                dbQuery,
-                            )
-                        "
+                        :href="schemaHref(workspace, name)"
                         :class="[
                             'flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-background',
                             name === workspace.schema && 'font-medium',
@@ -248,11 +240,18 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                                         :key="`${item.kind}:${item.name}`"
                                     >
                                         <component
-                                            :is="linkFor?.(item) ? Link : 'div'"
-                                            :href="linkFor?.(item) ?? undefined"
+                                            :is="
+                                                objectHref(workspace, item)
+                                                    ? Link
+                                                    : 'div'
+                                            "
+                                            :href="
+                                                objectHref(workspace, item) ??
+                                                undefined
+                                            "
                                             :class="[
                                                 'flex items-center gap-2 rounded-md py-1.5 pr-2 pl-6',
-                                                linkFor?.(item) &&
+                                                objectHref(workspace, item) &&
                                                     'hover:bg-background',
                                                 selected === item.name &&
                                                     (item.kind === 'table' ||
@@ -290,7 +289,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                                         v-if="term && !group.visible.length"
                                         class="px-2 py-1 pl-8 text-xs text-muted-foreground"
                                     >
-                                        nichts gefunden
+                                        {{ t('nichts gefunden') }}
                                     </li>
                                 </ul>
                             </template>

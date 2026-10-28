@@ -47,3 +47,84 @@ export type ConnectionProblemView = {
     code: string | null;
     serverMessage: string | null;
 };
+
+export type ColumnKind =
+    | 'number'
+    | 'text'
+    | 'choice'
+    | 'boolean'
+    | 'datetime'
+    | 'json'
+    | 'binary'
+    | 'identifier'
+    | 'geometry'
+    | 'list'
+    | 'other';
+
+export type StructureColumn = {
+    position: number;
+    name: string;
+    type: string;
+    kind: ColumnKind;
+    kindLabel: string;
+    nullable: boolean;
+    default: string | null;
+    autoIncrement: boolean;
+    collation: string | null;
+    comment: string | null;
+    generated: string | null;
+    primary: boolean;
+    references: { table: string; column: string | null } | null;
+};
+
+export type StructureIndex = {
+    name: string;
+    columns: string[];
+    type: string | null;
+    unique: boolean;
+    primary: boolean;
+};
+
+export type StructureForeignKey = {
+    name: string;
+    columns: string[];
+    foreignSchema: string | null;
+    foreignTable: string;
+    foreignColumns: string[];
+    onUpdate: string;
+    onDelete: string;
+};
+
+export type StructureReference = {
+    name: string;
+    table: string;
+    columns: string[];
+    foreignColumns: string[];
+    onDelete: string;
+};
+
+export type StructureTrigger = {
+    name: string;
+    timing: string;
+    event: string;
+    definition: string;
+};
+
+export type ObjectStructure = {
+    object: {
+        name: string;
+        kind: 'table' | 'view';
+        rows: number | null;
+        size: number | null;
+        comment: string | null;
+        engine: string | null;
+        collation: string | null;
+    };
+    columns: StructureColumn[];
+    indexes: StructureIndex[];
+    foreignKeys: StructureForeignKey[];
+    referencedBy: StructureReference[];
+    checks: { name: string; definition: string }[];
+    triggers: StructureTrigger[];
+    ddl: string;
+};

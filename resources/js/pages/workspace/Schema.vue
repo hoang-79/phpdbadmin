@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { Database, Eye, Table2 } from '@lucide/vue';
 import { computed } from 'vue';
 import Notice from '@/components/Notice.vue';
 import { formatRows, titlePrefix } from '@/lib/environment';
+import { t, tc } from '@/lib/i18n';
+import { structureHref } from '@/lib/workspace';
 import type { Workspace } from '@/types';
 
 /** Schema bzw. Datenbank im Überblick (Wireframe 05 ohne gewähltes Objekt). */
@@ -47,16 +49,18 @@ const title = computed(
                 }}
             </h1>
             <p class="text-sm text-text-secondary">
-                {{ workspace.schemaKind === 'schema' ? 'Schema' : 'Datenbank' }}
-                · {{ tables.length }}
-                {{ tables.length === 1 ? 'Tabelle' : 'Tabellen' }} ·
-                {{ views.length }}
-                {{ views.length === 1 ? 'Sicht' : 'Sichten' }}
+                {{
+                    workspace.schemaKind === 'schema'
+                        ? t('Schema')
+                        : t('Datenbank')
+                }}
+                · {{ tc(':count Tabelle|:count Tabellen', tables.length) }} ·
+                {{ tc(':count Sicht|:count Sichten', views.length) }}
             </p>
         </div>
 
         <p v-else class="text-text-secondary">
-            Dieses Konto sieht keine Datenbank auf dem Server.
+            {{ t('Dieses Konto sieht keine Datenbank auf dem Server.') }}
         </p>
 
         <ul
@@ -66,26 +70,32 @@ const title = computed(
             <li
                 v-for="item in [...tables, ...views]"
                 :key="`${item.kind}:${item.name}`"
-                class="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
             >
-                <component
-                    :is="item.kind === 'view' ? Eye : Table2"
-                    class="size-4 shrink-0 text-text-secondary"
-                />
-                <span class="truncate font-mono">{{ item.name }}</span>
-                <span
-                    class="ml-auto shrink-0 text-xs text-muted-foreground tabular-nums"
-                    >{{
-                        item.kind === 'view' ? 'Sicht' : formatRows(item.rows)
-                    }}</span
+                <Link
+                    :href="structureHref(workspace, item.name)"
+                    class="flex items-center gap-2 rounded-md border px-3 py-2 text-sm outline-none hover:border-text-secondary focus-visible:ring-2 focus-visible:ring-ring"
                 >
+                    <component
+                        :is="item.kind === 'view' ? Eye : Table2"
+                        class="size-4 shrink-0 text-text-secondary"
+                    />
+                    <span class="truncate font-mono">{{ item.name }}</span>
+                    <span
+                        class="ml-auto shrink-0 text-xs text-muted-foreground tabular-nums"
+                        >{{
+                            item.kind === 'view'
+                                ? t('Sicht')
+                                : formatRows(item.rows)
+                        }}</span
+                    >
+                </Link>
             </li>
         </ul>
         <p
             v-else-if="workspace.schema"
             class="rounded-lg border border-dashed px-4 py-8 text-center text-sm text-text-secondary"
         >
-            Diese Datenbank ist leer.
+            {{ t('Diese Datenbank ist leer.') }}
         </p>
     </div>
 </template>

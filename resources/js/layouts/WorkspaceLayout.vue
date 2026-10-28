@@ -13,23 +13,17 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Toaster } from '@/components/ui/sonner';
+import { t } from '@/lib/i18n';
 import { home } from '@/routes';
-import type { NavigatorItem, Workspace } from '@/types';
+import type { Workspace } from '@/types';
 
 /**
  * Arbeitsbildschirm (Wireframe 05): Kopf mit Verbindung und Umgebung, Navigator links; auf dem Telefon als Schublade.
- * Produktion trägt oben einen roten Streifen (V-04, G-03).
+ * Produktion trägt oben einen roten Streifen (V-04, G-03). Das gewählte Objekt kommt als Seiten-Prop `selected`.
  */
-withDefaults(
-    defineProps<{
-        selected?: string | null;
-        linkFor?: ((item: NavigatorItem) => string | null) | null;
-    }>(),
-    { selected: null, linkFor: null },
-);
-
-const page = usePage<{ workspace?: Workspace }>();
+const page = usePage<{ workspace?: Workspace; selected?: string | null }>();
 const workspace = computed(() => page.props.workspace ?? null);
+const selected = computed(() => page.props.selected ?? null);
 const navigatorOpen = ref(false);
 
 // Nach jedem Seitenwechsel die Schublade schliessen.
@@ -55,7 +49,7 @@ watch(
                 v-if="workspace"
                 type="button"
                 class="inline-grid size-9 place-items-center rounded-md border text-text-secondary lg:hidden"
-                aria-label="Navigator öffnen"
+                :aria-label="t('Navigator öffnen')"
                 @click="navigatorOpen = true"
             >
                 <PanelLeft class="size-4" />
@@ -63,7 +57,7 @@ watch(
             <Link
                 :href="home()"
                 class="hidden rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring sm:block"
-                aria-label="Verbindungen"
+                :aria-label="t('Verbindungen')"
             >
                 <Wordmark />
             </Link>
@@ -87,11 +81,7 @@ watch(
                 v-if="workspace"
                 class="hidden w-64 shrink-0 flex-col border-r bg-muted lg:flex"
             >
-                <Navigator
-                    :workspace="workspace"
-                    :selected="selected"
-                    :link-for="linkFor ?? undefined"
-                />
+                <Navigator :workspace="workspace" :selected="selected" />
             </aside>
             <main class="min-w-0 flex-1 overflow-auto">
                 <slot />
@@ -103,19 +93,14 @@ watch(
                 side="left"
                 class="flex w-[300px] flex-col gap-0 bg-muted p-0"
             >
-                <SheetTitle class="sr-only">Navigator</SheetTitle>
-                <SheetDescription class="sr-only"
-                    >Datenbanken, Schemas und Objekte dieser
-                    Verbindung</SheetDescription
-                >
+                <SheetTitle class="sr-only">{{ t('Navigator') }}</SheetTitle>
+                <SheetDescription class="sr-only">{{
+                    t('Datenbanken, Schemas und Objekte dieser Verbindung')
+                }}</SheetDescription>
                 <div class="border-b p-3 pr-10">
                     <ConnectionChip :connection="workspace.connection" />
                 </div>
-                <Navigator
-                    :workspace="workspace"
-                    :selected="selected"
-                    :link-for="linkFor ?? undefined"
-                />
+                <Navigator :workspace="workspace" :selected="selected" />
             </SheetContent>
         </Sheet>
 

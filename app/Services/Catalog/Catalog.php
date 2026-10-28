@@ -99,28 +99,28 @@ final class Catalog
         $sequences = $dialect->sequences($target, $schema);
 
         $groups = [
-            ['key' => 'tables', 'label' => 'Tabellen', 'items' => $tables, 'note' => null],
-            ['key' => 'views', 'label' => 'Sichten', 'items' => $views, 'note' => null],
+            ['key' => 'tables', 'label' => __('Tabellen'), 'items' => $tables, 'note' => null],
+            ['key' => 'views', 'label' => __('Sichten'), 'items' => $views, 'note' => null],
             [
                 'key' => 'routines',
-                'label' => 'Routinen',
+                'label' => __('Routinen'),
                 'items' => array_map(fn (array $routine): array => $item($routine['name'], $routine['kind']), $routines ?? []),
-                'note' => $routines === null ? 'SQLite kennt keine gespeicherten Funktionen und Prozeduren.' : null,
+                'note' => $routines === null ? __('SQLite kennt keine gespeicherten Funktionen und Prozeduren.') : null,
             ],
             [
                 'key' => 'triggers',
-                'label' => 'Trigger',
+                'label' => __('Trigger'),
                 'items' => array_map(fn (array $trigger): array => $item($trigger['name'], 'trigger', detail: $trigger['table']), $dialect->schemaTriggers($target, $schema)),
                 'note' => null,
             ],
         ];
 
         if ($events !== null) {
-            $groups[] = ['key' => 'events', 'label' => 'Ereignisse', 'items' => array_map(fn (string $name): array => $item($name, 'event'), $events), 'note' => null];
+            $groups[] = ['key' => 'events', 'label' => __('Ereignisse'), 'items' => array_map(fn (string $name): array => $item($name, 'event'), $events), 'note' => null];
         }
 
         if ($sequences !== null) {
-            $groups[] = ['key' => 'sequences', 'label' => 'Sequenzen', 'items' => array_map(fn (string $name): array => $item($name, 'sequence'), $sequences), 'note' => null];
+            $groups[] = ['key' => 'sequences', 'label' => __('Sequenzen'), 'items' => array_map(fn (string $name): array => $item($name, 'sequence'), $sequences), 'note' => null];
         }
 
         return $groups;
