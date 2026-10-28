@@ -48,6 +48,14 @@ interface Dialect
      */
     public function schemas(Connection $connection): array;
 
+    /**
+     * Datenbanken auf dem Server, wo sie über Schemas stehen (PostgreSQL); null, wo Datenbank und Schema dasselbe
+     * sind (MySQL, MariaDB) oder es nur die Datei gibt (SQLite).
+     *
+     * @return list<string>|null
+     */
+    public function databases(Connection $connection): ?array;
+
     public function defaultSchema(Connection $connection): ?string;
 
     /**

@@ -15,6 +15,7 @@ import {
 } from '@lucide/vue';
 import { onBeforeUnmount, onMounted, ref, computed } from 'vue';
 import { formatRows } from '@/lib/environment';
+import { workspace as workspaceRoute } from '@/routes';
 import { schema as schemaRoute } from '@/routes/workspace';
 import type { NavigatorGroup, NavigatorItem, Workspace } from '@/types';
 
@@ -39,6 +40,24 @@ const collapsed = ref<Record<string, boolean>>({
 });
 
 const term = computed(() => filter.value.trim().toLowerCase());
+
+// PostgreSQL mit «alle Datenbanken»: übrige Datenbanken über und unter der geöffneten.
+const currentIndex = computed(
+    () =>
+        props.workspace.databases?.indexOf(props.workspace.database ?? '') ??
+        -1,
+);
+const databasesBefore = computed(() =>
+    (props.workspace.databases ?? []).slice(0, Math.max(0, currentIndex.value)),
+);
+const databasesAfter = computed(() =>
+    currentIndex.value < 0
+        ? []
+        : (props.workspace.databases ?? []).slice(currentIndex.value + 1),
+);
+const dbQuery = computed(() =>
+    props.workspace.database ? { query: { db: props.workspace.database } } : {},
+);
 
 const groups = computed<(NavigatorGroup & { visible: NavigatorItem[] })[]>(() =>
     props.workspace.groups.map((group) => ({
@@ -110,10 +129,29 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
         </div>
 
         <div class="min-h-0 flex-1 overflow-y-auto px-2 pb-3 text-sm">
+            <Link
+                v-for="name in databasesBefore"
+                :key="`db-${name}`"
+                :href="
+                    workspaceRoute(workspace.connection.id, {
+                        query: { db: name },
+                    })
+                "
+                class="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-background"
+            >
+                <ChevronRight class="size-3.5 shrink-0 text-text-secondary" />
+                <Database class="size-4 shrink-0 text-text-secondary" />
+                <span class="truncate">{{ name }}</span>
+            </Link>
             <div
                 v-if="workspace.databaseLabel"
                 class="flex items-center gap-2 px-2 py-1.5 font-medium"
+                :aria-current="workspace.databases ? 'location' : undefined"
             >
+                <ChevronDown
+                    v-if="workspace.databases"
+                    class="size-3.5 shrink-0 text-text-secondary"
+                />
                 <Database class="size-4 shrink-0 text-text-secondary" />
                 <span class="truncate">{{ workspace.databaseLabel }}</span>
                 <span
@@ -126,7 +164,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
             <ul :class="workspace.databaseLabel ? 'pl-3' : ''">
                 <li v-for="name in workspace.schemas" :key="name">
                     <Link
-                        :href="schemaRoute([workspace.connection.id, name])"
+                        :href="
+                            schemaRoute(
+                                [workspace.connection.id, name],
+                                dbQuery,
+                            )
+                        "
                         :class="[
                             'flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-background',
                             name === workspace.schema && 'font-medium',
@@ -255,6 +298,21 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                     </ul>
                 </li>
             </ul>
+
+            <Link
+                v-for="name in databasesAfter"
+                :key="`db-${name}`"
+                :href="
+                    workspaceRoute(workspace.connection.id, {
+                        query: { db: name },
+                    })
+                "
+                class="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-background"
+            >
+                <ChevronRight class="size-3.5 shrink-0 text-text-secondary" />
+                <Database class="size-4 shrink-0 text-text-secondary" />
+                <span class="truncate">{{ name }}</span>
+            </Link>
         </div>
     </nav>
 </template>

@@ -49,7 +49,7 @@ final readonly class ConnectionSettings
             driver: $driver,
             host: $driver->isServer() ? $text('host') : null,
             port: $driver->isServer() && isset($input['port']) && $input['port'] !== '' ? (int) $input['port'] : null,
-            database: $driver->isServer() ? $text('database') : null,
+            database: $driver->isServer() && ! filter_var($input['all_databases'] ?? false, FILTER_VALIDATE_BOOLEAN) ? $text('database') : null,
             username: $driver->isServer() ? $text('username') : null,
             password: $driver->isServer() ? $text('password') : null,
             sqlitePath: $driver->isServer() ? null : $text('sqlite_path'),
@@ -60,6 +60,12 @@ final readonly class ConnectionSettings
     public function withPassword(?string $password): self
     {
         return new self($this->driver, $this->host, $this->port, $this->database, $this->username, $password, $this->sqlitePath, $this->sslMode);
+    }
+
+    /** Andere Datenbank auf demselben Server (PostgreSQL mit «alle Datenbanken»). */
+    public function withDatabase(?string $database): self
+    {
+        return new self($this->driver, $this->host, $this->port, $database, $this->username, $this->password, $this->sqlitePath, $this->sslMode);
     }
 
     public function port(): ?int

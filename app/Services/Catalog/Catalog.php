@@ -7,37 +7,63 @@ use App\Enums\DatabaseDriver;
 use App\Models\DatabaseConnection;
 
 /**
- * Katalog für den Navigator (O-01): Schemas und Objektgruppen einer Zielverbindung — für alle vier Treiber mit
- * denselben Gruppen und Begriffen (O-04). Wo ein Treiber etwas nicht kennt, steht die Gruppe mit Erklärung da statt
- * zu fehlen.
+ * Katalog für den Navigator (O-01): Datenbanken, Schemas und Objektgruppen einer Zielverbindung — für alle vier
+ * Treiber mit denselben Gruppen und Begriffen (O-04). Wo ein Treiber etwas nicht kennt, steht die Gruppe mit
+ * Erklärung da statt zu fehlen.
+ *
+ * «Alle Datenbanken» (Verbindung ohne Datenbankname): MySQL und MariaDB zeigen jede Datenbank, die das Konto sieht;
+ * PostgreSQL listet die Datenbanken des Servers und öffnet die gewählte. Mit Datenbankname zeigt der Navigator nur
+ * diese eine.
  *
  * @phpstan-type NavigatorItem array{name: string, kind: string, rows: int|null, detail: string|null}
  * @phpstan-type NavigatorGroup array{key: string, label: string, items: list<NavigatorItem>, note: string|null}
  */
 final class Catalog
 {
+    /** PostgreSQL ohne Datenbankname verbindet sich zuerst hierhin. */
+    public const string POSTGRES_MAINTENANCE_DATABASE = 'postgres';
+
     public function __construct(private readonly TargetConnections $targets) {}
+
+    /**
+     * Datenbanken zur Auswahl — nur PostgreSQL mit «alle Datenbanken»; sonst null.
+     *
+     * @return list<string>|null
+     */
+    public function databases(DatabaseConnection $connection): ?array
+    {
+        if ($connection->driver !== DatabaseDriver::Postgres || $connection->database !== null) {
+            return null;
+        }
+
+        return $connection->driver->dialect()->databases($this->targets->open($connection));
+    }
 
     /**
      * @return list<string>
      */
-    public function schemas(DatabaseConnection $connection): array
+    public function schemas(DatabaseConnection $connection, ?string $database = null): array
     {
-        $target = $this->targets->open($connection);
+        $schemas = $connection->driver->dialect()->schemas($this->targets->open($connection, $database));
 
-        return $connection->driver->dialect()->schemas($target);
+        // MySQL und MariaDB mit eingetragener Datenbank: nur diese (ohne «alle Datenbanken»).
+        if (in_array($connection->driver, [DatabaseDriver::MySql, DatabaseDriver::MariaDb], true) && $connection->database !== null) {
+            return array_values(array_intersect($schemas, [$connection->database]));
+        }
+
+        return $schemas;
     }
 
     /**
      * Das Schema, das beim Öffnen gezeigt wird: die eingetragene Datenbank (MySQL, MariaDB), das aktuelle Schema
      * (PostgreSQL) bzw. «main» (SQLite) — sonst das erste.
      */
-    public function defaultSchema(DatabaseConnection $connection): ?string
+    public function defaultSchema(DatabaseConnection $connection, ?string $database = null): ?string
     {
-        $schemas = $this->schemas($connection);
+        $schemas = $this->schemas($connection, $database);
         $preferred = match ($connection->driver) {
             DatabaseDriver::MySql, DatabaseDriver::MariaDb => $connection->database,
-            default => $connection->driver->dialect()->defaultSchema($this->targets->open($connection)),
+            default => $connection->driver->dialect()->defaultSchema($this->targets->open($connection, $database)),
         };
 
         return in_array($preferred, $schemas, true) ? $preferred : ($schemas[0] ?? null);
@@ -48,9 +74,9 @@ final class Catalog
      *
      * @return list<NavigatorGroup>
      */
-    public function groups(DatabaseConnection $connection, string $schema): array
+    public function groups(DatabaseConnection $connection, string $schema, ?string $database = null): array
     {
-        $target = $this->targets->open($connection);
+        $target = $this->targets->open($connection, $database);
         $dialect = $connection->driver->dialect();
         $objects = $dialect->tables($target, $schema);
 

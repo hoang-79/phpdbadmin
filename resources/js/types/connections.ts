@@ -46,6 +46,7 @@ export type EditableConnection = {
     host: string | null;
     port: number | null;
     database: string | null;
+    allDatabases: boolean;
     username: string | null;
     hasPassword: boolean;
     storePassword: boolean;

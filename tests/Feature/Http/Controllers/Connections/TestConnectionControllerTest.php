@@ -51,7 +51,7 @@ class TestConnectionControllerTest extends TestCase
     public function test_reports_unreachable_server_without_echoing_password(): void
     {
         $response = $this->actingAs(User::factory()->create())->postJson(route('connections.test'), [
-            'driver' => 'mysql', 'host' => '127.0.0.1', 'port' => 1, 'username' => 'app', 'password' => 'Geheim-Test-6',
+            'driver' => 'mysql', 'host' => '127.0.0.1', 'port' => 1, 'username' => 'app', 'password' => 'Geheim-Test-6', 'all_databases' => true,
         ]);
 
         $response->assertOk()

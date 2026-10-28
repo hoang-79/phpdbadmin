@@ -83,6 +83,7 @@ class ConnectionController extends Controller
                 'host' => $connection->host,
                 'port' => $connection->port,
                 'database' => $connection->database,
+                'allDatabases' => $connection->driver->isServer() && $connection->database === null,
                 'username' => $connection->username,
                 'hasPassword' => $connection->store_password && $connection->password !== null,
                 'storePassword' => $connection->store_password,
@@ -146,7 +147,7 @@ class ConnectionController extends Controller
             'driver' => $driver,
             'host' => $driver->isServer() ? $text('host') : null,
             'port' => $driver->isServer() && $request->filled('port') ? $request->integer('port') : null,
-            'database' => $driver->isServer() ? $text('database') : null,
+            'database' => $driver->isServer() && ! $request->boolean('all_databases') ? $text('database') : null,
             'username' => $driver->isServer() ? $text('username') : null,
             // Leeres Feld heisst «kein Passwort» (z. B. root in Herd) — nicht ein gespeichertes leeres.
             'password' => $driver->isServer() && $storePassword && $request->filled('password') ? $request->string('password')->toString() : null,

@@ -27,6 +27,11 @@ abstract class BaseDialect implements Dialect
         );
     }
 
+    public function databases(Connection $connection): ?array
+    {
+        return null;
+    }
+
     public function defaultSchema(Connection $connection): ?string
     {
         foreach ($connection->getSchemaBuilder()->getSchemas() as $schema) {

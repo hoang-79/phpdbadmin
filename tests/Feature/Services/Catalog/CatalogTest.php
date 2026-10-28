@@ -89,4 +89,39 @@ class CatalogTest extends TestCase
 
         $this->assertSame($this->sampleSchemaName($driver), app(Catalog::class)->defaultSchema($connection));
     }
+
+    /**
+     * @return array<string, array{0: DatabaseDriver}>
+     */
+    public static function mysqlDrivers(): array
+    {
+        return ['MySQL' => [DatabaseDriver::MySql], 'MariaDB' => [DatabaseDriver::MariaDb]];
+    }
+
+    #[DataProvider('mysqlDrivers')]
+    public function test_with_database_name_only_that_database_is_shown(DatabaseDriver $driver): void
+    {
+        $settings = $this->scratchSettings($driver, $this->folder);
+
+        $only = $this->savedConnection($settings);
+        $all = $this->savedConnection($settings->withDatabase(null));
+
+        $this->assertSame(['phpdbadmin_test'], app(Catalog::class)->schemas($only));
+        $this->assertContains('phpdbadmin_test', app(Catalog::class)->schemas($all));
+        $this->assertGreaterThan(1, count(app(Catalog::class)->schemas($all)));
+    }
+
+    public function test_postgres_with_all_databases_lists_and_opens_other_databases(): void
+    {
+        $settings = $this->scratchSettings(DatabaseDriver::Postgres, $this->folder);
+        $this->createSampleSchema(app(ConnectionFactory::class)->make($settings), DatabaseDriver::Postgres);
+        $all = $this->savedConnection($settings->withDatabase(null));
+        $catalog = app(Catalog::class);
+
+        $this->assertContains('phpdbadmin_test', $catalog->databases($all) ?? []);
+        $this->assertNull($catalog->databases($this->savedConnection($settings)));
+
+        $tables = array_column($catalog->groups($all, 'public', 'phpdbadmin_test'), null, 'key')['tables']['items'];
+        $this->assertSame(['customers', 'orders'], array_column($tables, 'name'));
+    }
 }

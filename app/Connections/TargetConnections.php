@@ -22,13 +22,17 @@ final class TargetConnections
     public function __construct(private readonly ConnectionFactory $factory, private readonly Session $session) {}
 
     /**
+     * @param  string|null  $database  andere Datenbank auf demselben Server — nur PostgreSQL mit «alle Datenbanken»
+     *
      * @throws PasswordRequired
      * @throws ConnectionNotAllowed
      */
-    public function open(DatabaseConnection $connection): Connection
+    public function open(DatabaseConnection $connection, ?string $database = null): Connection
     {
-        if (isset($this->open[$connection->id])) {
-            return $this->open[$connection->id];
+        $key = $connection->id.'#'.($database ?? '');
+
+        if (isset($this->open[$key])) {
+            return $this->open[$key];
         }
 
         $password = $this->password($connection);
@@ -37,8 +41,14 @@ final class TargetConnections
             throw new PasswordRequired($connection);
         }
 
-        return $this->open[$connection->id] = $this->factory->make(
-            ConnectionSettings::fromConnection($connection, $password),
+        $settings = ConnectionSettings::fromConnection($connection, $password);
+
+        if ($database !== null && $connection->database === null) {
+            $settings = $settings->withDatabase($database);
+        }
+
+        return $this->open[$key] = $this->factory->make(
+            $settings,
             readOnly: $connection->read_only,
             statementTimeoutMs: (int) config('phpdbadmin.connections.statement_timeout_ms', 15000),
         );

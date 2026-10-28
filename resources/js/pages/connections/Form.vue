@@ -37,6 +37,8 @@ const form = useForm({
     host: props.connection?.host ?? '127.0.0.1',
     port: props.connection?.port?.toString() ?? '',
     database: props.connection?.database ?? '',
+    // Neue Verbindungen zeigen zuerst alle Datenbanken (bequem z. B. für Herd); beim Bearbeiten wie gespeichert.
+    all_databases: props.connection?.allDatabases ?? true,
     username: props.connection?.username ?? '',
     password: '',
     store_password: props.connection?.storePassword ?? true,
@@ -75,7 +77,18 @@ function chooseDriver(value: DatabaseDriver): void {
         form.sslmode = modes[0]?.value ?? 'disable';
     }
 
-    if (value === 'pgsql' && form.database === '') {
+    if (value === 'pgsql' && form.database === '' && !form.all_databases) {
+        form.database = 'postgres';
+    }
+}
+
+// «Alle Datenbanken anzeigen»: Feld leeren und sperren; ohne Haken braucht es einen Namen.
+function toggleAllDatabases(checked: boolean): void {
+    form.all_databases = checked;
+
+    if (checked) {
+        form.database = '';
+    } else if (form.driver === 'pgsql') {
         form.database = 'postgres';
     }
 }
@@ -411,12 +424,7 @@ function submit(): void {
                     <div class="grid gap-4 sm:grid-cols-2">
                         <div class="flex flex-col gap-1.5">
                             <Label for="database" class="text-[13px]"
-                                >Datenbank<span
-                                    v-if="form.driver !== 'pgsql'"
-                                    class="font-normal text-muted-foreground"
-                                >
-                                    (optional)</span
-                                ></Label
+                                >Datenbank</Label
                             >
                             <Input
                                 id="database"
@@ -424,10 +432,41 @@ function submit(): void {
                                 class="font-mono"
                                 autocomplete="off"
                                 spellcheck="false"
+                                :disabled="form.all_databases"
+                                :placeholder="
+                                    form.all_databases ? 'alle Datenbanken' : ''
+                                "
+                                :required="!form.all_databases"
                                 :aria-invalid="
                                     errors.database ? true : undefined
                                 "
+                                aria-describedby="all-databases-hint"
                             />
+                            <label class="flex items-start gap-2 text-sm">
+                                <input
+                                    type="checkbox"
+                                    class="mt-0.5 size-4 accent-primary"
+                                    :checked="form.all_databases"
+                                    @change="
+                                        toggleAllDatabases(
+                                            ($event.target as HTMLInputElement)
+                                                .checked,
+                                        )
+                                    "
+                                />
+                                <span class="flex flex-col gap-0.5">
+                                    <span>Alle Datenbanken anzeigen</span>
+                                    <span
+                                        id="all-databases-hint"
+                                        class="text-xs text-muted-foreground"
+                                        >{{
+                                            form.driver === 'pgsql'
+                                                ? 'Verbindet zuerst mit «postgres» und listet alle Datenbanken des Servers.'
+                                                : 'Der Navigator zeigt jede Datenbank, die das Konto sieht.'
+                                        }}</span
+                                    >
+                                </span>
+                            </label>
                             <InputError :message="errors.database" />
                         </div>
                         <div class="flex flex-col gap-1.5">

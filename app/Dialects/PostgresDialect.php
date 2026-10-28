@@ -46,6 +46,13 @@ class PostgresDialect extends BaseDialect
         }
     }
 
+    public function databases(Connection $connection): array
+    {
+        return $this->strings($connection->select(
+            'select datname from pg_database where not datistemplate and datallowconn order by datname',
+        ), 'datname');
+    }
+
     public function serverVersion(Connection $connection): string
     {
         $version = (string) $connection->selectOne('show server_version')?->server_version;

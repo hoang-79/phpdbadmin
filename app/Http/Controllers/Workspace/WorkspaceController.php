@@ -31,22 +31,48 @@ class WorkspaceController extends Controller
     public function show(Request $request, DatabaseConnection $connection): Response|RedirectResponse
     {
         return $this->guarded($request, $connection, function () use ($request, $connection): Response|RedirectResponse {
-            $schema = $this->catalog->defaultSchema($connection);
+            $database = $this->database($request, $connection);
+            $schema = $this->catalog->defaultSchema($connection, $database);
 
             return $schema === null
-                ? $this->render($request, $connection, 'workspace/Schema', [], null, [])
-                : to_route('workspace.schema', [$connection, $schema]);
+                ? $this->render($request, $connection, 'workspace/Schema', [], null, [], $database)
+                : to_route('workspace.schema', array_filter([$connection, $schema, 'db' => $database], fn ($value) => $value !== null));
         });
     }
 
     public function schema(Request $request, DatabaseConnection $connection, string $schema): Response|RedirectResponse
     {
         return $this->guarded($request, $connection, function () use ($request, $connection, $schema): Response {
-            $schemas = $this->catalog->schemas($connection);
+            $database = $this->database($request, $connection);
+            $schemas = $this->catalog->schemas($connection, $database);
             abort_unless(in_array($schema, $schemas, true), 404);
 
-            return $this->render($request, $connection, 'workspace/Schema', $schemas, $schema, $this->catalog->groups($connection, $schema));
+            return $this->render($request, $connection, 'workspace/Schema', $schemas, $schema, $this->catalog->groups($connection, $schema, $database), $database);
         });
+    }
+
+    /**
+     * Gewählte Datenbank bei PostgreSQL mit «alle Datenbanken» (`?db=`), sonst null. Unbekannte Namen sind 404.
+     */
+    protected function database(Request $request, DatabaseConnection $connection): ?string
+    {
+        $databases = $this->catalog->databases($connection);
+
+        if ($databases === null) {
+            return null;
+        }
+
+        $requested = $request->query('db');
+
+        if (is_string($requested) && $requested !== '') {
+            abort_unless(in_array($requested, $databases, true), 404);
+
+            return $requested;
+        }
+
+        return in_array(Catalog::POSTGRES_MAINTENANCE_DATABASE, $databases, true)
+            ? Catalog::POSTGRES_MAINTENANCE_DATABASE
+            : ($databases[0] ?? null);
     }
 
     /**
@@ -74,9 +100,10 @@ class WorkspaceController extends Controller
      * @param  list<NavigatorGroup>  $groups
      * @param  array<string, mixed>  $props
      */
-    protected function render(Request $request, DatabaseConnection $connection, string $component, array $schemas, ?string $schema, array $groups, array $props = []): Response
+    protected function render(Request $request, DatabaseConnection $connection, string $component, array $schemas, ?string $schema, array $groups, ?string $database = null, array $props = []): Response
     {
         $user = $this->user($request);
+        $databases = $this->catalog->databases($connection);
 
         return Inertia::render($component, [
             'workspace' => [
@@ -91,8 +118,11 @@ class WorkspaceController extends Controller
                     'accountWarnings' => $connection->account_warnings ?? [],
                     'canManage' => $connection->isManageableBy($user),
                 ],
+                // PostgreSQL mit «alle Datenbanken»: Auswahl im Navigator, die gewählte in der Adresse (?db=).
+                'databases' => $databases,
+                'database' => $database,
                 'databaseLabel' => match ($connection->driver) {
-                    DatabaseDriver::Postgres => $connection->database ?? 'postgres',
+                    DatabaseDriver::Postgres => $database ?? $connection->database ?? Catalog::POSTGRES_MAINTENANCE_DATABASE,
                     DatabaseDriver::Sqlite => basename((string) $connection->sqlite_path),
                     default => null,
                 },

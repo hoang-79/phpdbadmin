@@ -30,6 +30,8 @@ export type Workspace = {
         accountWarnings: AccountWarning[];
         canManage: boolean;
     };
+    databases: string[] | null;
+    database: string | null;
     databaseLabel: string | null;
     schemaKind: 'schema' | 'database';
     schemas: string[];

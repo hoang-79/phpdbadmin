@@ -107,9 +107,10 @@ class ConnectionControllerTest extends TestCase
     {
         $this->actingAs(User::factory()->create())->post(route('connections.store'), [
             'name' => 'shop', 'driver' => 'mariadb', 'host' => '127.0.0.1', 'port' => '1', 'username' => 'app',
-            'password' => 'Geheim-Nicht-3', 'store_password' => false, 'environment' => 'local',
+            'password' => 'Geheim-Nicht-3', 'store_password' => false, 'environment' => 'local', 'all_databases' => true,
         ])->assertRedirect(route('home'));
 
+        $this->assertDatabaseCount('connections', 1);
         $this->assertNull(DB::table('connections')->value('password'));
     }
 
@@ -119,12 +120,37 @@ class ConnectionControllerTest extends TestCase
 
         $this->actingAs($user)->post(route('connections.store'), [
             'name' => 'herd', 'driver' => 'mariadb', 'host' => '127.0.0.1', 'port' => '1', 'username' => 'root',
-            'password' => '', 'store_password' => true, 'environment' => 'local',
+            'password' => '', 'store_password' => true, 'environment' => 'local', 'all_databases' => true,
         ])->assertRedirect(route('home'));
 
         $this->assertNull(DB::table('connections')->value('password'));
         $this->get(route('connections.edit', DatabaseConnection::query()->sole()))
             ->assertInertia(fn (Assert $page) => $page->where('connection.hasPassword', false));
+    }
+
+    public function test_all_databases_stores_no_database_name(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('connections.store'), [
+            'name' => 'server', 'driver' => 'pgsql', 'host' => '127.0.0.1', 'port' => '1', 'username' => 'root',
+            'database' => 'wird_ignoriert', 'all_databases' => true, 'environment' => 'local',
+        ])->assertRedirect(route('home'));
+
+        $connection = DatabaseConnection::query()->sole();
+        $this->assertNull($connection->database);
+        $this->get(route('connections.edit', $connection))
+            ->assertInertia(fn (Assert $page) => $page->where('connection.allDatabases', true));
+    }
+
+    public function test_without_all_databases_a_database_name_is_required(): void
+    {
+        $this->actingAs(User::factory()->create())->post(route('connections.store'), [
+            'name' => 'shop', 'driver' => 'mysql', 'host' => '127.0.0.1', 'username' => 'app', 'environment' => 'local',
+            'all_databases' => false, 'database' => '',
+        ])->assertSessionHasErrors(['database' => 'Datenbank fehlt.']);
+
+        $this->assertDatabaseCount('connections', 0);
     }
 
     public function test_production_is_read_only_by_default(): void
@@ -198,7 +224,7 @@ class ConnectionControllerTest extends TestCase
 
         $this->actingAs($user)->put(route('connections.update', $connection), [
             'name' => 'umbenannt', 'driver' => 'mariadb', 'host' => '127.0.0.1', 'port' => '1', 'username' => 'app',
-            'password' => '', 'store_password' => true, 'environment' => 'local',
+            'password' => '', 'store_password' => true, 'environment' => 'local', 'all_databases' => true,
         ])->assertRedirect(route('home'));
 
         $connection->refresh();

@@ -29,7 +29,9 @@ trait ValidatesConnectionSettings
             'driver' => ['required', Rule::enum(DatabaseDriver::class)],
             'host' => ['exclude_if:driver,sqlite', 'required', 'string', 'max:255', $this->allowedHost(...)],
             'port' => ['exclude_if:driver,sqlite', 'nullable', 'integer', 'between:1,65535'],
-            'database' => ['exclude_if:driver,sqlite', 'required_if:driver,pgsql', 'nullable', 'string', 'max:255'],
+            // «Alle Datenbanken anzeigen»: kein Datenbankname — sonst ist er Pflicht.
+            'all_databases' => ['boolean'],
+            'database' => ['exclude_if:driver,sqlite', Rule::excludeIf(fn (): bool => $this->boolean('all_databases')), 'required', 'string', 'max:255'],
             'username' => ['exclude_if:driver,sqlite', 'required', 'string', 'max:255'],
             'password' => ['exclude_if:driver,sqlite', 'nullable', 'string', 'max:1024'],
             'sslmode' => ['exclude_if:driver,sqlite', 'nullable', Rule::in($sslModes)],
@@ -46,6 +48,7 @@ trait ValidatesConnectionSettings
             'host' => 'Host',
             'port' => 'Port',
             'database' => 'Datenbank',
+            'all_databases' => 'Alle Datenbanken',
             'username' => 'Benutzer',
             'password' => 'Passwort',
             'sslmode' => 'SSL',

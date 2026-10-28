@@ -152,6 +152,24 @@ class WorkspaceControllerTest extends TestCase
         $this->assertNull($connection->fresh()?->password);
     }
 
+    public function test_postgres_with_all_databases_switches_database_by_address(): void
+    {
+        $settings = $this->scratchSettings(DatabaseDriver::Postgres, $this->folder);
+        $connection = $this->savedConnection($settings->withDatabase(null), $this->user);
+
+        $this->actingAs($this->user)->get(route('workspace', $connection))
+            ->assertRedirect(route('workspace.schema', [$connection, 'public', 'db' => 'postgres']));
+
+        $this->get(route('workspace.schema', [$connection, 'public', 'db' => 'phpdbadmin_test']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('workspace.database', 'phpdbadmin_test')
+                ->where('workspace.databaseLabel', 'phpdbadmin_test')
+                ->has('workspace.databases'));
+
+        $this->get(route('workspace.schema', [$connection, 'public', 'db' => 'gibt_es_nicht']))->assertNotFound();
+    }
+
     private function sqliteConnection(?User $owner = null, string $environment = 'local'): DatabaseConnection
     {
         $file = $this->folder.'/notizen-'.uniqid().'.sqlite';
