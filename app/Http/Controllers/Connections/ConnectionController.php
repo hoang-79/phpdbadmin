@@ -148,7 +148,8 @@ class ConnectionController extends Controller
             'port' => $driver->isServer() && $request->filled('port') ? $request->integer('port') : null,
             'database' => $driver->isServer() ? $text('database') : null,
             'username' => $driver->isServer() ? $text('username') : null,
-            'password' => $driver->isServer() && $storePassword ? $request->string('password')->toString() : null,
+            // Leeres Feld heisst «kein Passwort» (z. B. root in Herd) — nicht ein gespeichertes leeres.
+            'password' => $driver->isServer() && $storePassword && $request->filled('password') ? $request->string('password')->toString() : null,
             'store_password' => $driver->isServer() ? $storePassword : true,
             'sqlite_path' => $driver->isServer() ? null : $text('sqlite_path'),
             'options' => $driver->isServer() ? ['sslmode' => $request->string('sslmode')->toString() ?: SslMode::Disable->value] : null,

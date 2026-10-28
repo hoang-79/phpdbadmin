@@ -458,7 +458,7 @@ function submit(): void {
                         class="font-mono"
                         required
                         spellcheck="false"
-                        placeholder="~/Datenbanken/notizen.sqlite"
+                        :placeholder="`${sqliteFolders[0] ?? '~'}/notizen.sqlite`"
                         :aria-invalid="errors.sqlite_path ? true : undefined"
                         aria-describedby="sqlite-hint"
                     />

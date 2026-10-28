@@ -1,17 +1,45 @@
 name: tests
 
+# Sparsam (GitHub-Actions-Minuten kosten): je Push und Pull Request ein schlanker Auftrag mit SQLite; die vier
+# Datenbanken nur wöchentlich, von Hand und für Release-Tags (B-03). Reine Doku löst keinen Lauf aus.
+
 on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
+    paths-ignore:
+      - 'dokumentationen/**'
+      - '**/*.md'
+      - '**/*.pdf'
+      - '**/*.png'
+      - '**/*.svg'
   pull_request:
+    paths-ignore:
+      - 'dokumentationen/**'
+      - '**/*.md'
+      - '**/*.pdf'
+      - '**/*.png'
+      - '**/*.svg'
+  schedule:
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ci:
+    # Prüfkette wie lokal: vp check, vue-tsc, Pint, Larastan, Tests (App-Datenbank SQLite; Zielserver fehlen hier,
+    # ihre Tests werden ausdrücklich übersprungen).
+    if: (github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')) || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
@@ -30,9 +58,88 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
+          cache: npm
+
+      - name: Composer-Cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
 
       - name: Setup Application
         run: composer setup
 
       - name: Run CI Checks
         run: composer ci:check
+
+  datenbanken:
+    # Alle vier Treiber: Zielverbindungen und App-Datenbank auf MariaDB 10.11, MySQL 8.4, PostgreSQL 18 und SQLite.
+    # Ports wie lokal in Herd, damit dieselben Skripte laufen (composer test:app-db).
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: '1'
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: root
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U root"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_mysql, pdo_pgsql, pdo_sqlite
+          tools: composer:v2
+          coverage: none
+
+      - name: Composer-Cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Setup Application
+        run: |
+          composer install --no-interaction --no-progress
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Tests (App-Datenbank SQLite, Zielserver alle vier)
+        run: php artisan test --compact
+
+      - name: Tests (App-Datenbank MariaDB, MySQL, PostgreSQL)
+        run: composer test:app-db

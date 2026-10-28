@@ -50,9 +50,13 @@ class LoginController extends Controller
             return to_route('login');
         }
 
+        $minutes = (int) config('phpdbadmin.login.code_minutes');
+
         return Inertia::render('auth/Code', [
             'email' => $email,
-            'validMinutes' => (int) config('phpdbadmin.login.code_minutes'),
+            'validMinutes' => $minutes,
+            // Gleich für bekannte und unbekannte Adressen: ab dem Absenden gerechnet, nicht aus dem Code.
+            'expiresAt' => now()->setTimestamp((int) $request->session()->get('login.sent_at', 0))->addMinutes($minutes)->toIso8601String(),
             'resendInSeconds' => $this->secondsUntilResend($request),
         ]);
     }

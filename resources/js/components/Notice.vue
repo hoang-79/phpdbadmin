@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { CircleAlert, CircleCheck, Info, TriangleAlert } from '@lucide/vue';
+import type { Component } from 'vue';
 import { computed } from 'vue';
 
 /** Hinweis (Gestaltung § 6): Linie links in der Farbe der Art, Symbol, kurzer Text. */
 const props = withDefaults(
     defineProps<{
         variant?: 'info' | 'success' | 'warning' | 'danger';
+        /** Eigenes Symbol statt des Symbols der Art (z. B. Mail beim Code). */
+        icon?: Component | null;
     }>(),
-    { variant: 'info' },
+    { variant: 'info', icon: null },
 );
 
 const look = computed(
@@ -46,7 +49,7 @@ const look = computed(
         ]"
     >
         <component
-            :is="look.icon"
+            :is="icon ?? look.icon"
             :class="['mt-px size-4 shrink-0', look.icon_]"
         />
         <div class="min-w-0"><slot /></div>

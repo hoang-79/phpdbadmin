@@ -113,6 +113,20 @@ class ConnectionControllerTest extends TestCase
         $this->assertNull(DB::table('connections')->value('password'));
     }
 
+    public function test_empty_password_is_stored_as_no_password(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('connections.store'), [
+            'name' => 'herd', 'driver' => 'mariadb', 'host' => '127.0.0.1', 'port' => '1', 'username' => 'root',
+            'password' => '', 'store_password' => true, 'environment' => 'local',
+        ])->assertRedirect(route('home'));
+
+        $this->assertNull(DB::table('connections')->value('password'));
+        $this->get(route('connections.edit', DatabaseConnection::query()->sole()))
+            ->assertInertia(fn (Assert $page) => $page->where('connection.hasPassword', false));
+    }
+
     public function test_production_is_read_only_by_default(): void
     {
         $this->actingAs(User::factory()->create())->post(route('connections.store'), [

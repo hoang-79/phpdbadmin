@@ -19,7 +19,7 @@ Route::middleware('auth')->group(function () {
     Route::get('account', [AccountController::class, 'show'])->name('account');
 });
 
-// Feasibility-Proben F-3 und F-4, nur lokal (dokumentationen/02-feasibility).
+// Feasibility-Proben F-3 und F-4, nur lokal und nur angemeldet — bis Raster (TB 01) und SQL-Editor (TB 05) sie ersetzen.
 if (app()->environment('local')) {
-    require __DIR__.'/probe.php';
+    Route::middleware('auth')->group(__DIR__.'/probe.php');
 }

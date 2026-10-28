@@ -72,9 +72,9 @@ const passkeyError = computed(() =>
     </div>
 
     <template v-if="codeSent">
-        <Notice>
+        <Notice :icon="Mail">
             Wir haben einen Code an
-            <b class="font-semibold break-all">{{ email }}</b> gesendet.
+            <b class="font-semibold wrap-break-word">{{ email }}</b> gesendet.
         </Notice>
         <Form
             v-bind="verify.form()"
@@ -91,7 +91,7 @@ const passkeyError = computed(() =>
                     maxlength="9"
                     required
                     autofocus
-                    class="h-11 font-mono text-xl tracking-[0.3em]"
+                    class="h-13 font-mono text-2xl tracking-[0.35em] md:text-2xl"
                     :aria-invalid="errors.code ? true : undefined"
                 />
                 <InputError :message="errors.code" />

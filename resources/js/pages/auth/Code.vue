@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { formatCountdown } from '@/lib/format';
+import { formatCountdown, formatTime } from '@/lib/format';
 import { login } from '@/routes';
 import { resend, verify } from '@/routes/login/code';
 
@@ -17,6 +17,7 @@ import { resend, verify } from '@/routes/login/code';
 const props = defineProps<{
     email: string;
     validMinutes: number;
+    expiresAt: string;
     resendInSeconds: number;
 }>();
 
@@ -33,10 +34,11 @@ useIntervalFn(() => {
 
     <h1 class="text-xl font-semibold">Code eingeben</h1>
 
-    <Notice>
+    <Notice :icon="Mail">
         Wir haben einen Code an
-        <b class="font-semibold break-all">{{ email }}</b> gesendet, sofern es
-        dazu ein Konto gibt. Er ist {{ validMinutes }} Minuten gültig.
+        <b class="font-semibold wrap-break-word">{{ email }}</b> gesendet,
+        sofern es dazu ein Konto gibt. Er ist {{ validMinutes }} Minuten gültig,
+        bis {{ formatTime(expiresAt) }} Uhr.
     </Notice>
 
     <Form
@@ -54,7 +56,7 @@ useIntervalFn(() => {
                 maxlength="9"
                 required
                 autofocus
-                class="h-11 font-mono text-xl tracking-[0.3em]"
+                class="h-13 font-mono text-2xl tracking-[0.35em] md:text-2xl"
                 :aria-invalid="errors.code ? true : undefined"
                 aria-describedby="code-hint"
             />

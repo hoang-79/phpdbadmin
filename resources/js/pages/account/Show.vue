@@ -57,7 +57,7 @@ defineProps<{
                         <b class="text-base font-semibold">{{
                             account.name
                         }}</b>
-                        <span class="break-all text-text-secondary">{{
+                        <span class="wrap-break-word text-text-secondary">{{
                             account.email
                         }}</span>
                     </div>

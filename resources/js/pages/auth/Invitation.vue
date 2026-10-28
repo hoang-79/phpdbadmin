@@ -32,7 +32,7 @@ setLayoutProps({ back: null });
             <h1 class="text-xl font-semibold">Einladung annehmen</h1>
             <p class="text-text-secondary">
                 Konto für
-                <b class="font-semibold break-all text-foreground">{{
+                <b class="font-semibold wrap-break-word text-foreground">{{
                     invitation.email
                 }}</b>
                 als {{ invitation.role }}.

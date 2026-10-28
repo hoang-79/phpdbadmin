@@ -1,8 +1,15 @@
 <script setup lang="ts">
-import { ChevronDown, Circle, CircleCheck, CircleX, Zap } from '@lucide/vue';
+import {
+    ChevronDown,
+    Circle,
+    CircleCheck,
+    CircleX,
+    TriangleAlert,
+    Zap,
+} from '@lucide/vue';
 import Notice from '@/components/Notice.vue';
 import { Spinner } from '@/components/ui/spinner';
-import { formatRecent } from '@/lib/format';
+import { formatTime } from '@/lib/format';
 import type { ConnectionTestResult } from '@/types';
 
 /** «Verbindung testen» (V-02, Wireframe 04): Prüfschritte, Fehler in Klartext, Meldung des Servers zum Aufklappen. */
@@ -16,13 +23,15 @@ defineProps<{
 <template>
     <aside class="flex min-w-0 flex-col gap-4">
         <section class="rounded-lg border bg-background" aria-live="polite">
-            <div class="flex items-center gap-2 border-b px-4 py-3">
+            <div class="flex flex-wrap items-center gap-2 border-b px-4 py-3">
                 <Zap class="size-4" />
-                <h2 class="text-[15px] font-semibold">Verbindung testen</h2>
+                <h2 class="text-[15px] font-semibold whitespace-nowrap">
+                    Verbindung testen
+                </h2>
                 <span
                     v-if="result && !testing"
                     class="ml-auto text-xs text-muted-foreground tabular-nums"
-                    >getestet {{ formatRecent(result.testedAt) }} ·
+                    >{{ formatTime(result.testedAt) }} ·
                     {{ result.durationMs }} ms</span
                 >
                 <Spinner v-if="testing" class="ml-auto" />
@@ -61,7 +70,7 @@ defineProps<{
                         </p>
                         <p
                             v-if="result.problem.detail"
-                            class="font-mono text-xs break-all text-text-secondary"
+                            class="font-mono text-xs wrap-break-word text-text-secondary"
                         >
                             {{ result.problem.detail }}
                         </p>
@@ -77,7 +86,7 @@ defineProps<{
                                 />Meldung des Servers
                             </summary>
                             <pre
-                                class="mt-1.5 rounded-md border bg-background px-2.5 py-2 font-mono text-xs leading-[18px] break-all whitespace-pre-wrap"
+                                class="mt-1.5 rounded-md border bg-background px-2.5 py-2 font-mono text-xs leading-[18px] wrap-break-word whitespace-pre-wrap"
                                 >{{ result.problem.serverMessage }}</pre>
                         </details>
                     </div>
@@ -108,7 +117,7 @@ defineProps<{
                                 <b class="font-semibold">{{ step.label }}</b>
                                 <span
                                     v-if="step.detail"
-                                    class="break-all text-text-secondary"
+                                    class="wrap-break-word text-text-secondary"
                                     >{{ step.detail }}</span
                                 >
                             </span>

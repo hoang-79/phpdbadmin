@@ -227,7 +227,7 @@ function remove(connection: ConnectionSummary): void {
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
                             <span
-                                class="font-mono text-base font-semibold break-all"
+                                class="font-mono text-base font-semibold wrap-break-word"
                                 >{{ connection.name }}</span
                             >
                             <span
@@ -239,7 +239,7 @@ function remove(connection: ConnectionSummary): void {
                         <div
                             class="text-[13px] leading-[18px] text-text-secondary"
                         >
-                            <span class="font-mono text-xs break-all">{{
+                            <span class="font-mono text-xs wrap-break-word">{{
                                 connection.location
                             }}</span>
                             <template
@@ -253,7 +253,10 @@ function remove(connection: ConnectionSummary): void {
                                     {{ connection.database }}</template
                                 >
                                 <template v-if="connection.username">
-                                    · Konto
+                                    <template v-if="connection.database">
+                                        ·
+                                    </template>
+                                    Konto
                                     <code>{{ connection.username }}</code>
                                 </template>
                             </template>

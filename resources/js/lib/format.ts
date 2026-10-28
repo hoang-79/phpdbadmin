@@ -30,6 +30,11 @@ export function formatDate(iso: string | null): string {
     return iso ? date.format(new Date(iso)) : '';
 }
 
+/** «10:41» */
+export function formatTime(iso: string | null): string {
+    return iso ? time.format(new Date(iso)) : '';
+}
+
 /** «28.10.2026, 10:31» */
 export function formatDateTime(iso: string | null): string {
     return iso ? dateTime.format(new Date(iso)) : '';

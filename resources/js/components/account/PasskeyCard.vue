@@ -151,7 +151,7 @@ const count = computed(() => props.passkeys.length);
                 <KeyRound class="mt-0.5 size-4 shrink-0 text-primary" />
                 <div class="flex min-w-0 flex-1 flex-col gap-1">
                     <div class="flex flex-wrap items-center gap-1.5">
-                        <b class="font-semibold break-all">{{
+                        <b class="font-semibold wrap-break-word">{{
                             passkey.name
                         }}</b>
                         <span
@@ -210,8 +210,8 @@ const count = computed(() => props.passkeys.length);
             class="rounded-b-lg border-t bg-muted px-4 py-2.5 text-xs text-muted-foreground"
         >
             Ohne Passkey melden Sie sich mit einem Code an
-            <span class="break-all">{{ email }}</span> an. Einen Passwort-Weg
-            gibt es nicht.
+            <span class="wrap-break-word">{{ email }}</span> an. Einen
+            Passwort-Weg gibt es nicht.
         </p>
 
         <Dialog

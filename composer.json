@@ -75,6 +75,30 @@
             "@types:check",
             "@php artisan test"
         ],
+        "test:app-db": [
+            "Composer\\Config::disableProcessTimeout",
+            "@putenv DB_HOST=127.0.0.1",
+            "@putenv DB_USERNAME=root",
+            "@putenv DB_PASSWORD=",
+            "@putenv DB_DATABASE=phpdbadmin_app_test",
+            "@putenv DB_CONNECTION=mariadb",
+            "@putenv DB_PORT=3306",
+            "@php artisan migrate --force --no-interaction --quiet",
+            "@php artisan test --compact",
+            "@putenv DB_CONNECTION=mysql",
+            "@putenv DB_PORT=3307",
+            "@php artisan migrate --force --no-interaction --quiet",
+            "@php artisan test --compact",
+            "@putenv DB_CONNECTION=pgsql",
+            "@putenv DB_PORT=5432",
+            "@php artisan migrate --force --no-interaction --quiet",
+            "@php artisan test --compact"
+        ],
+        "ci:local": [
+            "Composer\\Config::disableProcessTimeout",
+            "@ci:check",
+            "@test:app-db"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
@@ -113,5 +137,9 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "scripts-descriptions": {
+        "test:app-db": "Testsuite mit der App-Datenbank auf MariaDB (3306), MySQL (3307) und PostgreSQL (5432) — B-06",
+        "ci:local": "Lokale Prüfkette in der Reihenfolge der CI, dann die App-Datenbank auf allen Servern — B-03, B-08"
+    }
 }
