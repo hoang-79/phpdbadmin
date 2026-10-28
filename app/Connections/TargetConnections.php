@@ -2,7 +2,9 @@
 
 namespace App\Connections;
 
+use App\Enums\DatabaseDriver;
 use App\Models\DatabaseConnection;
+use App\Services\Catalog\Catalog;
 use Illuminate\Contracts\Session\Session;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\Crypt;
@@ -29,12 +31,6 @@ final class TargetConnections
      */
     public function open(DatabaseConnection $connection, ?string $database = null): Connection
     {
-        $key = $connection->id.'#'.($database ?? '');
-
-        if (isset($this->open[$key])) {
-            return $this->open[$key];
-        }
-
         $password = $this->password($connection);
 
         if ($connection->driver->isServer() && ! $connection->store_password && $password === null) {
@@ -45,6 +41,13 @@ final class TargetConnections
 
         if ($database !== null && $connection->database === null) {
             $settings = $settings->withDatabase($database);
+        }
+
+        // Eine Verbindung je tatsächlicher Datenbank: PostgreSQL ohne Namen ist dieselbe wie «postgres».
+        $key = $connection->id.'#'.($settings->database ?? ($connection->driver === DatabaseDriver::Postgres ? Catalog::POSTGRES_MAINTENANCE_DATABASE : ''));
+
+        if (isset($this->open[$key])) {
+            return $this->open[$key];
         }
 
         return $this->open[$key] = $this->factory->make(

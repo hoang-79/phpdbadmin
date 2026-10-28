@@ -131,6 +131,33 @@ class TargetConnectionsTest extends TestCase
         };
     }
 
+    /**
+     * Zwei Verbindungen mit gleicher Konfiguration bleiben unabhängig: Trennt sich die eine, arbeitet die andere
+     * weiter, und die getrennte baut sich beim nächsten Zugriff selbst wieder auf (früher: Endlosschleife).
+     */
+    #[DataProvider('drivers')]
+    public function test_connections_with_same_configuration_stay_independent(DatabaseDriver $driver): void
+    {
+        $settings = $this->scratchSettings($driver, $this->folder);
+        $factory = app(ConnectionFactory::class);
+        $first = $factory->make($settings, readOnly: true, statementTimeoutMs: 15000);
+        $second = $factory->make($settings, readOnly: true, statementTimeoutMs: 15000);
+
+        $first->disconnect();
+
+        $this->assertNotEmpty($driver->dialect()->serverVersion($second));
+        $this->assertNotEmpty($driver->dialect()->serverVersion($first));
+    }
+
+    public function test_postgres_without_database_name_and_postgres_share_one_connection(): void
+    {
+        $connection = $this->savedConnection($this->scratchSettings(DatabaseDriver::Postgres, $this->folder)->withDatabase(null));
+        $targets = app(TargetConnections::class);
+
+        $this->assertSame($targets->open($connection), $targets->open($connection, 'postgres'));
+        $this->assertNotSame($targets->open($connection), $targets->open($connection, 'phpdbadmin_test'));
+    }
+
     #[DataProvider('serverDrivers')]
     public function test_without_stored_password_opens_only_after_it_was_given_for_the_session(DatabaseDriver $driver): void
     {

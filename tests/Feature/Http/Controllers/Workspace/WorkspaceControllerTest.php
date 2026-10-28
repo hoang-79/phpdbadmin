@@ -170,6 +170,24 @@ class WorkspaceControllerTest extends TestCase
         $this->get(route('workspace.schema', [$connection, 'public', 'db' => 'gibt_es_nicht']))->assertNotFound();
     }
 
+    /**
+     * Fehler aus Hoangs Durchlauf (28.10.2026): «alle Datenbanken» und dann öffnen — die Liste der Datenbanken und
+     * die Datenbank «postgres» waren zwei Verbindungen mit gleichem Namen; die zweite trennte die erste, der
+     * Neuaufbau lief endlos.
+     */
+    public function test_postgres_with_all_databases_opens_its_default_database(): void
+    {
+        $settings = $this->scratchSettings(DatabaseDriver::Postgres, $this->folder);
+        $connection = $this->savedConnection($settings->withDatabase(null), $this->user);
+
+        $this->actingAs($this->user)->followingRedirects()->get(route('workspace', $connection))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('workspace/Schema')
+                ->where('workspace.database', 'postgres')
+                ->where('workspace.schema', 'public'));
+    }
+
     private function sqliteConnection(?User $owner = null, string $environment = 'local'): DatabaseConnection
     {
         $file = $this->folder.'/notizen-'.uniqid().'.sqlite';
