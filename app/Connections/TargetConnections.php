@@ -81,6 +81,29 @@ final class TargetConnections
         }
     }
 
+    /**
+     * Eine eigene Verbindung neben denen der Anfrage — für das Abbrechen (`KILL QUERY`, `pg_cancel_backend`), das nicht
+     * auf der blockierten Verbindung laufen kann. Schreibschutz wie bei open(); danach gleich wieder freigegeben.
+     *
+     * @template T
+     *
+     * @param  Closure(Connection): T  $action
+     * @return T
+     *
+     * @throws PasswordRequired
+     * @throws ConnectionNotAllowed
+     */
+    public function separate(DatabaseConnection $connection, Closure $action, ?string $database = null): mixed
+    {
+        $separate = $this->factory->make($this->settings($connection, $database), readOnly: $connection->read_only);
+
+        try {
+            return $action($separate);
+        } finally {
+            $this->factory->release($separate);
+        }
+    }
+
     /** Passwort für «in jeder Sitzung fragen» merken — verschlüsselt, nur in dieser Sitzung. */
     public function rememberPassword(DatabaseConnection $connection, string $password): void
     {
