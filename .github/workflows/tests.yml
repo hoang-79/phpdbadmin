@@ -74,15 +74,28 @@ jobs:
         run: composer ci:check
 
   datenbanken:
-    # Alle vier Treiber: Zielverbindungen und App-Datenbank auf MariaDB 10.11, MySQL 8.4, PostgreSQL 18 und SQLite.
-    # Ports wie lokal in Herd, damit dieselben Skripte laufen (composer test:app-db).
+    # Alle vier Treiber: Zielverbindungen und App-Datenbank auf den aktuellen Versionen und auf den Untergrenzen aus
+    # N-04 (MariaDB 10.6, MySQL 8.0, PostgreSQL 14). Ports wie lokal in Herd, damit dieselben Skripte laufen.
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    name: datenbanken (${{ matrix.stand }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - stand: aktuell
+            mariadb: '10.11'
+            mysql: '8.4'
+            postgres: '18'
+          - stand: untergrenzen
+            mariadb: '10.6'
+            mysql: '8.0'
+            postgres: '14'
 
     services:
       mariadb:
-        image: mariadb:10.11
+        image: mariadb:${{ matrix.mariadb }}
         env:
           MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: '1'
         ports:
@@ -91,7 +104,7 @@ jobs:
           --health-cmd="healthcheck.sh --connect --innodb_initialized"
           --health-interval=5s --health-timeout=5s --health-retries=20
       mysql:
-        image: mysql:8.4
+        image: mysql:${{ matrix.mysql }}
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
         ports:
@@ -100,7 +113,7 @@ jobs:
           --health-cmd="mysqladmin ping -h 127.0.0.1"
           --health-interval=5s --health-timeout=5s --health-retries=20
       postgres:
-        image: postgres:18
+        image: postgres:${{ matrix.postgres }}
         env:
           POSTGRES_USER: root
           POSTGRES_DB: postgres
