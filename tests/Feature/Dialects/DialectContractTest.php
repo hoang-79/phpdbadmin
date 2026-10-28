@@ -95,7 +95,44 @@ class DialectContractTest extends TestCase
 
         $this->assertSame(['orders_total_check'], array_column($checks, 'name'));
         $this->assertStringContainsString('total', $checks[0]['definition']);
-        $this->assertSame(['orders_note_default'], $dialect->triggers($connection, $this->sampleSchemaName($driver), 'orders'));
+        $triggers = $dialect->triggers($connection, $this->sampleSchemaName($driver), 'orders');
+        $this->assertSame(['orders_note_default'], array_column($triggers, 'name'));
+        $this->assertSame($driver === DatabaseDriver::Sqlite ? 'AFTER' : 'BEFORE', $triggers[0]['timing']);
+        $this->assertSame('INSERT', $triggers[0]['event']);
+        // PostgreSQL: der Trigger ruft eine Funktion auf; die übrigen Treiber tragen den Rumpf im Trigger.
+        $this->assertMatchesRegularExpression('/offen|vertrag_orders_note/i', $triggers[0]['definition']);
+    }
+
+    #[DataProvider('drivers')]
+    public function test_reads_foreign_keys_pointing_to_a_table(DatabaseDriver $driver): void
+    {
+        $connection = $this->writable($driver);
+        $this->createSampleSchema($connection, $driver);
+
+        $incoming = $driver->dialect()->referencingForeignKeys($connection, $this->sampleSchemaName($driver), 'customers');
+
+        $this->assertCount(1, $incoming);
+        $this->assertSame('orders', $incoming[0]['table']);
+        $this->assertSame(['customer_id'], $incoming[0]['columns']);
+        $this->assertSame(['id'], $incoming[0]['foreignColumns']);
+        $this->assertSame('cascade', $incoming[0]['onDelete']);
+    }
+
+    #[DataProvider('drivers')]
+    public function test_ddl_of_table_and_view_can_be_shown(DatabaseDriver $driver): void
+    {
+        $connection = $this->writable($driver);
+        $this->createSampleSchema($connection, $driver);
+        $dialect = $driver->dialect();
+
+        $table = $dialect->ddl($connection, $this->sampleSchemaName($driver), 'orders', false);
+        $view = $dialect->ddl($connection, $this->sampleSchemaName($driver), 'open_orders', true);
+
+        $this->assertMatchesRegularExpression('/^create table/i', $table);
+        $this->assertStringContainsString('orders_total_check', $table);
+        $this->assertStringContainsStringIgnoringCase('references', $table);
+        $this->assertMatchesRegularExpression('/create .*view/i', $view);
+        $this->assertStringContainsString('open_orders', $view);
     }
 
     #[DataProvider('serverDrivers')]

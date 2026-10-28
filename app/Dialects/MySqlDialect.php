@@ -104,10 +104,47 @@ class MySqlDialect extends BaseDialect
 
     public function triggers(Connection $connection, string $schema, string $table): array
     {
-        return $this->strings($connection->select(
-            'select trigger_name as name from information_schema.triggers where trigger_schema = ? and event_object_table = ? order by trigger_name',
+        return array_map(fn (array $row): array => [
+            'name' => $row['name'],
+            'timing' => strtoupper($row['timing']),
+            'event' => strtoupper($row['event']),
+            'definition' => $row['definition'],
+        ], $this->records($connection->select(
+            'select trigger_name as name, action_timing as timing, event_manipulation as event, action_statement as definition
+             from information_schema.triggers where trigger_schema = ? and event_object_table = ? order by trigger_name',
             [$schema, $table],
-        ), 'name');
+        ), ['name', 'timing', 'event', 'definition']));
+    }
+
+    public function referencingForeignKeys(Connection $connection, string $schema, string $table): array
+    {
+        return array_map(fn (array $row): array => [
+            'name' => $row['name'],
+            'table' => $row['tbl'],
+            'columns' => explode(',', $row['cols']),
+            'foreignColumns' => explode(',', $row['refcols']),
+            'onDelete' => strtolower($row['on_delete']),
+        ], $this->records($connection->select(
+            'select kcu.constraint_name as name, kcu.table_name as tbl,
+                    group_concat(kcu.column_name order by kcu.ordinal_position) as cols,
+                    group_concat(kcu.referenced_column_name order by kcu.ordinal_position) as refcols,
+                    rc.delete_rule as on_delete
+             from information_schema.key_column_usage kcu
+             join information_schema.referential_constraints rc
+               on rc.constraint_schema = kcu.constraint_schema and rc.constraint_name = kcu.constraint_name and rc.table_name = kcu.table_name
+             where kcu.referenced_table_schema = ? and kcu.referenced_table_name = ?
+             group by kcu.constraint_name, kcu.table_name, rc.delete_rule
+             order by kcu.table_name, kcu.constraint_name',
+            [$schema, $table],
+        ), ['name', 'tbl', 'cols', 'refcols', 'on_delete']));
+    }
+
+    public function ddl(Connection $connection, string $schema, string $object, bool $isView): string
+    {
+        $name = $connection->getQueryGrammar()->wrap($schema.'.'.$object);
+        $row = (array) $connection->selectOne(($isView ? 'show create view ' : 'show create table ').$name);
+
+        return (string) ($row[$isView ? 'Create View' : 'Create Table'] ?? '');
     }
 
     public function routines(Connection $connection, string $schema): array

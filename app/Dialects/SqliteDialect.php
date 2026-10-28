@@ -79,10 +79,51 @@ class SqliteDialect extends BaseDialect
 
     public function triggers(Connection $connection, string $schema, string $table): array
     {
-        return $this->strings($connection->select(
-            'select name from '.$this->wrap($connection, $schema).'.sqlite_schema where type = ? and tbl_name = ? order by name',
+        return array_map(function (array $row): array {
+            preg_match('/\bTRIGGER\s+(?:IF\s+NOT\s+EXISTS\s+)?\S+\s+(BEFORE|AFTER|INSTEAD\s+OF)?\s*(INSERT|DELETE|UPDATE(?:\s+OF\s+[^\s]+)?)\s+ON\s/i', $row['definition'], $match);
+
+            return [
+                'name' => $row['name'],
+                'timing' => strtoupper(($match[1] ?? '') !== '' ? $match[1] : 'BEFORE'),
+                'event' => strtoupper($match[2] ?? ''),
+                'definition' => $row['definition'],
+            ];
+        }, $this->records($connection->select(
+            'select name, sql as definition from '.$this->wrap($connection, $schema).'.sqlite_schema where type = ? and tbl_name = ? order by name',
             ['trigger', $table],
-        ), 'name');
+        ), ['name', 'definition']));
+    }
+
+    public function referencingForeignKeys(Connection $connection, string $schema, string $table): array
+    {
+        $groups = [];
+
+        foreach ($this->records($connection->select(
+            'select m.name as tbl, p.id as id, p."from" as col, p."to" as refcol, p.on_delete as on_delete
+             from '.$this->wrap($connection, $schema).'.sqlite_schema m
+             join pragma_foreign_key_list(m.name, ?) p
+             where m.type = ? and p."table" = ?
+             order by m.name, p.id, p.seq',
+            [$schema, 'table', $table],
+        ), ['tbl', 'id', 'col', 'refcol', 'on_delete']) as $row) {
+            $key = $row['tbl'].'#'.$row['id'];
+            $groups[$key] ??= ['name' => $row['tbl'].'_fk_'.$row['id'], 'table' => $row['tbl'], 'columns' => [], 'foreignColumns' => [], 'onDelete' => strtolower($row['on_delete'])];
+            $groups[$key]['columns'][] = $row['col'];
+            $groups[$key]['foreignColumns'][] = $row['refcol'];
+        }
+
+        return array_values($groups);
+    }
+
+    public function ddl(Connection $connection, string $schema, string $object, bool $isView): string
+    {
+        // Tabelle bzw. Sicht, dann ihre Indizes und Trigger — so, wie die Datei sie speichert.
+        return implode(";\n\n", $this->strings($connection->select(
+            'select sql from '.$this->wrap($connection, $schema).".sqlite_schema
+             where sql is not null and (name = ? or (tbl_name = ? and type in ('index', 'trigger')))
+             order by case type when 'table' then 0 when 'view' then 0 when 'index' then 1 else 2 end, name",
+            [$object, $object],
+        ), 'sql')).';';
     }
 
     public function routines(Connection $connection, string $schema): ?array

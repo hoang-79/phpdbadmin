@@ -65,11 +65,24 @@ interface Dialect
     public function checkConstraints(Connection $connection, string $schema, string $table): array;
 
     /**
-     * Trigger einer Tabelle — Laravel liest sie nicht (F-1).
+     * Trigger einer Tabelle mit Zeitpunkt, Ereignis und Definition — Laravel liest sie nicht (F-1).
      *
-     * @return list<string>
+     * @return list<array{name: string, timing: string, event: string, definition: string}>
      */
     public function triggers(Connection $connection, string $schema, string $table): array;
+
+    /**
+     * Fremdschlüssel anderer Tabellen, die auf diese Tabelle zeigen («Verwiesen von», Wireframe 08).
+     *
+     * @return list<array{name: string, table: string, columns: list<string>, foreignColumns: list<string>, onDelete: string}>
+     */
+    public function referencingForeignKeys(Connection $connection, string $schema, string $table): array;
+
+    /**
+     * DDL einer Tabelle oder Sicht zum Ansehen und Kopieren (S-01): MySQL und MariaDB vom Server, SQLite aus dem
+     * Katalog der Datei, PostgreSQL aus dem Katalog zusammengesetzt (PostgreSQL kennt kein SHOW CREATE TABLE).
+     */
+    public function ddl(Connection $connection, string $schema, string $object, bool $isView): string;
 
     /**
      * Gespeicherte Funktionen und Prozeduren eines Schemas; null, wo der Treiber keine kennt (SQLite).
