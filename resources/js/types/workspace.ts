@@ -128,3 +128,75 @@ export type ObjectStructure = {
     triggers: StructureTrigger[];
     ddl: string;
 };
+
+/** Ein Wert im Raster, gleich in allen vier Datenbanken (Cells.php). */
+export type Cell =
+    | string
+    | number
+    | boolean
+    | null
+    | { binary: number; hex: string }
+    | { text: string; length: number };
+
+export type GridColumn = {
+    name: string;
+    type: string;
+    kind: ColumnKind;
+    kindLabel: string;
+    nullable: boolean;
+    primary: boolean;
+    references: { table: string; column: string } | null;
+};
+
+export type GridPage = {
+    primaryKey: string[];
+    rows: Cell[][];
+    keys: (string | null)[][];
+    hasMore: boolean;
+    next: { after?: (string | null)[]; offset?: number } | null;
+    labels: Record<string, Record<string, string>>;
+    total: { count: number | null; exact: boolean };
+    durationMs: number;
+};
+
+export type GridFilter = { c: string; o: string; v?: string; b?: 'or' };
+
+/** Ausschnitt des Rasters, wie er in der Adresse steht (GridQuery.php). */
+export type GridQueryState = {
+    sort?: string;
+    f?: GridFilter[];
+    where?: string;
+    q?: string;
+};
+
+export type FilterOperatorOption = {
+    value: string;
+    symbol: string;
+    needsValue: boolean;
+};
+
+export type GridError = {
+    reason: string;
+    message: string;
+    serverMessage: string | null;
+};
+
+export type GridView = { hidden: string[]; widths: Record<string, number> };
+
+export type RowDetailData = {
+    values: Cell[];
+    outgoing: {
+        column: string;
+        table: string;
+        foreignColumn: string;
+        value: string;
+        label: string | null;
+    }[];
+    incoming: {
+        name: string;
+        table: string;
+        columns: string[];
+        values: (string | null)[];
+        count: number | null;
+    }[];
+};

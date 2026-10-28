@@ -92,8 +92,21 @@ class WorkspaceController extends Controller
         } catch (ConnectionNotAllowed $exception) {
             return $this->unavailable($request, $connection, $exception->problem->toArray());
         } catch (QueryException|PDOException $exception) {
+            if (! $this->isTargetError($exception)) {
+                throw $exception;
+            }
+
             return $this->unavailable($request, $connection, $connection->driver->dialect()->describeConnectionError($exception)->toArray());
         }
+    }
+
+    /**
+     * Nur Fehler der Zielverbindung werden zur Fehlerkarte. Ein Fehler der eigenen App-Datenbank ist ein Fehler der
+     * App und darf nicht als «Verbindung gescheitert» erscheinen.
+     */
+    protected function isTargetError(QueryException|PDOException $exception): bool
+    {
+        return ! $exception instanceof QueryException || str_starts_with((string) $exception->connectionName, 'target_');
     }
 
     /**

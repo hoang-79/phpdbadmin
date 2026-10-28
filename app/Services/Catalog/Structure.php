@@ -17,23 +17,49 @@ final class Structure
     public function __construct(private readonly TargetConnections $targets) {}
 
     /**
-     * @return array<string, mixed>|null null, wenn es das Objekt im Schema nicht gibt
+     * Kopf eines Objekts (Wireframes 05, 08): Art, geschätzte Zeilen, Grösse, Kommentar, Engine, Kollation.
+     *
+     * @return array{name: string, kind: 'table'|'view', rows: int|null, size: int|null, comment: string|null, engine: string|null, collation: string|null}|null null, wenn es das Objekt im Schema nicht gibt
      */
-    public function describe(DatabaseConnection $connection, string $schema, string $object, ?string $database = null): ?array
+    public function summary(DatabaseConnection $connection, string $schema, string $object, ?string $database = null): ?array
     {
         $target = $this->targets->open($connection, $database);
-        $dialect = $connection->driver->dialect();
-        $builder = $target->getSchemaBuilder();
-
-        $summary = array_find($dialect->tables($target, $schema), fn (array $table): bool => $table['name'] === $object);
+        $summary = array_find($connection->driver->dialect()->tables($target, $schema), fn (array $table): bool => $table['name'] === $object);
 
         if ($summary === null) {
             return null;
         }
 
         $isView = $summary['type'] === 'view';
+        $details = $isView ? [] : (array_find($target->getSchemaBuilder()->getTables($schema), fn (array $table): bool => $table['name'] === $object) ?? []);
+
+        return [
+            'name' => $object,
+            'kind' => $isView ? 'view' : 'table',
+            'rows' => $summary['rows'],
+            'size' => isset($details['size']) ? (int) $details['size'] : null,
+            'comment' => ($details['comment'] ?? '') !== '' ? (string) $details['comment'] : null,
+            'engine' => isset($details['engine']) ? (string) $details['engine'] : null,
+            'collation' => isset($details['collation']) ? (string) $details['collation'] : null,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null null, wenn es das Objekt im Schema nicht gibt
+     */
+    public function describe(DatabaseConnection $connection, string $schema, string $object, ?string $database = null): ?array
+    {
+        $summary = $this->summary($connection, $schema, $object, $database);
+
+        if ($summary === null) {
+            return null;
+        }
+
+        $target = $this->targets->open($connection, $database);
+        $dialect = $connection->driver->dialect();
+        $builder = $target->getSchemaBuilder();
+        $isView = $summary['kind'] === 'view';
         $qualified = $schema.'.'.$object;
-        $details = $isView ? [] : (array_find($builder->getTables($schema), fn (array $table): bool => $table['name'] === $object) ?? []);
 
         $indexes = $isView ? [] : $builder->getIndexes($qualified);
         $foreignKeys = $isView ? [] : $builder->getForeignKeys($qualified);
@@ -75,15 +101,7 @@ final class Structure
         }
 
         return [
-            'object' => [
-                'name' => $object,
-                'kind' => $isView ? 'view' : 'table',
-                'rows' => $summary['rows'],
-                'size' => $details['size'] ?? null,
-                'comment' => ($details['comment'] ?? '') !== '' ? $details['comment'] : null,
-                'engine' => $details['engine'] ?? null,
-                'collation' => $details['collation'] ?? null,
-            ],
+            'object' => $summary,
             'columns' => $columns,
             'indexes' => array_map(fn (array $index): array => [
                 'name' => (string) $index['name'],

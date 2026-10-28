@@ -5,7 +5,7 @@ import { computed } from 'vue';
 import Notice from '@/components/Notice.vue';
 import { formatRows, titlePrefix } from '@/lib/environment';
 import { t, tc } from '@/lib/i18n';
-import { structureHref } from '@/lib/workspace';
+import { dataHref } from '@/lib/workspace';
 import type { Workspace } from '@/types';
 
 /** Schema bzw. Datenbank im Überblick (Wireframe 05 ohne gewähltes Objekt). */
@@ -72,7 +72,7 @@ const title = computed(
                 :key="`${item.kind}:${item.name}`"
             >
                 <Link
-                    :href="structureHref(workspace, item.name)"
+                    :href="dataHref(workspace, item.name)"
                     class="flex items-center gap-2 rounded-md border px-3 py-2 text-sm outline-none hover:border-text-secondary focus-visible:ring-2 focus-visible:ring-ring"
                 >
                     <component

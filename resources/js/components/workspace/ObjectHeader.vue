@@ -4,7 +4,7 @@ import { Eye, Lock, Table2 } from '@lucide/vue';
 import { computed } from 'vue';
 import { formatBytes } from '@/lib/format';
 import { t, tc } from '@/lib/i18n';
-import { structureHref } from '@/lib/workspace';
+import { dataHref, structureHref } from '@/lib/workspace';
 import type { ObjectStructure, Workspace } from '@/types';
 
 /**
@@ -30,6 +30,11 @@ const facts = computed(() =>
 );
 
 const tabs = computed(() => [
+    {
+        key: 'data',
+        label: t('Daten'),
+        href: dataHref(props.workspace, props.object.name),
+    },
     {
         key: 'structure',
         label: t('Struktur'),
