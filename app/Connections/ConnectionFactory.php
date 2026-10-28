@@ -16,6 +16,9 @@ final class ConnectionFactory
     /** SQLITE_ATTACH im Authorizer von SQLite. */
     private const int SQLITE_ATTACH = 24;
 
+    /** Name der Faltfunktion für Vergleiche ohne Gross- und Kleinschreibung in SQLite. */
+    public const string SQLITE_FOLD = 'phpdbadmin_fold';
+
     public function __construct(private readonly HostPolicy $policy) {}
 
     /**
@@ -44,6 +47,7 @@ final class ConnectionFactory
         $prepare = function (Connection $connection) use ($settings, $dialect, $readOnly, $statementTimeoutMs): void {
             if ($settings->driver === DatabaseDriver::Sqlite) {
                 $this->guardAttach($connection);
+                $this->registerFold($connection);
             }
 
             $dialect->prepareSession($connection, $readOnly);
@@ -108,6 +112,19 @@ final class ConnectionFactory
     public function release(Connection $connection): void
     {
         $connection->disconnect();
+    }
+
+    /**
+     * SQLite faltet Gross- und Kleinschreibung nur für ASCII; «enthält» und die Suche im Raster (D-02) nutzen deshalb
+     * diese Funktion, damit «MÜLLER» auch «Müller» findet — wie bei den Servern.
+     */
+    private function registerFold(Connection $connection): void
+    {
+        $pdo = $connection->getPdo();
+
+        if ($pdo instanceof Sqlite) {
+            $pdo->createFunction(self::SQLITE_FOLD, fn (mixed $value): ?string => $value === null ? null : mb_strtolower((string) $value), 1, Sqlite::DETERMINISTIC);
+        }
     }
 
     /**

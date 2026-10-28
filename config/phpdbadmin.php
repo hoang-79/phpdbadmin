@@ -53,4 +53,18 @@ return [
         'statement_timeout_ms' => (int) env('PHPDBADMIN_STATEMENT_TIMEOUT_MS', 15000),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Datenraster (D-01, D-06)
+    |--------------------------------------------------------------------------
+    |
+    | Bis zu dieser geschätzten Zeilenzahl zählt das Raster genau; darüber zeigt es die Schätzung des Servers und
+    | zählt genau nur auf Wunsch.
+    |
+    */
+
+    'data' => [
+        'exact_count_limit' => (int) env('PHPDBADMIN_EXACT_COUNT_LIMIT', 50000),
+    ],
+
 ];
