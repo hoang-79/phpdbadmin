@@ -19,6 +19,7 @@
 | 2 | 28.10.2026 | Interaktive Rückfragen: R-01 und R-40 (Nguyen Development, MIT), R-11 (lokal und selbst gehostet), R-03 (neben Basalto), R-04 (Name phpdbadmin endgültig) — § 6, § 10, § 11, § 14 nachgeführt |
 | 3 | 28.10.2026 | Entscheid Weiterführen; Ergebnisse der [Feasibility](../02-feasibility/feasibility.md): neu V-10, Q-09, E-06; Abnahmen von V-02, V-04, O-01, D-04, S-02, S-03, Q-02, Q-03, E-01, B-04, N-02, N-03 geschärft; Schätzung 42–53 PT |
 | 4 | 28.10.2026 | Review der Foundation (Hoang): neu **V-11** Schreibschutz auf Zeit aufheben; D-04 zählt die Folgen über `ON DELETE CASCADE` in der Vorschau (aus den Wireframes) |
+| 5 | 28.10.2026 | TB 00, Wunsch Hoang: **A-06** — erstes Konto auch im Browser, abgesichert über einen Einrichtungsschlüssel als Datei auf dem Server (wer kein Terminal hat, kommt über Dateimanager oder FTP an die Datei), danach Passkey-Onboarding |
 
 ## 1. Ausgangslage und Problem
 
@@ -87,7 +88,7 @@ Priorität nach MoSCoW: **M** Must · **S** Should · **C** Could · **W** Won't
 | A-03 | **Anmeldung mit Passkey** und Passkeys verwalten (hinzufügen, umbenennen, entfernen) im Bereich **Sicherheit** | M | 0 | Zeremonie mit virtuellem Authenticator im Test; einmal von Hand mit Touch ID (Hoang) |
 | A-04 | **Dashboard entfernt:** nach der Anmeldung erscheint die Verbindungsübersicht | M | 0 | `/dashboard` 404; Anmeldung leitet auf die Übersicht |
 | A-05 | **Profilseite entfernt:** kein Bearbeiten von Name und E-Mail durch die Person selbst, kein «Konto löschen»; das Kontomenü zeigt Sicherheit (Passkeys, Sitzungen), Darstellung (hell/dunkel, Sprache) und Abmelden | M | 0 | `/settings/profile` 404; Menü im Durchlauf |
-| A-06 | **Keine offene Registrierung:** erstes Konto per Konsole (`php artisan …`), weitere per Einladung mit Ablauf durch einen Administrator | M | 0 | Test: Einladung annehmen, abgelaufene ablehnen; Befehl legt genau ein Administratorkonto an |
+| A-06 | **Keine offene Registrierung:** erstes Konto im Browser mit dem **Einrichtungsschlüssel**, den phpdbadmin als Datei auf dem Server ablegt, oder per Konsole (`php artisan phpdbadmin:install`); danach gleich ein Passkey; weitere Konten per Einladung mit Ablauf durch einen Administrator | M | 0 | Test: Einladung annehmen, abgelaufene ablehnen; Befehl legt genau ein Administratorkonto an; falscher Schlüssel legt kein Konto an; Einrichtung geschlossen, sobald es ein Konto gibt |
 | A-07 | **Rollen und Rechte:** Administrator; Mitglied mit Recht je Verbindung *lesen*, *schreiben* oder *verwalten* | S | 2 | Policy-Tests je Recht; fremde Verbindung 404 statt 403 (Prüfung vor der Routenbindung) |
 | A-08 | Aktive Sitzungen sehen und beenden | C | 4 | Test: beendete Sitzung ist abgemeldet |
 | A-09 | Anmeldungen und Fehlversuche im Protokoll | S | 0 | Eintrag mit Zeit, Konto bzw. Adresse (gehasht), IP-Prüfsumme |

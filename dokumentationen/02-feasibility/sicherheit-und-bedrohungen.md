@@ -35,6 +35,7 @@
 | T-16 | Fremde Verbindung aufrufen (Kennung im Pfad) | Rechte vor der Routenbindung prüfen, fremde Verbindung = 404; Test mit zweitem Konto | A-07, V-09 |
 | T-17 | phpdbadmin verwaltet sich selbst am System vorbei | App-Datenbank nie als Verbindung anbieten | R-17 |
 | T-18 | Probe-Seiten in einer Installation | `routes/probe.php` nur in `local`; in TB 00 entfernt oder übernommen | F-3, F-4 |
+| T-19 | Fremde übernehmen die Ersteinrichtung (erster Besucher einer frisch installierten Seite wird Administrator) | Einrichtung im Browser nur mit dem Einrichtungsschlüssel aus einer Datei auf dem Server (0600, nach der Einrichtung gelöscht), nur solange es kein Konto gibt, gedrosselt, Fehlversuche im Protokoll; alternativ per Konsole | **belegt** TB 00, A-06 |
 
 ## 3. Restrisiken
 
