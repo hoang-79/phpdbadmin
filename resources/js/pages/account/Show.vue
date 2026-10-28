@@ -7,6 +7,7 @@ import Notice from '@/components/Notice.vue';
 import { Button } from '@/components/ui/button';
 import { getInitials } from '@/composables/useInitials';
 import { formatDate } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import { logout } from '@/routes';
 import type { Passkey } from '@/types';
 
@@ -25,19 +26,19 @@ defineProps<{
 </script>
 
 <template>
-    <Head title="Konto" />
+    <Head :title="t('Konto')" />
 
     <div class="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-6 sm:px-8">
         <div class="flex items-start gap-3">
             <div class="flex flex-col gap-1">
-                <h1 class="text-xl font-semibold">Konto</h1>
+                <h1 class="text-xl font-semibold">{{ t('Konto') }}</h1>
                 <p class="text-text-secondary">
-                    Sicherheit und Darstellung für Ihr Konto
+                    {{ t('Sicherheit und Darstellung für Ihr Konto') }}
                 </p>
             </div>
             <Button variant="outline" class="ml-auto" as-child>
                 <Link :href="logout()" as="button" @click="router.flushAll()"
-                    ><LogOut />Abmelden</Link
+                    ><LogOut />{{ t('Abmelden') }}</Link
                 >
             </Button>
         </div>
@@ -75,12 +76,19 @@ defineProps<{
                     <span
                         v-if="account.memberSince"
                         class="text-xs text-muted-foreground"
-                        >Konto seit {{ formatDate(account.memberSince) }}</span
+                        >{{
+                            t('Konto seit :date', {
+                                date: formatDate(account.memberSince),
+                            })
+                        }}</span
                     >
                 </div>
                 <Notice>
-                    Name und E-Mail-Adresse ändert eine Administratorin oder ein
-                    Administrator. Es gibt keine eigene Profilseite.
+                    {{
+                        t(
+                            'Name und E-Mail-Adresse ändert eine Administratorin oder ein Administrator. Es gibt keine eigene Profilseite.',
+                        )
+                    }}
                 </Notice>
             </section>
 

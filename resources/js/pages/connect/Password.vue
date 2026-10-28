@@ -2,12 +2,14 @@
 import { Form, Head, setLayoutProps } from '@inertiajs/vue3';
 import { KeyRound } from '@lucide/vue';
 import InputError from '@/components/InputError.vue';
+import Interpolate from '@/components/Interpolate.vue';
 import Notice from '@/components/Notice.vue';
 import EnvironmentMark from '@/components/connections/EnvironmentMark.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { t } from '@/lib/i18n';
 import { home } from '@/routes';
 import { store } from '@/routes/workspace/password';
 import type { ConnectionEnvironment } from '@/types';
@@ -23,11 +25,11 @@ defineProps<{
     };
 }>();
 
-setLayoutProps({ back: { href: home.url(), label: 'Alle Verbindungen' } });
+setLayoutProps({ back: { href: home.url(), label: t('Alle Verbindungen') } });
 </script>
 
 <template>
-    <Head :title="`Passwort · ${connection.name}`" />
+    <Head :title="`${t('Passwort')} · ${connection.name}`" />
 
     <div class="flex flex-col gap-1">
         <EnvironmentMark
@@ -36,14 +38,27 @@ setLayoutProps({ back: { href: home.url(), label: 'Alle Verbindungen' } });
         />
         <h1 class="font-mono text-xl font-semibold">{{ connection.name }}</h1>
         <p class="text-text-secondary">
-            Konto <code class="font-mono">{{ connection.username }}</code> auf
-            <code class="font-mono">{{ connection.location }}</code>
+            <Interpolate :text="t('Konto :username auf :location')">
+                <template #username
+                    ><code class="font-mono">{{
+                        connection.username
+                    }}</code></template
+                >
+                <template #location
+                    ><code class="font-mono">{{
+                        connection.location
+                    }}</code></template
+                >
+            </Interpolate>
         </p>
     </div>
 
     <Notice>
-        Für diese Verbindung ist kein Passwort gespeichert. Es gilt nur für
-        diese Sitzung und liegt nie in der App-Datenbank.
+        {{
+            t(
+                'Für diese Verbindung ist kein Passwort gespeichert. Es gilt nur für diese Sitzung und liegt nie in der App-Datenbank.',
+            )
+        }}
     </Notice>
 
     <Form
@@ -52,7 +67,9 @@ setLayoutProps({ back: { href: home.url(), label: 'Alle Verbindungen' } });
         #default="{ errors, processing }"
     >
         <div class="flex flex-col gap-1.5">
-            <Label for="password" class="text-[13px]">Passwort</Label>
+            <Label for="password" class="text-[13px]">{{
+                t('Passwort')
+            }}</Label>
             <Input
                 id="password"
                 name="password"
@@ -72,7 +89,7 @@ setLayoutProps({ back: { href: home.url(), label: 'Alle Verbindungen' } });
         >
             <Spinner v-if="processing" />
             <KeyRound v-else />
-            Verbinden
+            {{ t('Verbinden') }}
         </Button>
     </Form>
 </template>

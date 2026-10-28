@@ -2,6 +2,7 @@
 import { Head, Link, router, setLayoutProps } from '@inertiajs/vue3';
 import { ChevronDown, CircleX, Pencil, RefreshCw } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
+import { t } from '@/lib/i18n';
 import { home } from '@/routes';
 import { edit } from '@/routes/connections';
 import type { ConnectionProblemView } from '@/types';
@@ -12,16 +13,16 @@ defineProps<{
     problem: ConnectionProblemView;
 }>();
 
-setLayoutProps({ back: { href: home.url(), label: 'Alle Verbindungen' } });
+setLayoutProps({ back: { href: home.url(), label: t('Alle Verbindungen') } });
 </script>
 
 <template>
-    <Head :title="`Nicht erreichbar · ${connection.name}`" />
+    <Head :title="`${t('Nicht erreichbar')} · ${connection.name}`" />
 
     <div class="flex flex-col gap-1">
         <h1 class="font-mono text-xl font-semibold">{{ connection.name }}</h1>
         <p class="text-text-secondary">
-            Die Verbindung lässt sich nicht öffnen.
+            {{ t('Die Verbindung lässt sich nicht öffnen.') }}
         </p>
     </div>
 
@@ -48,7 +49,7 @@ setLayoutProps({ back: { href: home.url(), label: 'Alle Verbindungen' } });
             >
                 <ChevronDown
                     class="size-3.5 transition-transform group-open:rotate-180"
-                />Meldung des Servers
+                />{{ t('Meldung des Servers') }}
             </summary>
             <pre
                 class="mt-1.5 rounded-md border bg-background px-2.5 py-2 font-mono text-xs leading-[18px] wrap-break-word whitespace-pre-wrap"
@@ -58,7 +59,7 @@ setLayoutProps({ back: { href: home.url(), label: 'Alle Verbindungen' } });
 
     <div class="flex flex-col gap-2">
         <Button size="lg" class="w-full text-[15px]" @click="router.reload()">
-            <RefreshCw />Erneut versuchen
+            <RefreshCw />{{ t('Erneut versuchen') }}
         </Button>
         <Button
             v-if="connection.canManage"
@@ -68,7 +69,7 @@ setLayoutProps({ back: { href: home.url(), label: 'Alle Verbindungen' } });
             as-child
         >
             <Link :href="edit(connection.id)"
-                ><Pencil />Verbindung bearbeiten</Link
+                ><Pencil />{{ t('Verbindung bearbeiten') }}</Link
             >
         </Button>
     </div>

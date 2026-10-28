@@ -10,6 +10,7 @@ import {
 import Notice from '@/components/Notice.vue';
 import { Spinner } from '@/components/ui/spinner';
 import { formatTime } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { ConnectionTestResult } from '@/types';
 
 /** «Verbindung testen» (V-02, Wireframe 04): Prüfschritte, Fehler in Klartext, Meldung des Servers zum Aufklappen. */
@@ -26,7 +27,7 @@ defineProps<{
             <div class="flex flex-wrap items-center gap-2 border-b px-4 py-3">
                 <Zap class="size-4" />
                 <h2 class="text-[15px] font-semibold whitespace-nowrap">
-                    Verbindung testen
+                    {{ t('Verbindung testen') }}
                 </h2>
                 <span
                     v-if="result && !testing"
@@ -38,19 +39,22 @@ defineProps<{
             </div>
             <div class="flex flex-col gap-3 px-4 py-3">
                 <p v-if="!result" class="text-sm text-text-secondary">
-                    Prüft Host, Erreichbarkeit und Anmeldung mit den Angaben im
-                    Formular — vor dem Speichern.
+                    {{
+                        t(
+                            'Prüft Host, Erreichbarkeit und Anmeldung mit den Angaben im Formular — vor dem Speichern.',
+                        )
+                    }}
                 </p>
 
                 <template v-else>
                     <Notice v-if="result.ok" variant="success">
-                        <b class="font-semibold text-success"
-                            >Verbunden ·
-                            {{
-                                result.steps.find((s) => s.key === 'login')
-                                    ?.detail
-                            }}</b
-                        >
+                        <b class="font-semibold text-success">{{
+                            t('Verbunden · :version', {
+                                version:
+                                    result.steps.find((s) => s.key === 'login')
+                                        ?.detail ?? '',
+                            })
+                        }}</b>
                     </Notice>
 
                     <div
@@ -83,7 +87,7 @@ defineProps<{
                             >
                                 <ChevronDown
                                     class="size-3.5 transition-transform group-open:rotate-180"
-                                />Meldung des Servers
+                                />{{ t('Meldung des Servers') }}
                             </summary>
                             <pre
                                 class="mt-1.5 rounded-md border bg-background px-2.5 py-2 font-mono text-xs leading-[18px] wrap-break-word whitespace-pre-wrap"
@@ -137,9 +141,12 @@ defineProps<{
         </Notice>
 
         <Notice v-if="production">
-            <b class="font-semibold">Eigenes Lesekonto empfohlen.</b> Für
-            Produktion ein Konto nur mit Leserechten — dann hilft der
-            Schreibschutz doppelt.
+            <b class="font-semibold">{{ t('Eigenes Lesekonto empfohlen.') }}</b>
+            {{
+                t(
+                    'Für Produktion ein Konto nur mit Leserechten — dann hilft der Schreibschutz doppelt.',
+                )
+            }}
         </Notice>
     </aside>
 </template>

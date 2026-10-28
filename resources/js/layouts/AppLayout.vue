@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/vue3';
 import AccountMenu from '@/components/AccountMenu.vue';
 import Wordmark from '@/components/Wordmark.vue';
 import { Toaster } from '@/components/ui/sonner';
+import { t } from '@/lib/i18n';
 import { home } from '@/routes';
 </script>
 
@@ -14,7 +15,7 @@ import { home } from '@/routes';
             <Link
                 :href="home()"
                 class="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label="Verbindungen"
+                :aria-label="t('Verbindungen')"
             >
                 <Wordmark />
             </Link>

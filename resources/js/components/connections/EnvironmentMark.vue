@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { t } from '@/lib/i18n';
 import type { ConnectionEnvironment } from '@/types';
 
 /** Umgebung (G-03): Symbol und Wort, nie Farbe allein — ○ lokal, ◐ Test, ● Produktion. */
@@ -6,11 +8,11 @@ defineProps<{
     environment: ConnectionEnvironment;
 }>();
 
-const words: Record<ConnectionEnvironment, string> = {
-    local: 'lokal',
-    test: 'Test',
-    production: 'Produktion',
-};
+const words = computed<Record<ConnectionEnvironment, string>>(() => ({
+    local: t('lokal'),
+    test: t('Test'),
+    production: t('Produktion'),
+}));
 
 const colors: Record<ConnectionEnvironment, string> = {
     local: 'text-env-local',

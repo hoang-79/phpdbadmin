@@ -5,10 +5,12 @@ import { computed, ref } from 'vue';
 import EnvironmentMark from '@/components/connections/EnvironmentMark.vue';
 import TestPanel from '@/components/connections/TestPanel.vue';
 import InputError from '@/components/InputError.vue';
+import Interpolate from '@/components/Interpolate.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { t } from '@/lib/i18n';
 import { home } from '@/routes';
 import { store, test, update } from '@/routes/connections';
 import type {
@@ -126,7 +128,9 @@ function submit(): void {
 
 <template>
     <Head
-        :title="connection ? 'Verbindung bearbeiten' : 'Verbindung anlegen'"
+        :title="
+            connection ? t('Verbindung bearbeiten') : t('Verbindung anlegen')
+        "
     />
 
     <form
@@ -137,25 +141,25 @@ function submit(): void {
         <div class="flex flex-col gap-1">
             <nav
                 class="flex items-center gap-1 text-xs text-text-secondary"
-                aria-label="Pfad"
+                :aria-label="t('Pfad')"
             >
-                <Link :href="home()" class="hover:text-foreground"
-                    >Verbindungen</Link
-                >
+                <Link :href="home()" class="hover:text-foreground">{{
+                    t('Verbindungen')
+                }}</Link>
                 <ChevronRight class="size-3.5" />
-                <span>{{ connection ? connection.name : 'Neu' }}</span>
+                <span>{{ connection ? connection.name : t('Neu') }}</span>
             </nav>
             <div class="flex flex-wrap items-center gap-2">
                 <h1 class="text-xl font-semibold">
                     {{
                         connection
-                            ? 'Verbindung bearbeiten'
-                            : 'Verbindung anlegen'
+                            ? t('Verbindung bearbeiten')
+                            : t('Verbindung anlegen')
                     }}
                 </h1>
                 <div class="ml-auto hidden gap-2 sm:flex">
                     <Button variant="ghost" as-child>
-                        <Link :href="home()">Abbrechen</Link>
+                        <Link :href="home()">{{ t('Abbrechen') }}</Link>
                     </Button>
                     <Button
                         type="button"
@@ -164,10 +168,10 @@ function submit(): void {
                         @click="runTest"
                     >
                         <Spinner v-if="http.processing" /><Zap v-else />
-                        Verbindung testen
+                        {{ t('Verbindung testen') }}
                     </Button>
                     <Button type="submit" :disabled="form.processing">
-                        <Spinner v-if="form.processing" />Speichern
+                        <Spinner v-if="form.processing" />{{ t('Speichern') }}
                     </Button>
                 </div>
             </div>
@@ -179,12 +183,12 @@ function submit(): void {
             <div class="flex min-w-0 flex-col gap-6">
                 <fieldset class="flex flex-col gap-1.5">
                     <legend class="mb-1.5 text-[13px] font-medium">
-                        Treiber
+                        {{ t('Treiber') }}
                     </legend>
                     <div
                         class="grid grid-cols-2 gap-2 sm:grid-cols-4"
                         role="radiogroup"
-                        aria-label="Treiber"
+                        :aria-label="t('Treiber')"
                     >
                         <button
                             v-for="option in drivers"
@@ -210,9 +214,11 @@ function submit(): void {
                                     option.label
                                 }}</span
                             >
-                            <span class="text-xs text-muted-foreground"
-                                >ab {{ option.minimumVersion }}</span
-                            >
+                            <span class="text-xs text-muted-foreground">{{
+                                t('ab :version', {
+                                    version: option.minimumVersion,
+                                })
+                            }}</span>
                         </button>
                     </div>
                     <InputError :message="errors.driver" />
@@ -220,7 +226,9 @@ function submit(): void {
 
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div class="flex flex-col gap-1.5">
-                        <Label for="name" class="text-[13px]">Name</Label>
+                        <Label for="name" class="text-[13px]">{{
+                            t('Name')
+                        }}</Label>
                         <Input
                             id="name"
                             v-model="form.name"
@@ -231,13 +239,15 @@ function submit(): void {
                         <InputError :message="errors.name" />
                     </div>
                     <div class="flex flex-col gap-1.5">
-                        <Label for="group" class="text-[13px]">Gruppe</Label>
+                        <Label for="group" class="text-[13px]">{{
+                            t('Gruppe')
+                        }}</Label>
                         <Input
                             id="group"
                             v-model="form.group"
                             list="connection-groups"
                             maxlength="255"
-                            placeholder="z. B. Lokal (Herd)"
+                            :placeholder="t('z. B. Lokal (Herd)')"
                         />
                         <datalist id="connection-groups">
                             <option
@@ -252,13 +262,13 @@ function submit(): void {
 
                 <fieldset class="flex flex-col gap-1.5">
                     <legend class="mb-1.5 text-[13px] font-medium">
-                        Umgebung
+                        {{ t('Umgebung') }}
                     </legend>
                     <div class="flex flex-wrap items-center gap-3">
                         <div
                             class="inline-flex flex-wrap overflow-hidden rounded-md border"
                             role="radiogroup"
-                            aria-label="Umgebung"
+                            :aria-label="t('Umgebung')"
                         >
                             <button
                                 v-for="option in environments"
@@ -286,8 +296,11 @@ function submit(): void {
                         <span
                             v-if="form.environment === 'production'"
                             class="max-w-xs text-xs text-muted-foreground"
-                            >Produktion: rote Kennzeichnung, Schreibschutz
-                            eingeschaltet.</span
+                            >{{
+                                t(
+                                    'Produktion: rote Kennzeichnung, Schreibschutz eingeschaltet.',
+                                )
+                            }}</span
                         >
                     </div>
                 </fieldset>
@@ -295,7 +308,9 @@ function submit(): void {
                 <template v-if="isServer">
                     <div class="grid grid-cols-[minmax(0,1fr)_120px] gap-4">
                         <div class="flex min-w-0 flex-col gap-1.5">
-                            <Label for="host" class="text-[13px]">Host</Label>
+                            <Label for="host" class="text-[13px]">{{
+                                t('Host')
+                            }}</Label>
                             <Input
                                 id="host"
                                 v-model="form.host"
@@ -311,7 +326,7 @@ function submit(): void {
                                 id="host-hint"
                                 class="text-xs text-muted-foreground"
                             >
-                                Erlaubt in dieser Installation:
+                                {{ t('Erlaubt in dieser Installation:') }}
                                 <code
                                     v-for="(entry, index) in allowedHosts"
                                     :key="entry"
@@ -325,7 +340,9 @@ function submit(): void {
                             </p>
                         </div>
                         <div class="flex flex-col gap-1.5">
-                            <Label for="port" class="text-[13px]">Port</Label>
+                            <Label for="port" class="text-[13px]">{{
+                                t('Port')
+                            }}</Label>
                             <Input
                                 id="port"
                                 v-model="form.port"
@@ -340,9 +357,9 @@ function submit(): void {
 
                     <div class="grid gap-4 sm:grid-cols-2">
                         <div class="flex flex-col gap-1.5">
-                            <Label for="username" class="text-[13px]"
-                                >Benutzer</Label
-                            >
+                            <Label for="username" class="text-[13px]">{{
+                                t('Benutzer')
+                            }}</Label>
                             <Input
                                 id="username"
                                 v-model="form.username"
@@ -357,9 +374,9 @@ function submit(): void {
                             <InputError :message="errors.username" />
                         </div>
                         <div class="flex flex-col gap-1.5">
-                            <Label for="password" class="text-[13px]"
-                                >Passwort</Label
-                            >
+                            <Label for="password" class="text-[13px]">{{
+                                t('Passwort')
+                            }}</Label>
                             <div class="relative">
                                 <Input
                                     id="password"
@@ -369,7 +386,9 @@ function submit(): void {
                                     autocomplete="new-password"
                                     :placeholder="
                                         connection?.hasPassword
-                                            ? 'gespeichert — leer lassen zum Behalten'
+                                            ? t(
+                                                  'gespeichert — leer lassen zum Behalten',
+                                              )
                                             : ''
                                     "
                                     :aria-invalid="
@@ -381,8 +400,8 @@ function submit(): void {
                                     class="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                     :aria-label="
                                         showPassword
-                                            ? 'Passwort verbergen'
-                                            : 'Passwort zeigen'
+                                            ? t('Passwort verbergen')
+                                            : t('Passwort zeigen')
                                     "
                                     @click="showPassword = !showPassword"
                                 >
@@ -409,23 +428,24 @@ function submit(): void {
                             "
                         />
                         <span class="flex flex-col gap-1">
-                            <span
-                                >Passwort nicht speichern — in jeder Sitzung
-                                fragen</span
-                            >
-                            <span class="text-xs text-muted-foreground"
-                                >Gespeicherte Passwörter liegen verschlüsselt in
-                                der App-Datenbank und erreichen nie den
-                                Browser.</span
-                            >
+                            <span>{{
+                                t(
+                                    'Passwort nicht speichern — in jeder Sitzung fragen',
+                                )
+                            }}</span>
+                            <span class="text-xs text-muted-foreground">{{
+                                t(
+                                    'Gespeicherte Passwörter liegen verschlüsselt in der App-Datenbank und erreichen nie den Browser.',
+                                )
+                            }}</span>
                         </span>
                     </label>
 
                     <div class="grid gap-4 sm:grid-cols-2">
                         <div class="flex flex-col gap-1.5">
-                            <Label for="database" class="text-[13px]"
-                                >Datenbank</Label
-                            >
+                            <Label for="database" class="text-[13px]">{{
+                                t('Datenbank')
+                            }}</Label>
                             <Input
                                 id="database"
                                 v-model="form.database"
@@ -434,7 +454,9 @@ function submit(): void {
                                 spellcheck="false"
                                 :disabled="form.all_databases"
                                 :placeholder="
-                                    form.all_databases ? 'alle Datenbanken' : ''
+                                    form.all_databases
+                                        ? t('alle Datenbanken')
+                                        : ''
                                 "
                                 :required="!form.all_databases"
                                 :aria-invalid="
@@ -455,14 +477,20 @@ function submit(): void {
                                     "
                                 />
                                 <span class="flex flex-col gap-0.5">
-                                    <span>Alle Datenbanken anzeigen</span>
+                                    <span>{{
+                                        t('Alle Datenbanken anzeigen')
+                                    }}</span>
                                     <span
                                         id="all-databases-hint"
                                         class="text-xs text-muted-foreground"
                                         >{{
                                             form.driver === 'pgsql'
-                                                ? 'Verbindet zuerst mit «postgres» und listet alle Datenbanken des Servers.'
-                                                : 'Der Navigator zeigt jede Datenbank, die das Konto sieht.'
+                                                ? t(
+                                                      'Verbindet zuerst mit «postgres» und listet alle Datenbanken des Servers.',
+                                                  )
+                                                : t(
+                                                      'Der Navigator zeigt jede Datenbank, die das Konto sieht.',
+                                                  )
                                         }}</span
                                     >
                                 </span>
@@ -470,7 +498,9 @@ function submit(): void {
                             <InputError :message="errors.database" />
                         </div>
                         <div class="flex flex-col gap-1.5">
-                            <Label for="sslmode" class="text-[13px]">SSL</Label>
+                            <Label for="sslmode" class="text-[13px]">{{
+                                t('SSL')
+                            }}</Label>
                             <select
                                 id="sslmode"
                                 v-model="form.sslmode"
@@ -490,7 +520,9 @@ function submit(): void {
                 </template>
 
                 <div v-else class="flex flex-col gap-1.5">
-                    <Label for="sqlite_path" class="text-[13px]">Datei</Label>
+                    <Label for="sqlite_path" class="text-[13px]">{{
+                        t('Datei')
+                    }}</Label>
                     <Input
                         id="sqlite_path"
                         v-model="form.sqlite_path"
@@ -503,16 +535,27 @@ function submit(): void {
                     />
                     <InputError :message="errors.sqlite_path" />
                     <p id="sqlite-hint" class="text-xs text-muted-foreground">
-                        Nur Dateien in erlaubten Ordnern:
-                        <code
-                            v-for="(folder, index) in sqliteFolders"
-                            :key="folder"
-                            >{{ folder
-                            }}{{
-                                index < sqliteFolders.length - 1 ? ', ' : ''
-                            }}</code
-                        >. Andere Pfade, <code>..</code> und Verknüpfungen nach
-                        draussen lehnt phpdbadmin ab.
+                        <Interpolate
+                            :text="
+                                t(
+                                    'Nur Dateien in erlaubten Ordnern: :folders. Andere Pfade, :parent und Verknüpfungen nach draussen lehnt phpdbadmin ab.',
+                                )
+                            "
+                        >
+                            <template #folders
+                                ><code
+                                    v-for="(folder, index) in sqliteFolders"
+                                    :key="folder"
+                                    >{{ folder
+                                    }}{{
+                                        index < sqliteFolders.length - 1
+                                            ? ', '
+                                            : ''
+                                    }}</code
+                                ></template
+                            >
+                            <template #parent><code>..</code></template>
+                        </Interpolate>
                     </p>
                 </div>
 
@@ -537,11 +580,12 @@ function submit(): void {
                         />
                     </button>
                     <span class="flex flex-col gap-1">
-                        <b class="font-semibold">Schreibgeschützt</b>
-                        <span class="text-xs text-muted-foreground"
-                            >Nur lesende Anweisungen — in mehreren Schichten
-                            durchgesetzt. Für Produktion vorgegeben.</span
-                        >
+                        <b class="font-semibold">{{ t('Schreibgeschützt') }}</b>
+                        <span class="text-xs text-muted-foreground">{{
+                            t(
+                                'Nur lesende Anweisungen — in mehreren Schichten durchgesetzt. Für Produktion vorgegeben.',
+                            )
+                        }}</span>
                     </span>
                 </label>
             </div>
@@ -555,7 +599,7 @@ function submit(): void {
 
         <div class="flex flex-col gap-2 sm:hidden">
             <Button type="submit" :disabled="form.processing">
-                <Spinner v-if="form.processing" />Speichern
+                <Spinner v-if="form.processing" />{{ t('Speichern') }}
             </Button>
             <Button
                 type="button"
@@ -564,7 +608,7 @@ function submit(): void {
                 @click="runTest"
             >
                 <Spinner v-if="http.processing" /><Zap v-else />
-                Verbindung testen
+                {{ t('Verbindung testen') }}
             </Button>
         </div>
     </form>

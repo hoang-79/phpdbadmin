@@ -11,6 +11,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { getInitials } from '@/composables/useInitials';
+import { t } from '@/lib/i18n';
 import { account, logout } from '@/routes';
 
 const page = usePage();
@@ -25,7 +26,7 @@ function signOut(): void {
     <DropdownMenu v-if="user">
         <DropdownMenuTrigger
             class="inline-flex items-center gap-1 rounded-full text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            aria-label="Kontomenü"
+            :aria-label="t('Kontomenü')"
         >
             <span
                 class="inline-grid size-8 place-items-center rounded-full border bg-surface-strong text-xs font-semibold text-foreground"
@@ -45,12 +46,12 @@ function signOut(): void {
             <DropdownMenuSeparator />
             <DropdownMenuItem as-child>
                 <Link :href="account()" class="gap-2.5">
-                    <ShieldCheck class="size-4" />Sicherheit
+                    <ShieldCheck class="size-4" />{{ t('Sicherheit') }}
                 </Link>
             </DropdownMenuItem>
             <DropdownMenuItem as-child>
                 <Link :href="`${account.url()}#darstellung`" class="gap-2.5">
-                    <Palette class="size-4" />Darstellung
+                    <Palette class="size-4" />{{ t('Darstellung') }}
                 </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -61,7 +62,7 @@ function signOut(): void {
                     class="w-full gap-2.5"
                     @click="signOut"
                 >
-                    <LogOut class="size-4" />Abmelden
+                    <LogOut class="size-4" />{{ t('Abmelden') }}
                 </Link>
             </DropdownMenuItem>
         </DropdownMenuContent>
