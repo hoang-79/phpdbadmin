@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 430" width="1180" height="430" role="img">
+  <style>
+    text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; fill: #1e293b; }
+    .cap { font-size: 19px; font-weight: bold; }
+    .sub { font-size: 12px; fill: #475569; }
+    .h { font-size: 14px; font-weight: bold; }
+    .hw { font-size: 14px; font-weight: bold; fill: #ffffff; }
+    .t { font-size: 12px; }
+    .tw { font-size: 12px; fill: #e2e8f0; }
+    .s { font-size: 10.5px; fill: #475569; }
+    .sw { font-size: 10.5px; fill: #cbd5e1; }
+    .badge { font-size: 10px; font-weight: bold; fill: #ffffff; }
+    .note { font-size: 11.5px; fill: #475569; font-style: italic; }
+    .mono { font-family: Menlo, "SF Mono", monospace; font-size: 11px; }
+    .monow { font-family: Menlo, "SF Mono", monospace; font-size: 11px; fill: #e2e8f0; }
+    .rotT { font-size: 12px; font-weight: bold; fill: #b42318; }
+    .kern { fill: #1e293b; stroke: #1e293b; }
+    .kernhell { fill: #eef2f6; stroke: #1e293b; stroke-width: 1.4; }
+    .ausbau { fill: #e6f4f7; stroke: #0e7490; stroke-width: 1.4; }
+    .gruen { fill: #e7f4ec; stroke: #2f7d4f; stroke-width: 1.4; }
+    .nein { fill: #f5f6f8; stroke: #94a3b8; stroke-width: 1.4; stroke-dasharray: 5 3; }
+    .neutral { fill: #ffffff; stroke: #94a3b8; stroke-width: 1.4; }
+    .rot { fill: #fdecea; stroke: #b42318; stroke-width: 1.4; }
+    .flaeche { fill: #f5f6f8; stroke: none; }
+    .pfeil { stroke: #1e293b; stroke-width: 1.6; fill: none; marker-end: url(#pf); }
+    .pfeilg { stroke: #475569; stroke-width: 1.4; fill: none; marker-end: url(#pfg); stroke-dasharray: 5 3; }
+    .linie { stroke: #94a3b8; stroke-width: 1.2; fill: none; }
+    .achse { stroke: #475569; stroke-width: 1.4; fill: none; marker-end: url(#pfg); }
+</style>
+
+  <defs>
+    <marker id="pf" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#1e293b"/>
+    </marker>
+    <marker id="pfg" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1180" height="430" fill="#ffffff"/>
+  <text x="30" y="36" class="cap" text-anchor="start">phpdbadmin — Stufen und Meilensteine</text>
+  <text x="30" y="57" class="sub" text-anchor="start">Reihenfolge, ohne Termine. Jede Stufe ist für sich nutzbar; phpdbadmin läuft neben Basalto, das bis zur Beta Vorrang hat (R-03)</text>
+  <rect x="30" y="90" width="204" height="190" rx="10" class="kernhell"/>
+  <circle cx="56" cy="116" r="16" class="kern"/>
+  <text x="56" y="121" class="hw" text-anchor="middle">0</text>
+  <text x="80" y="121" class="h" text-anchor="start">Fundament</text>
+  <text x="44" y="150" class="t" text-anchor="start">• Starter-Kit bereinigt</text>
+  <text x="44" y="168" class="t" text-anchor="start">• Passkey und Code</text>
+  <text x="44" y="186" class="t" text-anchor="start">• Verbindungen, Dialekte</text>
+  <text x="44" y="204" class="t" text-anchor="start">• Tests auf vier DBs</text>
+  <rect x="44" y="246" width="90" height="20" rx="10" fill="#1e293b"/>
+  <text x="89" y="260" class="badge" text-anchor="middle">6–8 PT</text>
+  <path d="M234 185 L250 185" class="pfeil"/>
+  <rect x="250" y="90" width="204" height="190" rx="10" class="kernhell"/>
+  <circle cx="276" cy="116" r="16" class="kern"/>
+  <text x="276" y="121" class="hw" text-anchor="middle">1</text>
+  <text x="300" y="121" class="h" text-anchor="start">Lesen</text>
+  <text x="264" y="150" class="t" text-anchor="start">• Navigator, Raster</text>
+  <text x="264" y="168" class="t" text-anchor="start">• Filter, Suche</text>
+  <text x="264" y="186" class="t" text-anchor="start">• Struktur ansehen</text>
+  <text x="264" y="204" class="t" text-anchor="start">• SQL-Editor, ⌘K</text>
+  <rect x="264" y="246" width="90" height="20" rx="10" fill="#1e293b"/>
+  <text x="309" y="260" class="badge" text-anchor="middle">8–10 PT</text>
+  <path d="M454 185 L470 185" class="pfeil"/>
+  <rect x="470" y="90" width="204" height="190" rx="10" class="kernhell"/>
+  <circle cx="496" cy="116" r="16" class="kern"/>
+  <text x="496" y="121" class="hw" text-anchor="middle">2</text>
+  <text x="520" y="121" class="h" text-anchor="start">Bearbeiten</text>
+  <text x="484" y="150" class="t" text-anchor="start">• Zellen mit Vorschau</text>
+  <text x="484" y="168" class="t" text-anchor="start">• Tabellen anlegen/ändern</text>
+  <text x="484" y="186" class="t" text-anchor="start">• Export und Import</text>
+  <text x="484" y="204" class="t" text-anchor="start">• Schutz, Protokoll</text>
+  <rect x="484" y="246" width="90" height="20" rx="10" fill="#1e293b"/>
+  <text x="529" y="260" class="badge" text-anchor="middle">10–12 PT</text>
+  <path d="M674 185 L690 185" class="pfeil"/>
+  <rect x="690" y="90" width="204" height="190" rx="10" class="kernhell"/>
+  <circle cx="716" cy="116" r="16" class="kern"/>
+  <text x="716" y="121" class="hw" text-anchor="middle">3</text>
+  <text x="740" y="121" class="h" text-anchor="start">Verwalten</text>
+  <text x="704" y="150" class="t" text-anchor="start">• Benutzer und Rechte</text>
+  <text x="704" y="168" class="t" text-anchor="start">• Prozesse, Status</text>
+  <text x="704" y="186" class="t" text-anchor="start">• Views, Routinen, ER</text>
+  <text x="704" y="204" class="t" text-anchor="start">• Sicherung</text>
+  <rect x="704" y="246" width="90" height="20" rx="10" fill="#1e293b"/>
+  <text x="749" y="260" class="badge" text-anchor="middle">8–10 PT</text>
+  <path d="M894 185 L910 185" class="pfeil"/>
+  <rect x="910" y="90" width="204" height="190" rx="10" class="kernhell"/>
+  <circle cx="936" cy="116" r="16" class="kern"/>
+  <text x="936" y="121" class="hw" text-anchor="middle">4</text>
+  <text x="960" y="121" class="h" text-anchor="start">Komfort, Team</text>
+  <text x="924" y="150" class="t" text-anchor="start">• Schemavergleich</text>
+  <text x="924" y="168" class="t" text-anchor="start">• Laravel-Migration</text>
+  <text x="924" y="186" class="t" text-anchor="start">• Herd, SSH-Tunnel</text>
+  <text x="924" y="204" class="t" text-anchor="start">• Team-Funktionen</text>
+  <rect x="924" y="246" width="90" height="20" rx="10" fill="#1e293b"/>
+  <text x="969" y="260" class="badge" text-anchor="middle">8–10 PT</text>
+  <path d="M454 90 L454 300" stroke="#0e7490" stroke-width="2" stroke-dasharray="4 3"/>
+  <rect x="418" y="300" width="72" height="24" rx="12" class="ausbau"/>
+  <text x="454" y="316" class="h" text-anchor="middle">Alpha</text>
+  <text x="454" y="344" class="s" text-anchor="middle">lesend im eigenen Alltag</text>
+  <path d="M674 90 L674 300" stroke="#0e7490" stroke-width="2" stroke-dasharray="4 3"/>
+  <rect x="638" y="300" width="72" height="24" rx="12" class="ausbau"/>
+  <text x="674" y="316" class="h" text-anchor="middle">v1.0</text>
+  <text x="674" y="344" class="s" text-anchor="middle">ersetzt phpMyAdmin und phpPgAdmin</text>
+  <path d="M894 90 L894 300" stroke="#0e7490" stroke-width="2" stroke-dasharray="4 3"/>
+  <rect x="858" y="300" width="72" height="24" rx="12" class="ausbau"/>
+  <text x="894" y="316" class="h" text-anchor="middle">v1.1</text>
+  <text x="894" y="344" class="s" text-anchor="middle">Verwaltung komplett</text>
+  <path d="M1114 90 L1114 300" stroke="#0e7490" stroke-width="2" stroke-dasharray="4 3"/>
+  <rect x="1078" y="300" width="72" height="24" rx="12" class="ausbau"/>
+  <text x="1114" y="316" class="h" text-anchor="middle">v1.2</text>
+  <text x="1114" y="344" class="s" text-anchor="end">Team und Laravel</text>
+  <text x="30" y="396" class="note" text-anchor="start">Summe rund 40–50 Personentage bis v1.2 (Schätzung vor Feasibility). Rückfallposition: nach Stufe 2 ist das Werkzeug vollständig nutzbar — Verwalten und Team folgen.</text>
+</svg>

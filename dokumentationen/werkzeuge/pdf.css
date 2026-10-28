@@ -1,0 +1,78 @@
+/* Druck-Stil für die phpdbadmin-Dossiers (Chrome headless → PDF) — übernommen aus Basalto 28.10.2026, Systemschrift bis zur eigenen Marke */
+@page {
+  size: A4;
+  margin: 20mm 18mm 22mm 18mm;
+  @top-right { content: "phpdbadmin"; font: 9pt "Helvetica Neue", Helvetica, Arial, sans-serif; color: #3b3f46; }
+  @bottom-center { content: "Seite " counter(page) " von " counter(pages); font: 9pt "Helvetica Neue", Helvetica, Arial, sans-serif; color: #3b3f46; }
+}
+@page :first {
+  @top-right { content: none; }
+  @bottom-center { content: none; }
+}
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font: 10.5pt/1.45 "Helvetica Neue", -apple-system, Helvetica, Arial, sans-serif; color: #23262b; margin: 0; }
+h1 { font-size: 21pt; line-height: 1.2; color: #23262b; border-bottom: 2px solid #23262b; padding-bottom: 6px; margin: 0 0 .7em; break-before: page; }
+h2 { font-size: 14.5pt; color: #23262b; margin: 1.5em 0 .5em; break-after: avoid; }
+h3 { font-size: 12pt; margin: 1.2em 0 .4em; break-after: avoid; }
+h4 { font-size: 10.5pt; margin: 1em 0 .3em; break-after: avoid; }
+p { margin: .45em 0; orphans: 3; widows: 3; overflow-wrap: anywhere; }
+li, dd { overflow-wrap: anywhere; }
+ul, ol { margin: .4em 0 .6em; padding-left: 1.4em; }
+li { margin: .15em 0; }
+a { color: #b53f1d; text-decoration: none; }
+hr { border: 0; border-top: 1px solid #e3e6ea; margin: 1.2em 0; }
+/* Tabellen: Breite nach Inhalt (table-layout auto). Mindestbreite einer Spalte ist ihr längstes Wort — «anywhere»
+   liesse sie auf ein Zeichen schrumpfen, und Chrome verteilt die Breite dann nach Textmenge (Kürzel brechen zeichenweise).
+   pdf-bauen.py setzt .kurz auf Spalten mit nur kurzen Zellen, .ganz auf kurze Code-Spannen und Trennstellen in überlange Zeichenketten. */
+table { border-collapse: collapse; width: 100%; table-layout: auto; font-size: 8.8pt; line-height: 1.35; margin: .6em 0 1em; }
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+th { background: #f6f4f0; text-align: left; font-weight: 600; }
+th, td { border: 1px solid #e3e6ea; padding: 4px 6px; vertical-align: top; overflow-wrap: break-word; }
+th.kurz, td.kurz { white-space: nowrap; }
+th code.ganz, td code.ganz { white-space: nowrap; }
+img, svg { max-width: 100%; height: auto; }
+figure { margin: 1em 0; break-inside: avoid; text-align: center; }
+figcaption { font-size: 9pt; color: #3b3f46; margin-top: .3em; }
+p > img { display: block; margin: .8em auto; break-inside: avoid; }
+pre { font: 8.3pt/1.35 "SF Mono", Menlo, Menlo, "SF Mono", Consolas, monospace; background: #f6f4f0; border: 1px solid #e3e6ea; border-radius: 4px; padding: 8px 10px; white-space: pre-wrap; word-break: break-word; }
+code { font: 8.8pt "SF Mono", Menlo, Menlo, "SF Mono", Consolas, monospace; background: #f6f4f0; padding: 0 3px; border-radius: 3px; }
+pre code { background: none; padding: 0; font-size: inherit; }
+blockquote { border-left: 3px solid #e4572e; margin: .9em 0; padding: .3em 1em; background: #fdece6; color: #23262b; }
+blockquote p { margin: .3em 0; }
+input[type="checkbox"] { margin: 0 .4em 0 0; }
+
+/* Diagramme: eigene Querformat-Seite */
+@page quer {
+  size: A4 landscape;
+  margin: 12mm 14mm 16mm 14mm;
+  @top-right { content: "phpdbadmin"; font: 9pt "Helvetica Neue", Helvetica, Arial, sans-serif; color: #3b3f46; }
+  @bottom-center { content: "Seite " counter(page) " von " counter(pages); font: 9pt "Helvetica Neue", Helvetica, Arial, sans-serif; color: #3b3f46; }
+}
+.diagramm { page: quer; break-before: page; break-after: page; display: flex; flex-direction: column; height: 180mm; }
+.diagramm h2, .diagramm h3, .diagramm h4 { margin: 0 0 .4em; break-before: auto; }
+.diagramm .bild { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.diagramm .bild p, .diagramm .bild figure { margin: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.diagramm .bild img { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; margin: 0 auto; }
+.diagramm > p { margin: .6em 0 0; font-size: 9.6pt; line-height: 1.4; columns: 2; column-gap: 2em; }
+
+/* Titelseite */
+.titelseite { min-height: 235mm; display: flex; flex-direction: column; justify-content: center; }
+.titelseite .produkt { font-size: 13pt; letter-spacing: .12em; text-transform: uppercase; color: #b53f1d; margin-bottom: 1.2em; }
+.titelseite h1.titel { font-size: 30pt; border: 0; break-before: auto; margin: 0 0 .3em; padding: 0; }
+.titelseite .untertitel { font-size: 14pt; color: #3b3f46; margin-bottom: 2.5em; }
+.titelseite table { width: 100%; font-size: 10pt; table-layout: auto; }
+.titelseite th { width: 28mm; white-space: nowrap; }
+.titelseite .inhalt { margin-top: 2em; font-size: 10pt; color: #3b3f46; }
+.titelseite .inhalt ol { columns: 2; }
+
+/* Inhaltsverzeichnis */
+#TOC { break-before: page; }
+#TOC::before { content: "Inhalt"; display: block; font-size: 21pt; color: #23262b; border-bottom: 2px solid #23262b; padding-bottom: 6px; margin-bottom: .7em; font-weight: bold; }
+#TOC ul { list-style: none; padding-left: 0; margin: 0; }
+#TOC > ul > li { font-weight: 600; margin-top: .7em; }
+#TOC > ul > li > ul { padding-left: 1.2em; font-weight: normal; font-size: 9.5pt; columns: 2; column-gap: 2em; }
+#TOC a { color: #23262b; }
+
+/* Statuszeichen etwas kleiner */
+.status { font-size: 9pt; color: #3b3f46; }

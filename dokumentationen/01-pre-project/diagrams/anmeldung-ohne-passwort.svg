@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 560" width="1180" height="560" role="img">
+  <style>
+    text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; fill: #1e293b; }
+    .cap { font-size: 19px; font-weight: bold; }
+    .sub { font-size: 12px; fill: #475569; }
+    .h { font-size: 14px; font-weight: bold; }
+    .hw { font-size: 14px; font-weight: bold; fill: #ffffff; }
+    .t { font-size: 12px; }
+    .tw { font-size: 12px; fill: #e2e8f0; }
+    .s { font-size: 10.5px; fill: #475569; }
+    .sw { font-size: 10.5px; fill: #cbd5e1; }
+    .badge { font-size: 10px; font-weight: bold; fill: #ffffff; }
+    .note { font-size: 11.5px; fill: #475569; font-style: italic; }
+    .mono { font-family: Menlo, "SF Mono", monospace; font-size: 11px; }
+    .monow { font-family: Menlo, "SF Mono", monospace; font-size: 11px; fill: #e2e8f0; }
+    .rotT { font-size: 12px; font-weight: bold; fill: #b42318; }
+    .kern { fill: #1e293b; stroke: #1e293b; }
+    .kernhell { fill: #eef2f6; stroke: #1e293b; stroke-width: 1.4; }
+    .ausbau { fill: #e6f4f7; stroke: #0e7490; stroke-width: 1.4; }
+    .gruen { fill: #e7f4ec; stroke: #2f7d4f; stroke-width: 1.4; }
+    .nein { fill: #f5f6f8; stroke: #94a3b8; stroke-width: 1.4; stroke-dasharray: 5 3; }
+    .neutral { fill: #ffffff; stroke: #94a3b8; stroke-width: 1.4; }
+    .rot { fill: #fdecea; stroke: #b42318; stroke-width: 1.4; }
+    .flaeche { fill: #f5f6f8; stroke: none; }
+    .pfeil { stroke: #1e293b; stroke-width: 1.6; fill: none; marker-end: url(#pf); }
+    .pfeilg { stroke: #475569; stroke-width: 1.4; fill: none; marker-end: url(#pfg); stroke-dasharray: 5 3; }
+    .linie { stroke: #94a3b8; stroke-width: 1.2; fill: none; }
+    .achse { stroke: #475569; stroke-width: 1.4; fill: none; marker-end: url(#pfg); }
+</style>
+
+  <defs>
+    <marker id="pf" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#1e293b"/>
+    </marker>
+    <marker id="pfg" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1180" height="560" fill="#ffffff"/>
+  <text x="30" y="36" class="cap" text-anchor="start">phpdbadmin — Anmeldung ohne Passwort</text>
+  <text x="30" y="57" class="sub" text-anchor="start">Zwei Wege zum selben Konto; das Passwort des Starter-Kits entfällt ganz (A-01 bis A-08)</text>
+  <text x="30" y="100" class="h" text-anchor="start">WEG 1 — CODE PER MAIL (erste Anmeldung, neues Gerät)</text>
+  <rect x="30" y="116" width="190" height="64" rx="10" class="kernhell"/>
+  <text x="44" y="142" class="h" text-anchor="start">E-Mail-Adresse</text>
+  <text x="44" y="162" class="s" text-anchor="start">eingeben</text>
+  <path d="M220 148 L256 148" class="pfeil"/>
+  <rect x="256" y="116" width="190" height="64" rx="10" class="kernhell"/>
+  <text x="270" y="142" class="h" text-anchor="start">Code per Mail</text>
+  <text x="270" y="162" class="s" text-anchor="start">6 Ziffern, 10 Min.</text>
+  <path d="M446 148 L482 148" class="pfeil"/>
+  <rect x="482" y="116" width="190" height="64" rx="10" class="kernhell"/>
+  <text x="496" y="142" class="h" text-anchor="start">Code eingeben</text>
+  <text x="496" y="162" class="s" text-anchor="start">Autofill aus der Mail</text>
+  <path d="M672 148 L708 148" class="pfeil"/>
+  <rect x="708" y="116" width="190" height="64" rx="10" class="kern"/>
+  <text x="722" y="142" class="hw" text-anchor="start">Angemeldet</text>
+  <text x="722" y="162" class="sw" text-anchor="start">Sitzung neu erzeugt</text>
+  <path d="M898 148 L934 148" class="pfeil"/>
+  <rect x="934" y="116" width="190" height="64" rx="10" class="kernhell"/>
+  <text x="948" y="142" class="h" text-anchor="start">Passkey anbieten</text>
+  <text x="948" y="162" class="s" text-anchor="start">einmal, abwählbar</text>
+  <text x="30" y="230" class="h" text-anchor="start">WEG 2 — PASSKEY (Alltag)</text>
+  <rect x="30" y="246" width="190" height="64" rx="10" class="kernhell"/>
+  <text x="44" y="272" class="h" text-anchor="start">«Mit Passkey»</text>
+  <text x="44" y="292" class="s" text-anchor="start">ein Knopf, keine Eingabe</text>
+  <path d="M220 278 L256 278" class="pfeil"/>
+  <rect x="256" y="246" width="190" height="64" rx="10" class="kernhell"/>
+  <text x="270" y="272" class="h" text-anchor="start">Browser fragt</text>
+  <text x="270" y="292" class="s" text-anchor="start">Touch ID, Passwortmanager</text>
+  <path d="M446 278 L482 278" class="pfeil"/>
+  <rect x="482" y="246" width="190" height="64" rx="10" class="kernhell"/>
+  <text x="496" y="272" class="h" text-anchor="start">Server prüft</text>
+  <text x="496" y="292" class="s" text-anchor="start">Signatur, Zähler, Herkunft</text>
+  <path d="M672 278 L708 278" class="pfeil"/>
+  <rect x="708" y="246" width="190" height="64" rx="10" class="kern"/>
+  <text x="722" y="272" class="hw" text-anchor="start">Angemeldet</text>
+  <text x="722" y="292" class="sw" text-anchor="start">Sitzung neu erzeugt</text>
+  <path d="M803 246 L803 180" class="pfeilg"/>
+  <rect x="759" y="196" width="88" height="16" rx="4" fill="#ffffff" opacity="0.95"/>
+  <text x="803" y="208" class="s" text-anchor="middle">dasselbe Ziel</text>
+  <rect x="30" y="350" width="360" height="160" rx="10" class="neutral"/>
+  <text x="44" y="376" class="h" text-anchor="start">Neue Konten</text>
+  <text x="44" y="400" class="t" text-anchor="start">• kein «Registrieren» für alle</text>
+  <text x="44" y="420" class="t" text-anchor="start">• erstes Konto: Erst-Setup per Konsole</text>
+  <text x="44" y="440" class="t" text-anchor="start">• weitere: Einladung durch einen</text>
+  <text x="53" y="460" class="t" text-anchor="start">Administrator (Link mit Ablauf)</text>
+  <text x="44" y="480" class="t" text-anchor="start">• Konto = E-Mail + Name + Rolle</text>
+  <rect x="410" y="350" width="360" height="160" rx="10" class="neutral"/>
+  <text x="424" y="376" class="h" text-anchor="start">Schutz</text>
+  <text x="424" y="400" class="t" text-anchor="start">• Code einmalig, gedrosselt je</text>
+  <text x="433" y="420" class="t" text-anchor="start">Adresse und IP, gehasht gespeichert</text>
+  <text x="424" y="440" class="t" text-anchor="start">• gleiche Antwort für bekannte und</text>
+  <text x="433" y="460" class="t" text-anchor="start">unbekannte Adressen</text>
+  <text x="424" y="480" class="t" text-anchor="start">• Passkeys verwalten: eigener Bereich</text>
+  <rect x="790" y="350" width="360" height="160" rx="10" class="nein"/>
+  <text x="804" y="376" class="h" text-anchor="start">Entfernt aus dem Starter-Kit</text>
+  <text x="804" y="400" class="t" text-anchor="start">• Passwort-Anmeldung, Passwort ändern</text>
+  <text x="804" y="420" class="t" text-anchor="start">• Passwort vergessen, Registrierung</text>
+  <text x="804" y="440" class="t" text-anchor="start">• Zwei-Faktor (TOTP), Passwort bestätigen</text>
+  <text x="804" y="460" class="t" text-anchor="start">• E-Mail-Bestätigung (Code bestätigt)</text>
+  <text x="804" y="480" class="t" text-anchor="start">• Dashboard, Profil, Konto löschen</text>
+  <text x="30" y="540" class="note" text-anchor="start">Fortify bleibt nur für die Passkey-Zeremonie; seine Passwort-Endpunkte lehnen ab oder antworten 404 (Muster aus Basalto TB 00, eigenes Projekt).</text>
+</svg>

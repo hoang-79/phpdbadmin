@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 640" width="1240" height="640" role="img">
+  <style>
+    text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; fill: #1e293b; }
+    .cap { font-size: 19px; font-weight: bold; }
+    .sub { font-size: 12px; fill: #475569; }
+    .h { font-size: 14px; font-weight: bold; }
+    .hw { font-size: 14px; font-weight: bold; fill: #ffffff; }
+    .t { font-size: 12px; }
+    .tw { font-size: 12px; fill: #e2e8f0; }
+    .s { font-size: 10.5px; fill: #475569; }
+    .sw { font-size: 10.5px; fill: #cbd5e1; }
+    .badge { font-size: 10px; font-weight: bold; fill: #ffffff; }
+    .note { font-size: 11.5px; fill: #475569; font-style: italic; }
+    .mono { font-family: Menlo, "SF Mono", monospace; font-size: 11px; }
+    .monow { font-family: Menlo, "SF Mono", monospace; font-size: 11px; fill: #e2e8f0; }
+    .rotT { font-size: 12px; font-weight: bold; fill: #b42318; }
+    .kern { fill: #1e293b; stroke: #1e293b; }
+    .kernhell { fill: #eef2f6; stroke: #1e293b; stroke-width: 1.4; }
+    .ausbau { fill: #e6f4f7; stroke: #0e7490; stroke-width: 1.4; }
+    .gruen { fill: #e7f4ec; stroke: #2f7d4f; stroke-width: 1.4; }
+    .nein { fill: #f5f6f8; stroke: #94a3b8; stroke-width: 1.4; stroke-dasharray: 5 3; }
+    .neutral { fill: #ffffff; stroke: #94a3b8; stroke-width: 1.4; }
+    .rot { fill: #fdecea; stroke: #b42318; stroke-width: 1.4; }
+    .flaeche { fill: #f5f6f8; stroke: none; }
+    .pfeil { stroke: #1e293b; stroke-width: 1.6; fill: none; marker-end: url(#pf); }
+    .pfeilg { stroke: #475569; stroke-width: 1.4; fill: none; marker-end: url(#pfg); stroke-dasharray: 5 3; }
+    .linie { stroke: #94a3b8; stroke-width: 1.2; fill: none; }
+    .achse { stroke: #475569; stroke-width: 1.4; fill: none; marker-end: url(#pfg); }
+</style>
+
+  <defs>
+    <marker id="pf" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#1e293b"/>
+    </marker>
+    <marker id="pfg" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1240" height="640" fill="#ffffff"/>
+  <text x="30" y="36" class="cap" text-anchor="start">phpdbadmin — Problembild: heute und mit phpdbadmin</text>
+  <text x="30" y="57" class="sub" text-anchor="start">Wer MariaDB, MySQL, PostgreSQL und SQLite im Browser verwalten will, braucht heute mehrere Werkzeuge — keines führt durch die Arbeit</text>
+  <text x="30" y="95" class="h" text-anchor="start">HEUTE</text>
+  <rect x="30" y="108" width="190" height="240" rx="10" class="neutral"/>
+  <text x="44" y="134" class="h" text-anchor="start">phpMyAdmin 5.2.3</text>
+  <text x="44" y="158" class="t" text-anchor="start">nur MySQL und MariaDB</text>
+  <text x="44" y="176" class="t" text-anchor="start">offiziell nur PHP &lt; 8.4</text>
+  <text x="44" y="194" class="t" text-anchor="start">Version 6 seit Jahren</text>
+  <text x="44" y="212" class="t" text-anchor="start">in Entwicklung</text>
+  <text x="44" y="230" class="t" text-anchor="start">viele Reiter und Formulare</text>
+  <text x="44" y="248" class="t" text-anchor="start">Anmeldung mit dem</text>
+  <text x="44" y="266" class="t" text-anchor="start">Datenbank-Passwort</text>
+  <rect x="232" y="108" width="190" height="240" rx="10" class="neutral"/>
+  <text x="246" y="134" class="h" text-anchor="start">phpPgAdmin 7.13</text>
+  <text x="246" y="158" class="t" text-anchor="start">nur PostgreSQL</text>
+  <text x="246" y="176" class="t" text-anchor="start">seit Dezember 2023</text>
+  <text x="246" y="194" class="t" text-anchor="start">ohne Commit</text>
+  <text x="246" y="212" class="t" text-anchor="start">offene XSS-Meldung 2026</text>
+  <text x="246" y="230" class="t" text-anchor="start">neuere PostgreSQL-</text>
+  <text x="246" y="248" class="t" text-anchor="start">Versionen nur in Forks</text>
+  <text x="246" y="266" class="t" text-anchor="start">Oberfläche der 2000er</text>
+  <rect x="434" y="108" width="190" height="240" rx="10" class="neutral"/>
+  <text x="448" y="134" class="h" text-anchor="start">Adminer 6.2</text>
+  <text x="448" y="158" class="t" text-anchor="start">alle vier, eine PHP-Datei</text>
+  <text x="448" y="176" class="t" text-anchor="start">aktiv gepflegt</text>
+  <text x="448" y="194" class="t" text-anchor="start">knapp und schnell</text>
+  <text x="448" y="212" class="t" text-anchor="start">Bedienung über Links</text>
+  <text x="448" y="230" class="t" text-anchor="start">und Formulare</text>
+  <text x="448" y="248" class="t" text-anchor="start">wenig Führung, keine</text>
+  <text x="448" y="266" class="t" text-anchor="start">Vorschau vor dem Ändern</text>
+  <rect x="636" y="108" width="190" height="240" rx="10" class="neutral"/>
+  <text x="650" y="134" class="h" text-anchor="start">Desktop-Clients</text>
+  <text x="650" y="158" class="t" text-anchor="start">TablePlus, DBeaver,</text>
+  <text x="650" y="176" class="t" text-anchor="start">Beekeeper, HeidiSQL</text>
+  <text x="650" y="194" class="t" text-anchor="start">je Rechner installiert</text>
+  <text x="650" y="212" class="t" text-anchor="start">nicht im Browser,</text>
+  <text x="650" y="230" class="t" text-anchor="start">nicht auf dem Server</text>
+  <text x="650" y="248" class="t" text-anchor="start">teils kostenpflichtig</text>
+  <text x="650" y="266" class="t" text-anchor="start">oder mit Tab-Grenzen</text>
+  <rect x="30" y="362" width="796" height="60" rx="10" class="rot"/>
+  <text x="44" y="386" class="t" text-anchor="start">Gemeinsam: keine einheitliche Bedienung über vier Datenbanken · Änderungen ohne Vorschau des SQL</text>
+  <text x="44" y="406" class="t" text-anchor="start">· kein Schutz vor DROP auf der Produktion · Anmeldung mit Datenbank-Passwörtern statt mit eigenem Konto</text>
+  <path d="M836 245 L880 245" class="pfeil"/>
+  <text x="890" y="95" class="h" text-anchor="start">MIT PHPDBADMIN</text>
+  <rect x="890" y="108" width="320" height="314" rx="10" class="kern"/>
+  <text x="904" y="134" class="hw" text-anchor="start">phpdbadmin</text>
+  <text x="904" y="158" class="tw" text-anchor="start">eine Oberfläche für alle vier Datenbanken</text>
+  <text x="904" y="177" class="tw" text-anchor="start">Tabelle bearbeiten wie in einer</text>
+  <text x="904" y="196" class="tw" text-anchor="start">Tabellenkalkulation</text>
+  <text x="904" y="215" class="tw" text-anchor="start">SQL-Vorschau vor jedem Schreiben</text>
+  <text x="904" y="234" class="tw" text-anchor="start">Befehlspalette ⌘K für alles</text>
+  <text x="904" y="253" class="tw" text-anchor="start">Produktion farbig und schreibgeschützt</text>
+  <text x="904" y="272" class="tw" text-anchor="start">Anmeldung mit Passkey oder Code</text>
+  <text x="904" y="291" class="tw" text-anchor="start">Zugangsdaten verschlüsselt gespeichert</text>
+  <text x="904" y="310" class="tw" text-anchor="start">Laravel 13, Inertia v3, Vue 3, Tailwind 4</text>
+  <text x="904" y="329" class="tw" text-anchor="start">läuft, wo Laravel läuft (Herd, Server)</text>
+  <text x="30" y="466" class="h" text-anchor="start">Was sich ändert</text>
+  <rect x="30" y="478" width="1180" height="36" rx="6" class="kernhell"/>
+  <text x="44" y="500" class="h" text-anchor="start">Entwickler</text>
+  <text x="210" y="500" class="t" text-anchor="start">Lokale Datenbanken aus Herd in einer Oberfläche, egal ob MariaDB oder PostgreSQL; SQL lernen am gezeigten SQL</text>
+  <rect x="30" y="522" width="1180" height="36" rx="6" class="kernhell"/>
+  <text x="44" y="544" class="h" text-anchor="start">Betrieb / Admin</text>
+  <text x="210" y="544" class="t" text-anchor="start">Ein Werkzeug auf dem Server statt phpMyAdmin und phpPgAdmin; Konten mit Passkey, Protokoll, Schreibschutz</text>
+  <rect x="30" y="566" width="1180" height="36" rx="6" class="kernhell"/>
+  <text x="44" y="588" class="h" text-anchor="start">Nguyen Development</text>
+  <text x="210" y="588" class="t" text-anchor="start">Eigenes Werkzeug für alle Projekte (Basalto, Fristo, Kunden); Schaufenster für Laravel-Handwerk</text>
+</svg>

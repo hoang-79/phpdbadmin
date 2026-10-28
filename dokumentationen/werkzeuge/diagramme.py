@@ -1,0 +1,568 @@
+#!/usr/bin/env python3
+"""
+Diagramm-Generator für die phpdbadmin-Dokumentation.
+
+Erzeugt die SVG-Diagramme der Phasen aus einer Beschreibung in diesem Skript —
+ohne Abhängigkeiten ausserhalb der Python-Standardbibliothek. Geändert wird hier,
+nicht in den erzeugten Dateien. Grundformen nach dem Generator von Basalto (eigenes Projekt).
+
+Aufruf (aus dem Projektverzeichnis):
+    python3 dokumentationen/werkzeuge/diagramme.py              alle Diagramme
+    python3 dokumentationen/werkzeuge/diagramme.py systemkontext nur Diagramme, deren Name so beginnt
+    python3 dokumentationen/werkzeuge/diagramme.py --liste      Namen und Zielpfade ausgeben
+
+Nach dem Erzeugen jedes Diagramm ansehen (rsvg-convert → PNG), bevor es ins Dokument kommt.
+"""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+from xml.sax.saxutils import escape
+
+WURZEL = Path(__file__).resolve().parent.parent
+
+# Vorläufige Farben bis zur eigenen Marke (Foundation): Schiefer und Petrol.
+# Kontraste: INK auf WEISS 14,6:1 · AKZENT auf WEISS 5,4:1 · WEISS auf INK 14,6:1 · ROT auf ROT_HELL 5,6:1.
+INK = "#1e293b"          # Schiefer: Text, Kern-Kästen
+GRAU = "#475569"         # Schiefer hell: Untertitel, Sekundärtext
+LINIE = "#94a3b8"        # Rahmen, Linien
+KERN = "#1e293b"
+KERN_HELL = "#eef2f6"    # helle Kern-Kästen
+AKZENT = "#0e7490"       # Petrol: Ausbau-Text, Pillen, Meilensteine
+AKZENT_HELL = "#e6f4f7"
+AKZENT_RAND = "#0e7490"
+GRUEN = "#2f7d4f"
+GRUEN_HELL = "#e7f4ec"
+ROT = "#b42318"          # Gefahr, Produktion, Risiken
+ROT_HELL = "#fdecea"
+NEUTRAL_HELL = "#f5f6f8" # «nicht im Umfang», Grund
+WEISS = "#ffffff"
+
+STIL = f"""
+    text {{ font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; fill: {INK}; }}
+    .cap {{ font-size: 19px; font-weight: bold; }}
+    .sub {{ font-size: 12px; fill: {GRAU}; }}
+    .h {{ font-size: 14px; font-weight: bold; }}
+    .hw {{ font-size: 14px; font-weight: bold; fill: {WEISS}; }}
+    .t {{ font-size: 12px; }}
+    .tw {{ font-size: 12px; fill: #e2e8f0; }}
+    .s {{ font-size: 10.5px; fill: {GRAU}; }}
+    .sw {{ font-size: 10.5px; fill: #cbd5e1; }}
+    .badge {{ font-size: 10px; font-weight: bold; fill: {WEISS}; }}
+    .note {{ font-size: 11.5px; fill: {GRAU}; font-style: italic; }}
+    .mono {{ font-family: Menlo, "SF Mono", monospace; font-size: 11px; }}
+    .monow {{ font-family: Menlo, "SF Mono", monospace; font-size: 11px; fill: #e2e8f0; }}
+    .rotT {{ font-size: 12px; font-weight: bold; fill: {ROT}; }}
+    .kern {{ fill: {KERN}; stroke: {KERN}; }}
+    .kernhell {{ fill: {KERN_HELL}; stroke: {KERN}; stroke-width: 1.4; }}
+    .ausbau {{ fill: {AKZENT_HELL}; stroke: {AKZENT_RAND}; stroke-width: 1.4; }}
+    .gruen {{ fill: {GRUEN_HELL}; stroke: {GRUEN}; stroke-width: 1.4; }}
+    .nein {{ fill: {NEUTRAL_HELL}; stroke: {LINIE}; stroke-width: 1.4; stroke-dasharray: 5 3; }}
+    .neutral {{ fill: {WEISS}; stroke: {LINIE}; stroke-width: 1.4; }}
+    .rot {{ fill: {ROT_HELL}; stroke: {ROT}; stroke-width: 1.4; }}
+    .flaeche {{ fill: {NEUTRAL_HELL}; stroke: none; }}
+    .pfeil {{ stroke: {KERN}; stroke-width: 1.6; fill: none; marker-end: url(#pf); }}
+    .pfeilg {{ stroke: {GRAU}; stroke-width: 1.4; fill: none; marker-end: url(#pfg); stroke-dasharray: 5 3; }}
+    .linie {{ stroke: {LINIE}; stroke-width: 1.2; fill: none; }}
+    .achse {{ stroke: {GRAU}; stroke-width: 1.4; fill: none; marker-end: url(#pfg); }}
+"""
+
+DEFS = f"""
+  <defs>
+    <marker id="pf" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="{KERN}"/>
+    </marker>
+    <marker id="pfg" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="{GRAU}"/>
+    </marker>
+  </defs>
+"""
+
+
+class Zeichnung:
+    """Sammelt SVG-Elemente und schreibt eine Datei mit Titel und Untertitel."""
+
+    def __init__(self, breite: int, hoehe: int, titel: str, untertitel: str = "") -> None:
+        self.breite, self.hoehe = breite, hoehe
+        self.teile: list[str] = []
+        self.text(30, 36, titel, "cap")
+        if untertitel:
+            self.text(30, 57, untertitel, "sub")
+
+    # --- Grundformen -------------------------------------------------------
+    def roh(self, s: str) -> None:
+        self.teile.append(s)
+
+    def text(self, x: float, y: float, s: str, cls: str = "t", anker: str = "start") -> None:
+        self.teile.append(f'<text x="{x:.0f}" y="{y:.0f}" class="{cls}" text-anchor="{anker}">{escape(s)}</text>')
+
+    def zeilen(self, x: float, y: float, zeilen: list[str], cls: str = "t", abstand: float = 18, anker: str = "start", punkt: bool = False) -> float:
+        """Mehrere Zeilen untereinander; gibt die y-Position nach der letzten Zeile zurück."""
+        for z in zeilen:
+            if punkt and z.startswith("  "):          # Fortsetzung eines Punkts: eingerückt, ohne Punkt
+                self.text(x + 9, y, z.strip(), cls, anker)
+            else:
+                self.text(x, y, ("• " + z) if punkt and z else z.strip(), cls, anker)
+            y += abstand
+        return y
+
+    def rechteck(self, x: float, y: float, b: float, h: float, cls: str = "neutral", rx: float = 10) -> None:
+        self.teile.append(f'<rect x="{x:.0f}" y="{y:.0f}" width="{b:.0f}" height="{h:.0f}" rx="{rx}" class="{cls}"/>')
+
+    def kreis(self, x: float, y: float, r: float, cls: str = "kern") -> None:
+        self.teile.append(f'<circle cx="{x:.0f}" cy="{y:.0f}" r="{r}" class="{cls}"/>')
+
+    def pille(self, x: float, y: float, s: str, farbe: str = AKZENT_RAND, breite: float | None = None) -> float:
+        b = breite or (len(s) * 6.4 + 18)
+        self.teile.append(f'<rect x="{x:.0f}" y="{y:.0f}" width="{b:.0f}" height="20" rx="10" fill="{farbe}"/>')
+        self.text(x + b / 2, y + 14, s, "badge", "middle")
+        return b
+
+    def nummer(self, x: float, y: float, n: str, farbe: str = AKZENT_RAND) -> None:
+        """Runde Marke mit Ziffer (Legende im Text oder unter dem Bild)."""
+        self.teile.append(f'<circle cx="{x:.0f}" cy="{y:.0f}" r="11" fill="{farbe}"/>')
+        self.text(x, y + 4, n, "badge", "middle")
+
+    def pfeil(self, x1: float, y1: float, x2: float, y2: float, cls: str = "pfeil", beschriftung: str = "", knick: float | None = None) -> None:
+        if knick is None:
+            d = f"M{x1:.0f} {y1:.0f} L{x2:.0f} {y2:.0f}"
+        else:
+            d = f"M{x1:.0f} {y1:.0f} L{knick:.0f} {y1:.0f} L{knick:.0f} {y2:.0f} L{x2:.0f} {y2:.0f}"
+        self.teile.append(f'<path d="{d}" class="{cls}"/>')
+        if beschriftung:
+            mx, my = (x1 + x2) / 2, (y1 + y2) / 2 - 6
+            tb = len(beschriftung) * 6 + 10
+            self.teile.append(f'<rect x="{mx - tb / 2:.0f}" y="{my - 11:.0f}" width="{tb:.0f}" height="16" rx="4" fill="{WEISS}" opacity="0.95"/>')
+            self.text(mx, my + 1, beschriftung, "s", "middle")
+
+    # --- Zusammengesetzte Formen -----------------------------------------
+    def kasten(self, x: float, y: float, b: float, h: float, titel: str, zeilen: list[str] | None = None,
+               cls: str = "neutral", dunkel: bool = False, badge: str = "", abstand: float = 18, punkt: bool = True) -> None:
+        self.rechteck(x, y, b, h, cls)
+        ty = y + 26
+        if badge:
+            self.pille(x + 14, y + 12, badge, AKZENT_RAND if not dunkel else "#334155")
+            ty = y + 50
+        self.text(x + 14, ty, titel, "hw" if dunkel else "h")
+        if zeilen:
+            self.zeilen(x + 14, ty + 24, zeilen, "tw" if dunkel else "t", abstand, punkt=punkt)
+
+    def legende(self, x: float, y: float, eintraege: list[tuple[str, str]]) -> None:
+        for cls, s in eintraege:
+            self.rechteck(x, y - 11, 22, 14, cls, 3)
+            self.text(x + 30, y, s, "s")
+            x += len(s) * 6.2 + 56
+
+    def schreiben(self, ziel: Path) -> None:
+        inhalt = "\n  ".join(self.teile)
+        svg = (
+            f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {self.breite} {self.hoehe}" '
+            f'width="{self.breite}" height="{self.hoehe}" role="img">\n'
+            f"  <style>{STIL}</style>\n{DEFS}\n"
+            f'  <rect x="0" y="0" width="{self.breite}" height="{self.hoehe}" fill="{WEISS}"/>\n  {inhalt}\n</svg>\n'
+        )
+        ziel.parent.mkdir(parents=True, exist_ok=True)
+        ziel.write_text(svg, encoding="utf-8")
+
+
+# ============================================================================
+# 00 — Change Request
+# ============================================================================
+
+def problembild_ist_soll() -> Zeichnung:
+    z = Zeichnung(1240, 640, "phpdbadmin — Problembild: heute und mit phpdbadmin",
+                  "Wer MariaDB, MySQL, PostgreSQL und SQLite im Browser verwalten will, braucht heute mehrere Werkzeuge — keines führt durch die Arbeit")
+    z.text(30, 95, "HEUTE", "h")
+    spalten = [
+        ("phpMyAdmin 5.2.3", ["nur MySQL und MariaDB", "offiziell nur PHP < 8.4", "Version 6 seit Jahren", "in Entwicklung", "viele Reiter und Formulare", "Anmeldung mit dem", "Datenbank-Passwort"]),
+        ("phpPgAdmin 7.13", ["nur PostgreSQL", "seit Dezember 2023", "ohne Commit", "offene XSS-Meldung 2026", "neuere PostgreSQL-", "Versionen nur in Forks", "Oberfläche der 2000er"]),
+        ("Adminer 6.2", ["alle vier, eine PHP-Datei", "aktiv gepflegt", "knapp und schnell", "Bedienung über Links", "und Formulare", "wenig Führung, keine", "Vorschau vor dem Ändern"]),
+        ("Desktop-Clients", ["TablePlus, DBeaver,", "Beekeeper, HeidiSQL", "je Rechner installiert", "nicht im Browser,", "nicht auf dem Server", "teils kostenpflichtig", "oder mit Tab-Grenzen"]),
+    ]
+    x = 30
+    for titel, zl in spalten:
+        z.kasten(x, 108, 190, 240, titel, zl, "neutral", punkt=False)
+        x += 202
+    z.rechteck(30, 362, 796, 60, "rot")
+    z.text(44, 386, "Gemeinsam: keine einheitliche Bedienung über vier Datenbanken · Änderungen ohne Vorschau des SQL", "t")
+    z.text(44, 406, "· kein Schutz vor DROP auf der Produktion · Anmeldung mit Datenbank-Passwörtern statt mit eigenem Konto", "t")
+
+    z.pfeil(836, 245, 880, 245)
+    z.text(890, 95, "MIT PHPDBADMIN", "h")
+    z.kasten(890, 108, 320, 314, "phpdbadmin", [
+        "eine Oberfläche für alle vier Datenbanken",
+        "Tabelle bearbeiten wie in einer",
+        "Tabellenkalkulation",
+        "SQL-Vorschau vor jedem Schreiben",
+        "Befehlspalette ⌘K für alles",
+        "Produktion farbig und schreibgeschützt",
+        "Anmeldung mit Passkey oder Code",
+        "Zugangsdaten verschlüsselt gespeichert",
+        "Laravel 13, Inertia v3, Vue 3, Tailwind 4",
+        "läuft, wo Laravel läuft (Herd, Server)",
+    ], "kern", dunkel=True, abstand=19, punkt=False)
+
+    z.text(30, 466, "Was sich ändert", "h")
+    folgen = [
+        ("Entwickler", "Lokale Datenbanken aus Herd in einer Oberfläche, egal ob MariaDB oder PostgreSQL; SQL lernen am gezeigten SQL"),
+        ("Betrieb / Admin", "Ein Werkzeug auf dem Server statt phpMyAdmin und phpPgAdmin; Konten mit Passkey, Protokoll, Schreibschutz"),
+        ("Nguyen Development", "Eigenes Werkzeug für alle Projekte (Basalto, Fristo, Kunden); Schaufenster für Laravel-Handwerk"),
+    ]
+    y = 494
+    for wer, was in folgen:
+        z.rechteck(30, y - 16, 1180, 36, "kernhell", 6)
+        z.text(44, y + 6, wer, "h")
+        z.text(210, y + 6, was, "t")
+        y += 44
+    return z
+
+
+def marktpositionierung() -> Zeichnung:
+    z = Zeichnung(1000, 660, "phpdbadmin — Marktpositionierung",
+                  "Datenbank-Werkzeuge 2026: wie viele Datenbanken in einer Oberfläche, gegen wie geführt die Bedienung ist (Marktbild § 3)")
+    ox, oy, b, h = 110, 580, 820, 440
+    z.roh(f'<path d="M{ox} {oy} L{ox + b} {oy}" class="achse"/>')
+    z.roh(f'<path d="M{ox} {oy} L{ox} {oy - h}" class="achse"/>')
+    z.text(ox + b / 2, oy + 24, "Bedienung: technisch, Formulare und Links  →  geführt, Vorschau, Tastatur", "s", "middle")
+    z.roh(f'<text x="{ox - 60}" y="{oy - h / 2}" class="s" text-anchor="middle" transform="rotate(-90 {ox - 60} {oy - h / 2})">Datenbanken in einer Oberfläche: eine  →  alle vier</text>')
+    z.roh(f'<path d="M{ox} {oy - h / 2} L{ox + b} {oy - h / 2}" class="linie"/>')
+    z.roh(f'<path d="M{ox + b / 2} {oy} L{ox + b / 2} {oy - h}" class="linie"/>')
+
+    def punkt(px: float, py: float, name: str, zusatz: str, cls: str = "neutral", r: float = 48) -> None:
+        z.kreis(ox + px * b, oy - py * h, r, cls)
+        z.text(ox + px * b, oy - py * h - 2, name, "hw" if cls == "kern" else "h", "middle")
+        z.text(ox + px * b, oy - py * h + 14, zusatz, "sw" if cls == "kern" else "s", "middle")
+
+    punkt(0.10, 0.22, "phpPgAdmin", "ruht seit 2023", "neutral", 56)
+    punkt(0.28, 0.22, "phpMyAdmin", "MySQL, MariaDB", "neutral", 56)
+    punkt(0.50, 0.24, "pgAdmin 4", "Python, nur PG", "nein", 46)
+    punkt(0.22, 0.80, "Adminer", "eine PHP-Datei", "neutral", 46)
+    punkt(0.47, 0.62, "Jaxon DbAdmin", "PHP, v0.35", "neutral", 64)
+    punkt(0.69, 0.74, "DbGate", "Node, Docker", "nein", 44)
+    punkt(0.80, 0.40, "Desktop-Clients", "kein Browser", "nein", 66)
+    punkt(0.90, 0.90, "phpdbadmin", "alle vier, geführt", "kern", 60)
+    z.rechteck(ox + 0.14 * b, 84, 0.58 * b, 26, "kernhell", 6)
+    z.text(ox + 0.43 * b, 102, "unbesetzt (oben rechts): im Browser · alle vier Datenbanken · geführt · auf Laravel", "s", "middle")
+    z.pfeil(ox + 0.72 * b, 97, ox + 0.86 * b, oy - 0.90 * h - 50, "pfeilg")
+    z.legende(ox, 640, [("neutral", "PHP, im Browser"), ("nein", "andere Technik (Python, Node, Desktop)"), ("kern", "phpdbadmin (Ziel)")])
+    return z
+
+
+def scope_abgrenzung() -> Zeichnung:
+    z = Zeichnung(1180, 480, "phpdbadmin — Abgrenzung des Funktionsumfangs",
+                  "Was v1.0 braucht, was danach folgt — und was bewusst nicht gebaut wird (Funktionsraster, CR-001 § 3)")
+    z.kasten(30, 80, 300, 330, "Kern bis v1.0 (Stufe 0–2)", [
+        "Anmeldung: Passkey und Code", "Verbindungen für vier Treiber", "Navigator Server → Schema → Tabelle",
+        "Datenraster: blättern, sortieren,", "  filtern, suchen", "Bearbeiten mit SQL-Vorschau",
+        "Struktur: Spalten, Indizes,", "  Fremdschlüssel, Tabellen anlegen", "SQL-Editor mit Vervollständigung",
+        "Verlauf und gespeicherte Abfragen", "Export und Import: CSV, SQL, JSON", "Schutz vor Gefährlichem",
+        "Protokoll, DE/EN, hell/dunkel", "Befehlspalette ⌘K",
+    ], "kern", dunkel=True, badge="v1.0", abstand=17)
+    z.kasten(348, 80, 260, 330, "Verwalten (Stufe 3)", [
+        "Benutzer und Rechte", "Prozesse und Sitzungen", "Server-Status, Variablen", "Views, Routinen, Trigger,",
+        "  Sequenzen, Typen", "Beziehungsdiagramm (ER)", "EXPLAIN als Bild", "Sicherung und", "  Wiederherstellung",
+    ], "ausbau", badge="v1.1", abstand=18)
+    z.kasten(626, 80, 270, 330, "Komfort und Team (Stufe 4)", [
+        "Schemavergleich → Migration", "Laravel-Migration aus Tabelle", "Herd-Dienste und .env erkennen",
+        "SSH-Tunnel", "geteilte Verbindungen, Rollen", "Abfragen im Team teilen", "SQL-Hilfe mit KI", "  (eigener Schlüssel, optional)",
+    ], "ausbau", badge="v1.2", abstand=18)
+    z.kasten(914, 80, 236, 330, "Nicht — bewusst", [
+        "SQL Server, Oracle (vorerst)", "NoSQL: MongoDB, Redis", "SaaS mit fremden", "  Zugangsdaten", "Desktop-App",
+        "Berichte, BI, Diagramme", "  aus Daten", "Replikation und Cluster", "  einrichten", "Hosting-Panel", "  (Konten, Domains)",
+        "Passwort-Anmeldung", "Dashboard, Profilseite",
+    ], "nein", abstand=17)
+    z.legende(30, 450, [("kern", "Kern bis v1.0"), ("ausbau", "Ausbau nach v1.0"), ("nein", "nicht im Umfang")])
+    return z
+
+
+def systemkontext() -> Zeichnung:
+    z = Zeichnung(1180, 640, "phpdbadmin — Systemkontext (C4 Level 1)",
+                  "Eine Installation (lokal in Herd oder auf einem Server) mit ihren Personen und Umsystemen")
+    z.rechteck(440, 200, 300, 280, "kern", 16)
+    z.text(590, 232, "phpdbadmin", "hw", "middle")
+    z.zeilen(590, 262, ["Laravel-13-Anwendung", "Oberfläche Inertia v3 + Vue 3", "Navigator · Raster · SQL-Editor",
+                        "Struktur · Export/Import", "Verbindungen (verschlüsselt)", "Protokoll aller Änderungen"], "tw", 22, "middle")
+    z.text(590, 410, "eigene App-Datenbank:", "sw", "middle")
+    z.text(590, 426, "Konten, Passkeys, Verbindungen,", "sw", "middle")
+    z.text(590, 442, "Verlauf, Protokoll (SQLite oder MariaDB)", "sw", "middle")
+
+    personen = [
+        (40, 110, "Entwickler", "lokal in Herd, eigene Datenbanken"),
+        (40, 240, "Administrator", "Konten, Verbindungen, Rechte"),
+        (40, 370, "Mitarbeitende", "lesen oder bearbeiten je Verbindung"),
+    ]
+    for x, y, n, s in personen:
+        z.kreis(x + 22, y + 12, 12, "kernhell")
+        z.rechteck(x, y + 30, 320, 48, "kernhell", 8)
+        z.text(x + 12, y + 50, n, "h")
+        z.text(x + 12, y + 68, s, "s")
+        z.pfeil(x + 320, y + 54, 440, 270 + (y - 110) * 0.45)
+    z.rechteck(40, 520, 320, 70, "neutral", 8)
+    z.text(52, 544, "Authenticator", "h")
+    z.text(52, 562, "Touch ID, Passwortmanager, Schlüssel", "s")
+    z.text(52, 578, "(WebAuthn, Passkey)", "s")
+    z.pfeil(360, 552, 470, 480, "pfeilg")
+
+    systeme = [
+        (800, 80, "MariaDB-Server", "10.6 bis 11.x (lokal Herd 10.11)", "neutral"),
+        (800, 160, "MySQL-Server", "8.0 und 8.4 LTS", "neutral"),
+        (800, 240, "PostgreSQL-Server", "14 bis 18 (lokal Herd 18)", "neutral"),
+        (800, 320, "SQLite-Dateien", "auf dem Rechner bzw. Server", "neutral"),
+        (800, 400, "Mail-Versand", "Anmeldecode, Einladungen", "neutral"),
+        (800, 480, "SSH-Bastion", "Tunnel zu internen Servern (Stufe 4)", "nein"),
+    ]
+    for x, y, n, s, cls in systeme:
+        z.rechteck(x, y, 340, 56, cls, 8)
+        z.text(x + 12, y + 22, n, "h")
+        z.text(x + 12, y + 42, s, "s")
+        z.pfeil(740, 240 + (y - 80) * 0.45, x, y + 28, "pfeil" if cls == "neutral" else "pfeilg")
+    z.text(800, 580, "Verbindung je Anfrage, mit Zeit- und Mengengrenzen;", "note")
+    z.text(800, 598, "erlaubte Hosts je Installation (kein Sprungbrett ins Netz)", "note")
+    return z
+
+
+def architektur_treiber() -> Zeichnung:
+    z = Zeichnung(1180, 640, "phpdbadmin — Schichten: eine Oberfläche, vier Dialekte",
+                  "Was Laravel für alle Treiber kann, nutzen wir; nur die Unterschiede liegen in einem Dialekt je Datenbank")
+    # Schichten
+    schichten = [
+        (80, "Browser — Vue 3 + Inertia v3", "Navigator · Datenraster · SQL-Editor · Strukturformulare · Befehlspalette · SQL-Vorschau", "kernhell"),
+        (170, "Laravel 13 — Controller und Dienste", "Katalog (lesen) · Daten (blättern, ändern) · Struktur (DDL bauen) · Abfrage ausführen · Export/Import (Queue) · Protokoll", "kernhell"),
+        (260, "Dialekt-Schicht — ein Vertrag, vier Umsetzungen", "Bezeichner quoten · Typen · Schemas · Prozesse · Rechte · EXPLAIN · Routinen · Server-Werte · Grenzen setzen", "ausbau"),
+        (350, "Laravel-Datenbankschicht", "Schema::getTables(), getColumns(), getIndexes(), getForeignKeys(), getViews() · Grammatiken · PDO · Verbindung je Anfrage", "kernhell"),
+    ]
+    for y, titel, text, cls in schichten:
+        z.rechteck(30, y, 820, 72, cls, 10)
+        z.text(46, y + 28, titel, "h")
+        z.text(46, y + 52, text, "s")
+    for y in (152, 242, 332, 422):
+        z.pfeil(440, y, 440, y + 16)
+    # Dialekte
+    dialekte = [("MySQL", "SET max_execution_time"), ("MariaDB", "max_statement_time"), ("PostgreSQL", "statement_timeout, Schemas"), ("SQLite", "Datei, PRAGMA, kein Server")]
+    x = 30
+    for n, s in dialekte:
+        z.rechteck(x, 440, 196, 64, "neutral", 8)
+        z.text(x + 12, 464, n, "h")
+        z.text(x + 12, 484, s, "s")
+        x += 208
+    z.text(30, 530, "Datenbank-Server bzw. -Dateien", "note")
+    # Querschnitt
+    z.kasten(880, 80, 270, 424, "Querschnitt (für jede Anfrage)", [
+        "Verbindung nur aus gespeicherten", "Angaben, Hosts nach Liste",
+        "Zugangsdaten verschlüsselt", "(APP_KEY), nie im Browser",
+        "Schreibschutz je Verbindung", "Zeitlimit je Anweisung",
+        "Zeilengrenze je Ergebnis", "SQL-Vorschau vor DDL/DML",
+        "Protokoll: wer, wann, was", "Rechte: lesen / schreiben /", "verwalten je Verbindung",
+    ], "kern", dunkel=True, abstand=19, punkt=False)
+    z.text(30, 580, "Beispiel: «Spalte umbenennen» baut der Dienst Struktur mit dem Dialekt der Verbindung; die Oberfläche zeigt das SQL, erst «Anwenden» führt es aus.", "note")
+    z.text(30, 600, "SQLite kennt kein ALTER COLUMN — dort baut der Dialekt die Tabelle neu (wie Laravel), die Vorschau zeigt alle Schritte.", "note")
+    return z
+
+
+def bedienkonzept() -> Zeichnung:
+    z = Zeichnung(1180, 720, "phpdbadmin — Bedienkonzept (Skizze, keine Gestaltung)",
+                  "Ein Bildschirm für die tägliche Arbeit: wo bin ich, was sehe ich, was ändere ich — und was passiert, bevor es passiert")
+    # Rahmen
+    z.rechteck(30, 76, 1120, 560, "neutral", 8)
+    # Kopfleiste
+    z.rechteck(30, 76, 1120, 46, "kernhell", 8)
+    z.rechteck(46, 86, 210, 26, "rot", 13)
+    z.text(60, 104, "● produktion · shop (MySQL)", "rotT")
+    z.rechteck(420, 86, 340, 26, "neutral", 6)
+    z.text(434, 104, "Suchen oder Befehl …                 ⌘K", "s")
+    z.text(1130, 104, "HN ▾", "h", "end")
+    z.nummer(270, 99, "1")
+    z.nummer(775, 99, "2")
+    # Navigator
+    z.rechteck(30, 122, 230, 514, "flaeche", 0)
+    nav = [(0, "▾ shop"), (1, "▾ Tabellen"), (2, "customers"), (2, "orders"), (2, "order_items"), (2, "products"),
+           (1, "▸ Views"), (1, "▸ Routinen"), (0, "▸ analytics"), (0, ""), (0, "★ Gespeichert"), (1, "offene Bestellungen"), (0, "◷ Verlauf")]
+    y = 150
+    for ebene, eintrag in nav:
+        if eintrag == "orders":
+            z.rechteck(40, y - 16, 210, 23, "kernhell", 4)
+        z.text(46 + ebene * 16, y, eintrag, "h" if eintrag == "orders" else "t")
+        y += 22
+    z.nummer(240, 145, "3")
+    # Reiter
+    reiter = [("Daten", True), ("Struktur", False), ("Beziehungen", False), ("SQL", False)]
+    x = 280
+    for n, aktiv in reiter:
+        z.rechteck(x, 134, len(n) * 8 + 28, 28, "kern" if aktiv else "neutral", 6)
+        z.text(x + 14, 153, n, "hw" if aktiv else "t")
+        x += len(n) * 8 + 36
+    z.nummer(x + 4, 148, "4")
+    # Filterleiste
+    z.rechteck(280, 172, 850, 30, "neutral", 6)
+    z.text(292, 192, "status = 'offen'   ·   created_at ≥ letzte 7 Tage   ·   + Filter", "t")
+    z.text(1118, 192, "1 248 Zeilen", "s", "end")
+    # Raster
+    kopf = ["id", "customer", "status", "total", "created_at"]
+    breiten = [80, 260, 150, 140, 220]
+    y0 = 214
+    x = 280
+    for k, bb in zip(kopf, breiten):
+        z.rechteck(x, y0, bb, 26, "kernhell", 0)
+        z.text(x + 8, y0 + 18, k, "h")
+        x += bb
+    zeilen = [
+        ["10231", "→ Anna Muster", "offen", "149.00", "2026-10-27 09:12"],
+        ["10232", "→ Beat Keller", "bezahlt", "89.50", "2026-10-27 10:40"],
+        ["10233", "→ Carla Rossi", "offen", "1 020.00", "2026-10-27 11:03"],
+        ["10234", "→ Daniel Weber", "offen", "35.00", "2026-10-28 08:15"],
+    ]
+    y = y0 + 26
+    for i, zl in enumerate(zeilen):
+        x = 280
+        for j, (w, bb) in enumerate(zip(zl, breiten)):
+            geaendert = (i == 1 and j == 2) or (i == 2 and j == 3)
+            z.rechteck(x, y, bb, 28, "ausbau" if geaendert else "neutral", 0)
+            z.text(x + 8, y + 19, w, "h" if geaendert else "t")
+            x += bb
+        y += 28
+    z.nummer(1110, y0 + 26 + 28 + 14, "5")
+    z.text(282, y + 22, "Zelle doppelt klicken = bearbeiten · Pfeil → springt über den Fremdschlüssel zum Kunden", "s")
+    # Änderungsleiste
+    z.rechteck(280, 400, 850, 44, "ausbau", 8)
+    z.text(296, 427, "2 Änderungen noch nicht angewendet", "h")
+    for xb, t, cls in [(700, "SQL ansehen", "neutral"), (830, "Verwerfen", "neutral"), (950, "Anwenden", "kern")]:
+        z.rechteck(xb, 408, 110, 28, cls, 6)
+        z.text(xb + 55, 427, t, "hw" if cls == "kern" else "t", "middle")
+    z.nummer(1096, 422, "6")
+    # SQL-Vorschau
+    z.rechteck(280, 456, 850, 150, "kern", 8)
+    z.text(296, 480, "SQL-Vorschau — wird in einer Transaktion ausgeführt", "hw")
+    z.zeilen(296, 506, [
+        "UPDATE `orders` SET `status` = 'bezahlt' WHERE `id` = 10232;",
+        "UPDATE `orders` SET `total` = 1020.00 WHERE `id` = 10233;",
+        "",
+        "Produktion: Anwenden verlangt die Eingabe von «shop».",
+    ], "monow", 20)
+    z.nummer(1096, 476, "7")
+    z.text(30, 664, "1 Verbindung mit Umgebungsfarbe (Produktion rot, schreibgeschützt möglich) · 2 Befehlspalette: Tabelle öffnen, Abfrage, Verbindung wechseln · 3 Navigator mit Gespeichertem und Verlauf", "s")
+    z.text(30, 682, "4 gleiche Reiter für jede Tabelle in jeder Datenbank · 5 geänderte Zellen markiert, nichts ist sofort geschrieben · 6 Änderungen sammeln, ansehen, verwerfen · 7 das SQL vor dem Ausführen", "s")
+    return z
+
+
+def stufen_fahrplan() -> Zeichnung:
+    z = Zeichnung(1180, 430, "phpdbadmin — Stufen und Meilensteine",
+                  "Reihenfolge, ohne Termine. Jede Stufe ist für sich nutzbar; phpdbadmin läuft neben Basalto, das bis zur Beta Vorrang hat (R-03)")
+    stufen = [
+        ("0", "Fundament", ["Starter-Kit bereinigt", "Passkey und Code", "Verbindungen, Dialekte", "Tests auf vier DBs"], "6–8 PT"),
+        ("1", "Lesen", ["Navigator, Raster", "Filter, Suche", "Struktur ansehen", "SQL-Editor, ⌘K"], "8–10 PT"),
+        ("2", "Bearbeiten", ["Zellen mit Vorschau", "Tabellen anlegen/ändern", "Export und Import", "Schutz, Protokoll"], "10–12 PT"),
+        ("3", "Verwalten", ["Benutzer und Rechte", "Prozesse, Status", "Views, Routinen, ER", "Sicherung"], "8–10 PT"),
+        ("4", "Komfort, Team", ["Schemavergleich", "Laravel-Migration", "Herd, SSH-Tunnel", "Team-Funktionen"], "8–10 PT"),
+    ]
+    x = 30
+    for n, t, zl, pt in stufen:
+        z.rechteck(x, 90, 204, 190, "kernhell", 10)
+        z.kreis(x + 26, 116, 16, "kern")
+        z.text(x + 26, 121, n, "hw", "middle")
+        z.text(x + 50, 121, t, "h")
+        z.zeilen(x + 14, 150, zl, "t", 18, punkt=True)
+        z.pille(x + 14, 246, pt, KERN, 90)
+        if n != "4":
+            z.pfeil(x + 204, 185, x + 220, 185)
+        x += 220
+    for xm, t, s in [(30 + 1 * 220 + 204, "Alpha", "lesend im eigenen Alltag"),
+                     (30 + 2 * 220 + 204, "v1.0", "ersetzt phpMyAdmin und phpPgAdmin"),
+                     (30 + 3 * 220 + 204, "v1.1", "Verwaltung komplett"),
+                     (30 + 4 * 220 + 204, "v1.2", "Team und Laravel")]:
+        z.roh(f'<path d="M{xm} 90 L{xm} 300" stroke="{AKZENT_RAND}" stroke-width="2" stroke-dasharray="4 3"/>')
+        z.rechteck(xm - 36, 300, 72, 24, "ausbau", 12)
+        z.text(xm, 316, t, "h", "middle")
+        z.text(xm, 344, s, "s", "end" if t == "v1.2" else "middle")
+    z.text(30, 396, "Summe rund 40–50 Personentage bis v1.2 (Schätzung vor Feasibility). Rückfallposition: nach Stufe 2 ist das Werkzeug vollständig nutzbar — Verwalten und Team folgen.", "note")
+    return z
+
+
+# ============================================================================
+# 01 — Pre-Project
+# ============================================================================
+
+def anmeldung_ohne_passwort() -> Zeichnung:
+    z = Zeichnung(1180, 560, "phpdbadmin — Anmeldung ohne Passwort",
+                  "Zwei Wege zum selben Konto; das Passwort des Starter-Kits entfällt ganz (A-01 bis A-08)")
+    # Weg 1: Code
+    z.text(30, 100, "WEG 1 — CODE PER MAIL (erste Anmeldung, neues Gerät)", "h")
+    schritte1 = [("E-Mail-Adresse", "eingeben"), ("Code per Mail", "6 Ziffern, 10 Min."), ("Code eingeben", "Autofill aus der Mail"), ("Angemeldet", "Sitzung neu erzeugt"), ("Passkey anbieten", "einmal, abwählbar")]
+    x = 30
+    for i, (t, s) in enumerate(schritte1):
+        cls = "kern" if t == "Angemeldet" else "kernhell"
+        z.rechteck(x, 116, 190, 64, cls, 10)
+        z.text(x + 14, 142, t, "hw" if cls == "kern" else "h")
+        z.text(x + 14, 162, s, "sw" if cls == "kern" else "s")
+        if i < len(schritte1) - 1:
+            z.pfeil(x + 190, 148, x + 226, 148)
+        x += 226
+    # Weg 2: Passkey
+    z.text(30, 230, "WEG 2 — PASSKEY (Alltag)", "h")
+    schritte2 = [("«Mit Passkey»", "ein Knopf, keine Eingabe"), ("Browser fragt", "Touch ID, Passwortmanager"), ("Server prüft", "Signatur, Zähler, Herkunft"), ("Angemeldet", "Sitzung neu erzeugt")]
+    x = 30
+    for i, (t, s) in enumerate(schritte2):
+        cls = "kern" if t == "Angemeldet" else "kernhell"
+        z.rechteck(x, 246, 190, 64, cls, 10)
+        z.text(x + 14, 272, t, "hw" if cls == "kern" else "h")
+        z.text(x + 14, 292, s, "sw" if cls == "kern" else "s")
+        if i < len(schritte2) - 1:
+            z.pfeil(x + 190, 278, x + 226, 278)
+        x += 226
+    z.pfeil(30 + 3 * 226 + 95, 246, 30 + 3 * 226 + 95, 180, "pfeilg", "dasselbe Ziel")
+    # Konten
+    z.kasten(30, 350, 360, 160, "Neue Konten", [
+        "kein «Registrieren» für alle",
+        "erstes Konto: Erst-Setup per Konsole",
+        "weitere: Einladung durch einen",
+        "  Administrator (Link mit Ablauf)",
+        "Konto = E-Mail + Name + Rolle",
+    ], "neutral", abstand=20)
+    z.kasten(410, 350, 360, 160, "Schutz", [
+        "Code einmalig, gedrosselt je",
+        "  Adresse und IP, gehasht gespeichert",
+        "gleiche Antwort für bekannte und",
+        "  unbekannte Adressen",
+        "Passkeys verwalten: eigener Bereich",
+    ], "neutral", abstand=20)
+    z.kasten(790, 350, 360, 160, "Entfernt aus dem Starter-Kit", [
+        "Passwort-Anmeldung, Passwort ändern",
+        "Passwort vergessen, Registrierung",
+        "Zwei-Faktor (TOTP), Passwort bestätigen",
+        "E-Mail-Bestätigung (Code bestätigt)",
+        "Dashboard, Profil, Konto löschen",
+    ], "nein", abstand=20, punkt=True)
+    z.text(30, 540, "Fortify bleibt nur für die Passkey-Zeremonie; seine Passwort-Endpunkte lehnen ab oder antworten 404 (Muster aus Basalto TB 00, eigenes Projekt).", "note")
+    return z
+
+
+DIAGRAMME = {
+    "problembild-ist-soll": ("00-change_request/diagrams/problembild-ist-soll.svg", problembild_ist_soll),
+    "marktpositionierung": ("00-change_request/diagrams/marktpositionierung.svg", marktpositionierung),
+    "scope-abgrenzung": ("00-change_request/diagrams/scope-abgrenzung.svg", scope_abgrenzung),
+    "systemkontext-c4-l1": ("00-change_request/diagrams/systemkontext-c4-l1.svg", systemkontext),
+    "architektur-treiber": ("00-change_request/diagrams/architektur-treiber.svg", architektur_treiber),
+    "bedienkonzept": ("00-change_request/diagrams/bedienkonzept.svg", bedienkonzept),
+    "stufen-fahrplan": ("00-change_request/diagrams/stufen-fahrplan.svg", stufen_fahrplan),
+    "anmeldung-ohne-passwort": ("01-pre-project/diagrams/anmeldung-ohne-passwort.svg", anmeldung_ohne_passwort),
+}
+
+
+def main(argv: list[str]) -> int:
+    if "--liste" in argv:
+        for name, (pfad, _) in DIAGRAMME.items():
+            print(f"{name:28s} {pfad}")
+        return 0
+    filter_ = argv[1] if len(argv) > 1 else ""
+    n = 0
+    for name, (pfad, fn) in DIAGRAMME.items():
+        if filter_ and not name.startswith(filter_):
+            continue
+        fn().schreiben(WURZEL / pfad)
+        print("geschrieben:", pfad)
+        n += 1
+    print(f"{n} Diagramme")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

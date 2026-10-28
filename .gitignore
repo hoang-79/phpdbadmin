@@ -43,3 +43,9 @@ yarn-error.log
 /boost.json
 /opencode.json
 /opencode.jsonc
+
+# Quellmaterial der Dokumentation (nur das Verzeichnis ist versioniert)
+/dokumentationen/00-change_request/00_sources/*
+!/dokumentationen/00-change_request/00_sources/.gitkeep
+!/dokumentationen/00-change_request/00_sources/README.md
+/dokumentationen/werkzeuge/__pycache__

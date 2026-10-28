@@ -69,6 +69,8 @@ export default defineConfig({
         ignorePatterns: [
             '.github/**',
             'composer.json',
+            // Projektdoku: Markdown von Hand gesetzt (Tabellen, Umbrüche), PDFs bauen daraus — wie Basalto
+            'dokumentationen/**',
             'resources/js/components/ui/*',
             'resources/views/mail/*',
         ],

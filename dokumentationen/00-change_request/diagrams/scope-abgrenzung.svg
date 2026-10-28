@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 480" width="1180" height="480" role="img">
+  <style>
+    text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; fill: #1e293b; }
+    .cap { font-size: 19px; font-weight: bold; }
+    .sub { font-size: 12px; fill: #475569; }
+    .h { font-size: 14px; font-weight: bold; }
+    .hw { font-size: 14px; font-weight: bold; fill: #ffffff; }
+    .t { font-size: 12px; }
+    .tw { font-size: 12px; fill: #e2e8f0; }
+    .s { font-size: 10.5px; fill: #475569; }
+    .sw { font-size: 10.5px; fill: #cbd5e1; }
+    .badge { font-size: 10px; font-weight: bold; fill: #ffffff; }
+    .note { font-size: 11.5px; fill: #475569; font-style: italic; }
+    .mono { font-family: Menlo, "SF Mono", monospace; font-size: 11px; }
+    .monow { font-family: Menlo, "SF Mono", monospace; font-size: 11px; fill: #e2e8f0; }
+    .rotT { font-size: 12px; font-weight: bold; fill: #b42318; }
+    .kern { fill: #1e293b; stroke: #1e293b; }
+    .kernhell { fill: #eef2f6; stroke: #1e293b; stroke-width: 1.4; }
+    .ausbau { fill: #e6f4f7; stroke: #0e7490; stroke-width: 1.4; }
+    .gruen { fill: #e7f4ec; stroke: #2f7d4f; stroke-width: 1.4; }
+    .nein { fill: #f5f6f8; stroke: #94a3b8; stroke-width: 1.4; stroke-dasharray: 5 3; }
+    .neutral { fill: #ffffff; stroke: #94a3b8; stroke-width: 1.4; }
+    .rot { fill: #fdecea; stroke: #b42318; stroke-width: 1.4; }
+    .flaeche { fill: #f5f6f8; stroke: none; }
+    .pfeil { stroke: #1e293b; stroke-width: 1.6; fill: none; marker-end: url(#pf); }
+    .pfeilg { stroke: #475569; stroke-width: 1.4; fill: none; marker-end: url(#pfg); stroke-dasharray: 5 3; }
+    .linie { stroke: #94a3b8; stroke-width: 1.2; fill: none; }
+    .achse { stroke: #475569; stroke-width: 1.4; fill: none; marker-end: url(#pfg); }
+</style>
+
+  <defs>
+    <marker id="pf" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#1e293b"/>
+    </marker>
+    <marker id="pfg" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1180" height="480" fill="#ffffff"/>
+  <text x="30" y="36" class="cap" text-anchor="start">phpdbadmin — Abgrenzung des Funktionsumfangs</text>
+  <text x="30" y="57" class="sub" text-anchor="start">Was v1.0 braucht, was danach folgt — und was bewusst nicht gebaut wird (Funktionsraster, CR-001 § 3)</text>
+  <rect x="30" y="80" width="300" height="330" rx="10" class="kern"/>
+  <rect x="44" y="92" width="44" height="20" rx="10" fill="#334155"/>
+  <text x="66" y="106" class="badge" text-anchor="middle">v1.0</text>
+  <text x="44" y="130" class="hw" text-anchor="start">Kern bis v1.0 (Stufe 0–2)</text>
+  <text x="44" y="154" class="tw" text-anchor="start">• Anmeldung: Passkey und Code</text>
+  <text x="44" y="171" class="tw" text-anchor="start">• Verbindungen für vier Treiber</text>
+  <text x="44" y="188" class="tw" text-anchor="start">• Navigator Server → Schema → Tabelle</text>
+  <text x="44" y="205" class="tw" text-anchor="start">• Datenraster: blättern, sortieren,</text>
+  <text x="53" y="222" class="tw" text-anchor="start">filtern, suchen</text>
+  <text x="44" y="239" class="tw" text-anchor="start">• Bearbeiten mit SQL-Vorschau</text>
+  <text x="44" y="256" class="tw" text-anchor="start">• Struktur: Spalten, Indizes,</text>
+  <text x="53" y="273" class="tw" text-anchor="start">Fremdschlüssel, Tabellen anlegen</text>
+  <text x="44" y="290" class="tw" text-anchor="start">• SQL-Editor mit Vervollständigung</text>
+  <text x="44" y="307" class="tw" text-anchor="start">• Verlauf und gespeicherte Abfragen</text>
+  <text x="44" y="324" class="tw" text-anchor="start">• Export und Import: CSV, SQL, JSON</text>
+  <text x="44" y="341" class="tw" text-anchor="start">• Schutz vor Gefährlichem</text>
+  <text x="44" y="358" class="tw" text-anchor="start">• Protokoll, DE/EN, hell/dunkel</text>
+  <text x="44" y="375" class="tw" text-anchor="start">• Befehlspalette ⌘K</text>
+  <rect x="348" y="80" width="260" height="330" rx="10" class="ausbau"/>
+  <rect x="362" y="92" width="44" height="20" rx="10" fill="#0e7490"/>
+  <text x="384" y="106" class="badge" text-anchor="middle">v1.1</text>
+  <text x="362" y="130" class="h" text-anchor="start">Verwalten (Stufe 3)</text>
+  <text x="362" y="154" class="t" text-anchor="start">• Benutzer und Rechte</text>
+  <text x="362" y="172" class="t" text-anchor="start">• Prozesse und Sitzungen</text>
+  <text x="362" y="190" class="t" text-anchor="start">• Server-Status, Variablen</text>
+  <text x="362" y="208" class="t" text-anchor="start">• Views, Routinen, Trigger,</text>
+  <text x="371" y="226" class="t" text-anchor="start">Sequenzen, Typen</text>
+  <text x="362" y="244" class="t" text-anchor="start">• Beziehungsdiagramm (ER)</text>
+  <text x="362" y="262" class="t" text-anchor="start">• EXPLAIN als Bild</text>
+  <text x="362" y="280" class="t" text-anchor="start">• Sicherung und</text>
+  <text x="371" y="298" class="t" text-anchor="start">Wiederherstellung</text>
+  <rect x="626" y="80" width="270" height="330" rx="10" class="ausbau"/>
+  <rect x="640" y="92" width="44" height="20" rx="10" fill="#0e7490"/>
+  <text x="662" y="106" class="badge" text-anchor="middle">v1.2</text>
+  <text x="640" y="130" class="h" text-anchor="start">Komfort und Team (Stufe 4)</text>
+  <text x="640" y="154" class="t" text-anchor="start">• Schemavergleich → Migration</text>
+  <text x="640" y="172" class="t" text-anchor="start">• Laravel-Migration aus Tabelle</text>
+  <text x="640" y="190" class="t" text-anchor="start">• Herd-Dienste und .env erkennen</text>
+  <text x="640" y="208" class="t" text-anchor="start">• SSH-Tunnel</text>
+  <text x="640" y="226" class="t" text-anchor="start">• geteilte Verbindungen, Rollen</text>
+  <text x="640" y="244" class="t" text-anchor="start">• Abfragen im Team teilen</text>
+  <text x="640" y="262" class="t" text-anchor="start">• SQL-Hilfe mit KI</text>
+  <text x="649" y="280" class="t" text-anchor="start">(eigener Schlüssel, optional)</text>
+  <rect x="914" y="80" width="236" height="330" rx="10" class="nein"/>
+  <text x="928" y="106" class="h" text-anchor="start">Nicht — bewusst</text>
+  <text x="928" y="130" class="t" text-anchor="start">• SQL Server, Oracle (vorerst)</text>
+  <text x="928" y="147" class="t" text-anchor="start">• NoSQL: MongoDB, Redis</text>
+  <text x="928" y="164" class="t" text-anchor="start">• SaaS mit fremden</text>
+  <text x="937" y="181" class="t" text-anchor="start">Zugangsdaten</text>
+  <text x="928" y="198" class="t" text-anchor="start">• Desktop-App</text>
+  <text x="928" y="215" class="t" text-anchor="start">• Berichte, BI, Diagramme</text>
+  <text x="937" y="232" class="t" text-anchor="start">aus Daten</text>
+  <text x="928" y="249" class="t" text-anchor="start">• Replikation und Cluster</text>
+  <text x="937" y="266" class="t" text-anchor="start">einrichten</text>
+  <text x="928" y="283" class="t" text-anchor="start">• Hosting-Panel</text>
+  <text x="937" y="300" class="t" text-anchor="start">(Konten, Domains)</text>
+  <text x="928" y="317" class="t" text-anchor="start">• Passwort-Anmeldung</text>
+  <text x="928" y="334" class="t" text-anchor="start">• Dashboard, Profilseite</text>
+  <rect x="30" y="439" width="22" height="14" rx="3" class="kern"/>
+  <text x="60" y="450" class="s" text-anchor="start">Kern bis v1.0</text>
+  <rect x="167" y="439" width="22" height="14" rx="3" class="ausbau"/>
+  <text x="197" y="450" class="s" text-anchor="start">Ausbau nach v1.0</text>
+  <rect x="322" y="439" width="22" height="14" rx="3" class="nein"/>
+  <text x="352" y="450" class="s" text-anchor="start">nicht im Umfang</text>
+</svg>

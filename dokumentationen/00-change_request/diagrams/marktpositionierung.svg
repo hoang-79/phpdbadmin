@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 660" width="1000" height="660" role="img">
+  <style>
+    text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; fill: #1e293b; }
+    .cap { font-size: 19px; font-weight: bold; }
+    .sub { font-size: 12px; fill: #475569; }
+    .h { font-size: 14px; font-weight: bold; }
+    .hw { font-size: 14px; font-weight: bold; fill: #ffffff; }
+    .t { font-size: 12px; }
+    .tw { font-size: 12px; fill: #e2e8f0; }
+    .s { font-size: 10.5px; fill: #475569; }
+    .sw { font-size: 10.5px; fill: #cbd5e1; }
+    .badge { font-size: 10px; font-weight: bold; fill: #ffffff; }
+    .note { font-size: 11.5px; fill: #475569; font-style: italic; }
+    .mono { font-family: Menlo, "SF Mono", monospace; font-size: 11px; }
+    .monow { font-family: Menlo, "SF Mono", monospace; font-size: 11px; fill: #e2e8f0; }
+    .rotT { font-size: 12px; font-weight: bold; fill: #b42318; }
+    .kern { fill: #1e293b; stroke: #1e293b; }
+    .kernhell { fill: #eef2f6; stroke: #1e293b; stroke-width: 1.4; }
+    .ausbau { fill: #e6f4f7; stroke: #0e7490; stroke-width: 1.4; }
+    .gruen { fill: #e7f4ec; stroke: #2f7d4f; stroke-width: 1.4; }
+    .nein { fill: #f5f6f8; stroke: #94a3b8; stroke-width: 1.4; stroke-dasharray: 5 3; }
+    .neutral { fill: #ffffff; stroke: #94a3b8; stroke-width: 1.4; }
+    .rot { fill: #fdecea; stroke: #b42318; stroke-width: 1.4; }
+    .flaeche { fill: #f5f6f8; stroke: none; }
+    .pfeil { stroke: #1e293b; stroke-width: 1.6; fill: none; marker-end: url(#pf); }
+    .pfeilg { stroke: #475569; stroke-width: 1.4; fill: none; marker-end: url(#pfg); stroke-dasharray: 5 3; }
+    .linie { stroke: #94a3b8; stroke-width: 1.2; fill: none; }
+    .achse { stroke: #475569; stroke-width: 1.4; fill: none; marker-end: url(#pfg); }
+</style>
+
+  <defs>
+    <marker id="pf" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#1e293b"/>
+    </marker>
+    <marker id="pfg" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1000" height="660" fill="#ffffff"/>
+  <text x="30" y="36" class="cap" text-anchor="start">phpdbadmin — Marktpositionierung</text>
+  <text x="30" y="57" class="sub" text-anchor="start">Datenbank-Werkzeuge 2026: wie viele Datenbanken in einer Oberfläche, gegen wie geführt die Bedienung ist (Marktbild § 3)</text>
+  <path d="M110 580 L930 580" class="achse"/>
+  <path d="M110 580 L110 140" class="achse"/>
+  <text x="520" y="604" class="s" text-anchor="middle">Bedienung: technisch, Formulare und Links  →  geführt, Vorschau, Tastatur</text>
+  <text x="50" y="360.0" class="s" text-anchor="middle" transform="rotate(-90 50 360.0)">Datenbanken in einer Oberfläche: eine  →  alle vier</text>
+  <path d="M110 360.0 L930 360.0" class="linie"/>
+  <path d="M520.0 580 L520.0 140" class="linie"/>
+  <circle cx="192" cy="483" r="56" class="neutral"/>
+  <text x="192" y="481" class="h" text-anchor="middle">phpPgAdmin</text>
+  <text x="192" y="497" class="s" text-anchor="middle">ruht seit 2023</text>
+  <circle cx="340" cy="483" r="56" class="neutral"/>
+  <text x="340" y="481" class="h" text-anchor="middle">phpMyAdmin</text>
+  <text x="340" y="497" class="s" text-anchor="middle">MySQL, MariaDB</text>
+  <circle cx="520" cy="474" r="46" class="nein"/>
+  <text x="520" y="472" class="h" text-anchor="middle">pgAdmin 4</text>
+  <text x="520" y="488" class="s" text-anchor="middle">Python, nur PG</text>
+  <circle cx="290" cy="228" r="46" class="neutral"/>
+  <text x="290" y="226" class="h" text-anchor="middle">Adminer</text>
+  <text x="290" y="242" class="s" text-anchor="middle">eine PHP-Datei</text>
+  <circle cx="495" cy="307" r="64" class="neutral"/>
+  <text x="495" y="305" class="h" text-anchor="middle">Jaxon DbAdmin</text>
+  <text x="495" y="321" class="s" text-anchor="middle">PHP, v0.35</text>
+  <circle cx="676" cy="254" r="44" class="nein"/>
+  <text x="676" y="252" class="h" text-anchor="middle">DbGate</text>
+  <text x="676" y="268" class="s" text-anchor="middle">Node, Docker</text>
+  <circle cx="766" cy="404" r="66" class="nein"/>
+  <text x="766" y="402" class="h" text-anchor="middle">Desktop-Clients</text>
+  <text x="766" y="418" class="s" text-anchor="middle">kein Browser</text>
+  <circle cx="848" cy="184" r="60" class="kern"/>
+  <text x="848" y="182" class="hw" text-anchor="middle">phpdbadmin</text>
+  <text x="848" y="198" class="sw" text-anchor="middle">alle vier, geführt</text>
+  <rect x="225" y="84" width="476" height="26" rx="6" class="kernhell"/>
+  <text x="463" y="102" class="s" text-anchor="middle">unbesetzt (oben rechts): im Browser · alle vier Datenbanken · geführt · auf Laravel</text>
+  <path d="M700 97 L815 134" class="pfeilg"/>
+  <rect x="110" y="629" width="22" height="14" rx="3" class="neutral"/>
+  <text x="140" y="640" class="s" text-anchor="start">PHP, im Browser</text>
+  <rect x="259" y="629" width="22" height="14" rx="3" class="nein"/>
+  <text x="289" y="640" class="s" text-anchor="start">andere Technik (Python, Node, Desktop)</text>
+  <rect x="551" y="629" width="22" height="14" rx="3" class="kern"/>
+  <text x="581" y="640" class="s" text-anchor="start">phpdbadmin (Ziel)</text>
+</svg>
