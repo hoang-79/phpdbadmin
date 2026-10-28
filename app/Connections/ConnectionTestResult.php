@@ -9,6 +9,7 @@ final readonly class ConnectionTestResult
 {
     /**
      * @param  list<array{key: string, label: string, state: string, detail: string|null}>  $steps
+     * @param  list<array{key: string, title: string, recommendation: string}>  $warnings
      */
     public function __construct(
         public bool $ok,
@@ -16,6 +17,7 @@ final readonly class ConnectionTestResult
         public int $durationMs,
         public ?string $version = null,
         public ?ConnectionProblem $problem = null,
+        public array $warnings = [],
     ) {}
 
     /**
@@ -29,6 +31,7 @@ final readonly class ConnectionTestResult
             'durationMs' => $this->durationMs,
             'version' => $this->version,
             'problem' => $this->problem?->toArray(),
+            'warnings' => $this->warnings,
             'testedAt' => now()->toIso8601String(),
         ];
     }

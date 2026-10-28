@@ -6,22 +6,23 @@ use App\Connections\ConnectionProblem;
 use App\Connections\ConnectionProblemKind;
 use App\Connections\ConnectionSettings;
 use App\Enums\DatabaseDriver;
+use Closure;
 use Illuminate\Database\Connection;
 use PDO;
 use Throwable;
 
 /**
  * PostgreSQL 14 und neuer. Alle Verbindungsfehler tragen SQLSTATE 08006 — zugeordnet wird über den Meldungstext
- * (F-2).
+ * (F-2). Zeitlimit über statement_timeout (Fehler 57014).
  */
-class PostgresDialect implements Dialect
+class PostgresDialect extends BaseDialect
 {
     public function driver(): DatabaseDriver
     {
         return DatabaseDriver::Postgres;
     }
 
-    public function connectionConfig(ConnectionSettings $settings, ?string $address, int $connectTimeout): array
+    public function connectionConfig(ConnectionSettings $settings, ?string $address, int $connectTimeout, bool $readOnly = false): array
     {
         return [
             'driver' => 'pgsql',
@@ -36,6 +37,13 @@ class PostgresDialect implements Dialect
             'timezone' => 'UTC',
             'options' => [PDO::ATTR_TIMEOUT => $connectTimeout],
         ];
+    }
+
+    public function prepareSession(Connection $connection, bool $readOnly): void
+    {
+        if ($readOnly) {
+            $connection->statement('set session characteristics as transaction read only');
+        }
     }
 
     public function serverVersion(Connection $connection): string
@@ -63,9 +71,124 @@ class PostgresDialect implements Dialect
             default => ConnectionProblemKind::Unknown,
         };
 
-        $state = property_exists($error, 'errorInfo') && is_array($error->errorInfo) ? ($error->errorInfo[0] ?? null) : null;
-        $state ??= preg_match('/SQLSTATE\[(\w{5})\]/', $message, $match) === 1 ? $match[1] : null;
+        [$state] = $this->errorCodes($error);
 
-        return new ConnectionProblem($kind, is_string($state) ? $state : null, $message);
+        return new ConnectionProblem($kind, $state, $message);
+    }
+
+    public function checkConstraints(Connection $connection, string $schema, string $table): array
+    {
+        return $this->constraints($connection->select(
+            "select con.conname as name, pg_get_constraintdef(con.oid) as definition
+             from pg_constraint con
+             join pg_class rel on rel.oid = con.conrelid
+             join pg_namespace nsp on nsp.oid = rel.relnamespace
+             where con.contype = 'c' and nsp.nspname = ? and rel.relname = ?
+             order by con.conname",
+            [$schema, $table],
+        ));
+    }
+
+    public function triggers(Connection $connection, string $schema, string $table): array
+    {
+        return $this->strings($connection->select(
+            'select tg.tgname as name
+             from pg_trigger tg
+             join pg_class rel on rel.oid = tg.tgrelid
+             join pg_namespace nsp on nsp.oid = rel.relnamespace
+             where not tg.tgisinternal and nsp.nspname = ? and rel.relname = ?
+             order by tg.tgname',
+            [$schema, $table],
+        ), 'name');
+    }
+
+    public function supportsStatementTimeout(): bool
+    {
+        return true;
+    }
+
+    public function setStatementTimeout(Connection $connection, int $milliseconds): void
+    {
+        $connection->statement('set statement_timeout = '.max(0, $milliseconds));
+    }
+
+    public function isTimeout(Throwable $error): bool
+    {
+        [$state] = $this->errorCodes($error);
+
+        return $state === '57014';
+    }
+
+    public function runReadOnly(Connection $connection, Closure $statement): mixed
+    {
+        $connection->beginTransaction();
+
+        try {
+            // Innerhalb der Transaktion: ein späteres «SET TRANSACTION READ WRITE» scheitert an 25001 (F-7).
+            $connection->statement('set transaction read only');
+
+            return $statement();
+        } finally {
+            try {
+                if ($connection->transactionLevel() > 0) {
+                    $connection->rollBack();
+                }
+            } catch (Throwable) {
+                // COMMIT des Menschen hat die Transaktion schon beendet.
+            }
+        }
+    }
+
+    public function isReadOnlyViolation(Throwable $error): bool
+    {
+        [$state] = $this->errorCodes($error);
+
+        return in_array($state, ['25006', '25001'], true);
+    }
+
+    public function accountWarnings(Connection $connection): array
+    {
+        $role = $connection->selectOne(
+            "select rolsuper as superuser, pg_has_role(current_user, 'pg_read_server_files', 'MEMBER') as files from pg_roles where rolname = current_user",
+        );
+
+        $warnings = [];
+
+        if ((bool) ($role->superuser ?? false)) {
+            $warnings[] = [
+                'key' => 'superuser',
+                'title' => 'Dieses Konto ist Superuser.',
+                'recommendation' => 'Empfehlung: ein eigenes Konto ohne Superuser-Recht — für Produktion nur mit Leserechten.',
+            ];
+        }
+
+        if ((bool) ($role->superuser ?? false) || (bool) ($role->files ?? false)) {
+            $warnings[] = [
+                'key' => 'file_read',
+                'title' => 'Dieses Konto darf Dateien auf dem Server lesen.',
+                'recommendation' => 'Empfehlung: ein eigenes Konto ohne pg_read_server_files.',
+            ];
+        }
+
+        return $warnings;
+    }
+
+    protected function rowEstimates(Connection $connection, string $schema): array
+    {
+        $estimates = [];
+
+        foreach ($connection->select(
+            "select c.relname as name, c.reltuples as estimate
+             from pg_class c join pg_namespace n on n.oid = c.relnamespace
+             where n.nspname = ? and c.relkind in ('r', 'p')",
+            [$schema],
+        ) as $row) {
+            // -1: noch nie analysiert — keine Schätzung statt einer falschen.
+            if ((float) $row->estimate >= 0) {
+                $estimates[(string) $row->name] = (int) $row->estimate;
+            }
+        }
+
+        return $estimates;
     }
 }

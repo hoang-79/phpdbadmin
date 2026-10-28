@@ -92,6 +92,10 @@ defineProps<{
                                 v-if="step.state === 'ok'"
                                 class="mt-px size-4 shrink-0 text-success"
                             />
+                            <TriangleAlert
+                                v-else-if="step.state === 'warning'"
+                                class="mt-px size-4 shrink-0 text-warning"
+                            />
                             <CircleX
                                 v-else-if="step.state === 'failed'"
                                 class="mt-px size-4 shrink-0 text-destructive"
@@ -113,6 +117,15 @@ defineProps<{
                 </template>
             </div>
         </section>
+
+        <Notice
+            v-for="warning in result?.warnings ?? []"
+            :key="warning.key"
+            variant="warning"
+        >
+            <b class="font-semibold">{{ warning.title }}</b>
+            {{ warning.recommendation }}
+        </Notice>
 
         <Notice v-if="production">
             <b class="font-semibold">Eigenes Lesekonto empfohlen.</b> Für

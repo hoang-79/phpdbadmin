@@ -4,6 +4,8 @@
 
 ✅ **Abgeschlossen am 28.10.2026** — gestartet auf Hoangs «Feasibility starten». Jeder Prüfpunkt ist mit einer Probe im Repo belegt, die gegen **MySQL 8.4.11, MariaDB 10.11.6, PostgreSQL 18 und SQLite 3.45** läuft (`tests/Feature/Feasibility`), oder mit einer Recherche mit Fundstellen. **6 bestanden, 4 bedingt, 0 nicht bestanden — Empfehlung: Weiterführen.**
 
+> **Nachtrag TB 00 (28.10.2026):** Die Proben F-1 (`CatalogProbeTest`), F-7 (`SecurityProbeTest`) und die Teile Zeitlimit, Zeitzone und Verbindungsfehler von F-2 sind zu **Vertragstests der Dialekt-Schicht** geworden (`tests/Feature/Dialects/DialectContractTest.php`, `tests/Feature/Connections/ConnectionTesterTest.php`); die Probe-Dateien sind entfernt (Stand der Feasibility: Commit `13a658a`). Proben bleiben, bis ihre Timebox kommt: Abbrechen (F-2, SQL-Editor), DDL-Vorschau (F-5), Raster und Export mit 1 Mio. Zeilen (F-3, F-8).
+
 | Dokument | Inhalt | Status |
 |---|---|---|
 | [Feasibility-Bericht](feasibility.md) | Prüfpunkte F-1 bis F-10 mit Frage, Nachweis, Befunden, Ergebnis und Folgen; neue und geänderte Anforderungen; ADR-Kandidaten; Empfehlung | ✅ v1.0 |

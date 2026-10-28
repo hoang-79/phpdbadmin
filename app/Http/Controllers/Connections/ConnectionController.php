@@ -169,7 +169,7 @@ class ConnectionController extends Controller
         $result = $tester->test(ConnectionSettings::fromConnection($connection), connectTimeout: 2);
 
         if ($result->ok) {
-            $connection->forceFill(['server_version' => $result->version, 'last_tested_at' => now()])->saveQuietly();
+            $connection->forceFill(['server_version' => $result->version, 'account_warnings' => $result->warnings, 'last_tested_at' => now()])->saveQuietly();
         }
     }
 
@@ -193,6 +193,7 @@ class ConnectionController extends Controller
             'environment' => $connection->environment->value,
             'readOnly' => $connection->read_only,
             'lastTestedAt' => $connection->last_tested_at?->toIso8601String(),
+            'accountWarnings' => $connection->account_warnings ?? [],
             'canManage' => $connection->isManageableBy($user),
         ];
     }

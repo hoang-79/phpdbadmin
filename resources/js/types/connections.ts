@@ -1,6 +1,12 @@
 export type ConnectionEnvironment = 'local' | 'test' | 'production';
 export type DatabaseDriver = 'mariadb' | 'mysql' | 'pgsql' | 'sqlite';
 
+export type AccountWarning = {
+    key: string;
+    title: string;
+    recommendation: string;
+};
+
 export type ConnectionSummary = {
     id: string;
     name: string;
@@ -14,6 +20,7 @@ export type ConnectionSummary = {
     environment: ConnectionEnvironment;
     readOnly: boolean;
     lastTestedAt: string | null;
+    accountWarnings: AccountWarning[];
     canManage: boolean;
 };
 
@@ -51,7 +58,7 @@ export type EditableConnection = {
 export type TestStep = {
     key: string;
     label: string;
-    state: 'ok' | 'failed' | 'skipped';
+    state: 'ok' | 'warning' | 'failed' | 'skipped';
     detail: string | null;
 };
 
@@ -61,6 +68,7 @@ export type ConnectionTestResult = {
     durationMs: number;
     version: string | null;
     testedAt: string;
+    warnings: AccountWarning[];
     problem: {
         kind: string;
         title: string;

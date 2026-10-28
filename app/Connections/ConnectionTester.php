@@ -6,8 +6,8 @@ use Throwable;
 
 /**
  * «Verbindung testen» (V-02, Wireframe 04): Prüfschritte in der Reihenfolge, in der sie scheitern können — Host
- * bzw. Datei erlaubt, Server erreichbar bzw. Datei lesbar, Anmeldung bzw. Datenbank geöffnet. Nach dem ersten Fehler
- * bleiben die übrigen Schritte ungeprüft.
+ * bzw. Datei erlaubt, Server erreichbar, Anmeldung bzw. Datenbank geöffnet, Rechte des Kontos (V-10). Nach dem
+ * ersten Fehler bleiben die übrigen Schritte ungeprüft.
  */
 final class ConnectionTester
 {
@@ -38,20 +38,35 @@ final class ConnectionTester
             $steps[] = $this->step('reachable', 'Server erreichbar', 'ok', 'Port '.$settings->port().' offen');
         }
 
+        $dialect = $settings->driver->dialect();
+
         try {
             $connection = $this->factory->make($settings, $connectTimeout);
-            $version = $settings->driver->dialect()->serverVersion($connection);
-            $this->factory->release($connection);
+            $version = $dialect->serverVersion($connection);
         } catch (Throwable $exception) {
-            $problem = $settings->driver->dialect()->describeConnectionError($exception);
+            $problem = $dialect->describeConnectionError($exception);
 
             return $this->failed($steps, 'login', $this->withoutPassword($problem, $settings->password), $isServer, $start);
         }
 
         $steps[] = $this->step('login', $isServer ? 'Anmeldung' : 'Datenbank geöffnet', 'ok', $settings->driver->label().' '.$version);
-        $steps[] = $this->step('account', 'Rechte des Kontos', 'skipped', 'Prüfung folgt mit der Dialekt-Schicht');
+        $warnings = [];
 
-        return new ConnectionTestResult(true, $steps, $this->milliseconds($start), $version);
+        if ($isServer) {
+            // Rechte des Kontos (V-10): eine Warnung, kein Fehler — die Verbindung funktioniert.
+            try {
+                $warnings = $dialect->accountWarnings($connection);
+                $steps[] = $warnings === []
+                    ? $this->step('account', 'Rechte des Kontos', 'ok', 'keine Rechte über die Datenbank hinaus')
+                    : $this->step('account', 'Rechte des Kontos', 'warning', implode(' ', array_column($warnings, 'title')));
+            } catch (Throwable) {
+                $steps[] = $this->step('account', 'Rechte des Kontos', 'skipped', 'liess sich nicht lesen');
+            }
+        }
+
+        $this->factory->release($connection);
+
+        return new ConnectionTestResult(true, $steps, $this->milliseconds($start), $version, warnings: $warnings);
     }
 
     /**
@@ -88,7 +103,7 @@ final class ConnectionTester
     {
         $labels = $isServer
             ? ['allowed' => 'Host erlaubt', 'reachable' => 'Server erreichbar', 'login' => 'Anmeldung', 'account' => 'Rechte des Kontos']
-            : ['allowed' => 'Datei erlaubt', 'login' => 'Datenbank geöffnet', 'account' => 'Rechte des Kontos'];
+            : ['allowed' => 'Datei erlaubt', 'login' => 'Datenbank geöffnet'];
 
         $reached = false;
         foreach ($labels as $key => $label) {

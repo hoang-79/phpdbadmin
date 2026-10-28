@@ -116,7 +116,7 @@ class ConnectionTesterTest extends TestCase
         $result = $this->tester()->test(new ConnectionSettings(DatabaseDriver::Sqlite, sqlitePath: $file));
 
         $this->assertTrue($result->ok, (string) $result->problem?->serverMessage);
-        $this->assertSame(['allowed', 'login', 'account'], array_column($result->steps, 'key'));
+        $this->assertSame(['allowed', 'login'], array_column($result->steps, 'key'));
     }
 
     public function test_file_that_is_no_sqlite_database_is_reported(): void

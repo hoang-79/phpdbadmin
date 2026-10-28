@@ -10,6 +10,7 @@ import {
     Plus,
     Search,
     Trash2,
+    TriangleAlert,
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import EnvironmentMark from '@/components/connections/EnvironmentMark.vue';
@@ -256,6 +257,21 @@ function remove(connection: ConnectionSummary): void {
                                     <code>{{ connection.username }}</code>
                                 </template>
                             </template>
+                        </div>
+                        <div
+                            v-for="warning in connection.accountWarnings"
+                            :key="warning.key"
+                            class="flex items-start gap-2 rounded-md border border-warning px-2.5 py-2 text-[13px] leading-[18px]"
+                        >
+                            <TriangleAlert
+                                class="mt-px size-4 shrink-0 text-warning"
+                            />
+                            <span class="flex flex-col gap-1">
+                                <b class="font-semibold">{{ warning.title }}</b>
+                                <span class="text-text-secondary">{{
+                                    warning.recommendation
+                                }}</span>
+                            </span>
                         </div>
                         <div
                             class="flex items-center gap-1 text-xs text-muted-foreground"

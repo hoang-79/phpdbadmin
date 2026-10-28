@@ -31,7 +31,7 @@ class TestConnectionController extends Controller
         $result = $tester->test($settings);
 
         if ($result->ok && $saved !== null) {
-            $saved->forceFill(['server_version' => $result->version, 'last_tested_at' => now()])->saveQuietly();
+            $saved->forceFill(['server_version' => $result->version, 'account_warnings' => $result->warnings, 'last_tested_at' => now()])->saveQuietly();
         }
 
         return response()->json($result->toArray());
