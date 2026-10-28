@@ -17,6 +17,7 @@ class RecordSuccessfulLogin
         'login.code.verify' => 'code',
         'passkey.login' => 'passkey',
         'invitation.accept' => 'invitation',
+        'setup.start' => 'setup',
     ];
 
     public function __construct(private readonly Request $request, private readonly AuditLog $audit) {}

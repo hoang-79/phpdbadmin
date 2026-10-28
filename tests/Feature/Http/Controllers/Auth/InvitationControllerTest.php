@@ -34,7 +34,7 @@ class InvitationControllerTest extends TestCase
         [$invitation, $token] = Invitation::issue('nina@example.com', UserRole::Admin);
 
         $this->post(route('invitation.accept', $token), ['name' => 'Nina Brügger'])
-            ->assertRedirect(route('account'));
+            ->assertRedirect(route('onboarding'));
 
         $user = User::query()->where('email', 'nina@example.com')->sole();
         $this->assertSame('Nina Brügger', $user->name);

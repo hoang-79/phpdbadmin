@@ -13,6 +13,7 @@ void createInertiaApp({
             case name.startsWith('probe/'):
                 return null;
             case name.startsWith('auth/'):
+            case name.startsWith('onboarding/'):
                 return AuthLayout;
             default:
                 return AppLayout;

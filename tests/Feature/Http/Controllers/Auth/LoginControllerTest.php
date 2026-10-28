@@ -48,7 +48,7 @@ class LoginControllerTest extends TestCase
 
         $verified = $this->post(route('login.code.verify'), ['code' => $this->sentCode($user)]);
 
-        $verified->assertRedirect(route('home'));
+        $verified->assertRedirect(route('onboarding'));
         $this->assertAuthenticatedAs($user);
         $this->assertNotSame($sessionBefore, $this->sessionCookie($verified));
         $this->assertNotNull($user->fresh()?->last_login_at);
@@ -63,9 +63,28 @@ class LoginControllerTest extends TestCase
         $code = $this->sentCode($user);
 
         $this->post(route('login.code.verify'), ['code' => substr($code, 0, 3).' '.substr($code, 3)])
-            ->assertRedirect(route('home'));
+            ->assertRedirect(route('onboarding'));
 
         $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_user_with_passkey_goes_straight_to_overview(): void
+    {
+        $user = User::factory()->create();
+        $user->passkeys()->create(['name' => 'MacBook', 'credential_id' => 'abc', 'credential' => ['test' => true]]);
+        $this->post(route('login.code'), ['email' => $user->email]);
+
+        $this->post(route('login.code.verify'), ['code' => $this->sentCode($user)])
+            ->assertRedirect(route('home'));
+    }
+
+    public function test_fresh_installation_shows_setup_instead_of_login(): void
+    {
+        $this->get(route('login'))->assertInertia(fn (Assert $page) => $page->where('needsSetup', true));
+
+        User::factory()->create();
+
+        $this->get(route('login'))->assertInertia(fn (Assert $page) => $page->where('needsSetup', false));
     }
 
     public function test_unknown_address_gets_same_answer_without_mail_or_code(): void

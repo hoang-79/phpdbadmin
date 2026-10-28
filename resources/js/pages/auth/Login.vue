@@ -4,6 +4,7 @@ import { usePasskeyVerify } from '@laravel/passkeys/vue';
 import { KeyRound, Mail } from '@lucide/vue';
 import { computed } from 'vue';
 import InputError from '@/components/InputError.vue';
+import Notice from '@/components/Notice.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,9 +14,13 @@ import { home } from '@/routes';
 import { code } from '@/routes/login';
 import { login as passkeyLogin, loginOptions } from '@/routes/passkey';
 
-/** Wireframe 01: Passkey zuerst, sonst Code per Mail. Keine Registrierung, kein Passwort. */
+/**
+ * Wireframe 01: Passkey zuerst, sonst Code per Mail. Keine Registrierung, kein Passwort. Ohne jedes Konto (frische
+ * Installation) erscheint statt der Anmeldung der Weg zur Ersteinrichtung.
+ */
 defineProps<{
     email: string | null;
+    needsSetup: boolean;
 }>();
 
 setLayoutProps({ back: null });
@@ -36,77 +41,106 @@ const passkeyError = computed(
 </script>
 
 <template>
-    <Head title="Anmelden" />
+    <template v-if="needsSetup">
+        <Head title="Ersteinrichtung" />
 
-    <div class="flex flex-col gap-1">
-        <h1 class="text-xl font-semibold">Anmelden</h1>
-        <p class="text-text-secondary">
-            Mit Ihrem Passkey oder mit einem Code, den wir Ihnen per Mail
-            senden.
-        </p>
-    </div>
-
-    <div v-if="button.isSupported.value" class="flex flex-col gap-2">
-        <Button
-            type="button"
-            size="lg"
-            class="w-full text-[15px]"
-            :disabled="button.isLoading.value"
-            @click="button.verify"
-        >
-            <Spinner v-if="button.isLoading.value" />
-            <KeyRound v-else />
-            Mit Passkey anmelden
-        </Button>
-        <InputError :message="passkeyError" />
-    </div>
-
-    <div
-        v-if="button.isSupported.value"
-        class="flex items-center gap-3 text-[13px] text-muted-foreground before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border"
-    >
-        oder mit Code per Mail
-    </div>
-
-    <Form
-        v-bind="code.form()"
-        class="flex flex-col gap-5"
-        #default="{ errors, processing }"
-    >
-        <div class="flex flex-col gap-1.5">
-            <Label for="email" class="text-[13px]">E-Mail-Adresse</Label>
-            <Input
-                id="email"
-                type="email"
-                name="email"
-                :default-value="email ?? ''"
-                required
-                autofocus
-                autocomplete="username webauthn"
-                :aria-invalid="errors.email ? true : undefined"
-                aria-describedby="email-hint"
-            />
-            <InputError :message="errors.email" />
-            <p id="email-hint" class="text-xs text-muted-foreground">
-                Ihr Browser schlägt hier auch gespeicherte Passkeys vor.
+        <div class="flex flex-col gap-1">
+            <h1 class="text-xl font-semibold">Willkommen bei phpdbadmin</h1>
+            <p class="text-text-secondary">
+                Diese Installation hat noch kein Konto. Das erste Konto — ein
+                Administrator — legen Sie auf dem Server an:
             </p>
         </div>
 
-        <Button
-            type="submit"
-            size="lg"
-            :variant="button.isSupported.value ? 'outline' : 'default'"
-            class="w-full text-[15px]"
-            :disabled="processing"
-        >
-            <Spinner v-if="processing" />
-            <Mail v-else />
-            Code senden
-        </Button>
-    </Form>
+        <pre
+            class="rounded-md border bg-muted px-3 py-2.5 font-mono text-[13px] whitespace-pre-wrap"
+        ><span class="text-muted-foreground select-none">$ </span>php artisan phpdbadmin:install</pre>
 
-    <p class="text-xs text-muted-foreground">
-        Neue Konten entstehen nur per Einladung durch eine Administratorin oder
-        einen Administrator.
-    </p>
+        <Notice :icon="KeyRound">
+            Der Befehl zeigt einen Link zur Ersteinrichtung. Darüber melden Sie
+            sich an und legen gleich Ihren Passkey an — ein Passwort gibt es
+            nicht.
+        </Notice>
+
+        <p class="text-xs text-muted-foreground">
+            Danach laden Sie weitere Personen ein; offene Registrierung gibt es
+            nicht.
+        </p>
+    </template>
+
+    <template v-else>
+        <Head title="Anmelden" />
+
+        <div class="flex flex-col gap-1">
+            <h1 class="text-xl font-semibold">Anmelden</h1>
+            <p class="text-text-secondary">
+                Mit Ihrem Passkey oder mit einem Code, den wir Ihnen per Mail
+                senden.
+            </p>
+        </div>
+
+        <div v-if="button.isSupported.value" class="flex flex-col gap-2">
+            <Button
+                type="button"
+                size="lg"
+                class="w-full text-[15px]"
+                :disabled="button.isLoading.value"
+                @click="button.verify"
+            >
+                <Spinner v-if="button.isLoading.value" />
+                <KeyRound v-else />
+                Mit Passkey anmelden
+            </Button>
+            <InputError :message="passkeyError" />
+        </div>
+
+        <div
+            v-if="button.isSupported.value"
+            class="flex items-center gap-3 text-[13px] text-muted-foreground before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border"
+        >
+            oder mit Code per Mail
+        </div>
+
+        <Form
+            v-bind="code.form()"
+            class="flex flex-col gap-5"
+            #default="{ errors, processing }"
+        >
+            <div class="flex flex-col gap-1.5">
+                <Label for="email" class="text-[13px]">E-Mail-Adresse</Label>
+                <Input
+                    id="email"
+                    type="email"
+                    name="email"
+                    :default-value="email ?? ''"
+                    required
+                    autofocus
+                    autocomplete="username webauthn"
+                    :aria-invalid="errors.email ? true : undefined"
+                    aria-describedby="email-hint"
+                />
+                <InputError :message="errors.email" />
+                <p id="email-hint" class="text-xs text-muted-foreground">
+                    Ihr Browser schlägt hier auch gespeicherte Passkeys vor.
+                </p>
+            </div>
+
+            <Button
+                type="submit"
+                size="lg"
+                :variant="button.isSupported.value ? 'outline' : 'default'"
+                class="w-full text-[15px]"
+                :disabled="processing"
+            >
+                <Spinner v-if="processing" />
+                <Mail v-else />
+                Code senden
+            </Button>
+        </Form>
+
+        <p class="text-xs text-muted-foreground">
+            Neue Konten entstehen nur per Einladung durch eine Administratorin
+            oder einen Administrator.
+        </p>
+    </template>
 </template>

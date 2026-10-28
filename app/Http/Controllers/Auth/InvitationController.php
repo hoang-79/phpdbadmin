@@ -14,8 +14,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Einladung annehmen (A-06): Name angeben, Konto entsteht, Anmeldung folgt sofort. Den ersten Passkey legt die
- * Person danach im Konto an.
+ * Einladung annehmen (A-06): Name angeben, Konto entsteht, Anmeldung folgt sofort — weiter ins Onboarding, das
+ * gleich den ersten Passkey anlegt.
  */
 class InvitationController extends Controller
 {
@@ -63,8 +63,6 @@ class InvitationController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Willkommen! Legen Sie jetzt einen Passkey an.']);
-
-        return to_route('account');
+        return to_route('onboarding');
     }
 }

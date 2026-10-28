@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Account\AccountController;
+use App\Http\Controllers\Account\OnboardingController;
 use App\Http\Controllers\Connections\ConnectionController;
 use App\Http\Controllers\Connections\TestConnectionController;
 use Illuminate\Support\Facades\Route;
@@ -14,6 +15,9 @@ Route::middleware('auth')->group(function () {
     // Zielverbindungen (V-01 bis V-05). {connection} löst nur sichtbare Verbindungen auf (AppServiceProvider).
     Route::post('connections/test', TestConnectionController::class)->middleware('throttle:connection-test')->name('connections.test');
     Route::resource('connections', ConnectionController::class)->except(['index', 'show']);
+
+    // Nach der ersten Anmeldung ohne Passkey: gleich einen anlegen.
+    Route::get('welcome', [OnboardingController::class, 'show'])->name('onboarding');
 
     // Kein Profil (A-05): das Konto zeigt Sicherheit und Darstellung.
     Route::get('account', [AccountController::class, 'show'])->name('account');

@@ -19,7 +19,10 @@ export function passkeyMessage(error: PasskeyError | null): string | null {
         case 'InvalidDomainError':
             return 'Passkeys funktionieren nur unter der Adresse dieser Installation.';
         default:
-            return error.message;
+            // 423 der Middleware password.confirm: die Bestätigung ist abgelaufen.
+            return error.message.includes('confirmation required')
+                ? 'Bitte bestätigen Sie zuerst kurz Ihre Anmeldung — per Passkey oder Code.'
+                : error.message;
     }
 }
 

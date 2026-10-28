@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\ConfirmController;
 use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasskeyLoginController;
+use App\Http\Controllers\Auth\SetupController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Passkeys\Http\Controllers\PasskeyConfirmationController;
 use Laravel\Passkeys\Http\Controllers\PasskeyRegistrationController;
@@ -23,6 +24,10 @@ Route::middleware('guest')->group(function () {
 
     Route::get('passkeys/login/options', [PasskeyLoginController::class, 'index'])->middleware('throttle:passkeys')->name('passkey.login-options');
     Route::post('passkeys/login', [PasskeyLoginController::class, 'store'])->middleware('throttle:passkeys')->name('passkey.login');
+
+    // Ersteinrichtung: signierter Link aus phpdbadmin:install, gültig bis zur ersten Anmeldung.
+    Route::get('setup/{user}', [SetupController::class, 'show'])->name('setup.show');
+    Route::post('setup/{user}', [SetupController::class, 'start'])->middleware('throttle:login-verify')->name('setup.start');
 
     Route::get('invitation/{token}', [InvitationController::class, 'show'])->name('invitation.show');
     Route::post('invitation/{token}', [InvitationController::class, 'accept'])->middleware('throttle:login-verify')->name('invitation.accept');

@@ -32,6 +32,8 @@ class LoginController extends Controller
     {
         return Inertia::render('auth/Login', [
             'email' => $request->session()->get('login.email'),
+            // Frische Installation ohne Konto: statt der Anmeldung die Ersteinrichtung zeigen.
+            'needsSetup' => ! User::query()->exists(),
         ]);
     }
 
@@ -87,7 +89,10 @@ class LoginController extends Controller
         $request->session()->regenerate();
         $request->session()->forget(['login.email', 'login.sent_at']);
 
-        return redirect()->intended(route('home'));
+        // Noch kein Passkey: zuerst das Onboarding, das gleich einen anlegt.
+        return $user->hasPasskeysEnabled()
+            ? redirect()->intended(route('home'))
+            : to_route('onboarding');
     }
 
     public function resendCode(Request $request): RedirectResponse

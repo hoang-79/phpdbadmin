@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\RecentConfirmation;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -34,14 +35,7 @@ class AccountController extends Controller
                 'createdAt' => $passkey->created_at?->toIso8601String(),
                 'lastUsedAt' => $passkey->last_used_at?->toIso8601String(),
             ])->values(),
-            'canManagePasskeys' => $this->recentlyConfirmed($request),
+            'canManagePasskeys' => RecentConfirmation::holds($request),
         ]);
-    }
-
-    private function recentlyConfirmed(Request $request): bool
-    {
-        $confirmedAt = (int) $request->session()->get('auth.password_confirmed_at', 0);
-
-        return now()->getTimestamp() - $confirmedAt < (int) config('auth.password_timeout', 10800);
     }
 }
