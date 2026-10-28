@@ -6,9 +6,13 @@ use App\Connections\ConnectionProblem;
 use App\Connections\ConnectionProblemKind;
 use App\Connections\ConnectionSettings;
 use App\Enums\DatabaseDriver;
+use App\Enums\MaintenanceOperation;
+use App\Enums\PrivilegeLevel;
 use App\Enums\SslMode;
 use Closure;
 use Illuminate\Database\Connection;
+use Illuminate\Database\QueryException;
+use InvalidArgumentException;
 use PDO;
 use Pdo\Mysql;
 use Throwable;
@@ -19,6 +23,9 @@ use Throwable;
  */
 class MySqlDialect extends BaseDialect
 {
+    /** Schemas des Systems — wie Laravels getSchemas() sie auslässt. */
+    private const array SYSTEM_SCHEMAS = ['information_schema', 'mysql', 'ndbinfo', 'performance_schema', 'sys'];
+
     public function driver(): DatabaseDriver
     {
         return DatabaseDriver::MySql;
@@ -253,6 +260,304 @@ class MySqlDialect extends BaseDialect
         }
 
         return $warnings;
+    }
+
+    public function serverOverview(Connection $connection): array
+    {
+        $variables = $this->keyValues($connection->select(
+            "show global variables where variable_name in ('version_comment', 'character_set_server', 'collation_server', 'max_connections', 'default_storage_engine', 'system_time_zone', 'innodb_buffer_pool_size')",
+        ));
+        $status = $this->keyValues($connection->select(
+            "show global status where variable_name in ('Uptime', 'Threads_connected', 'Questions')",
+        ));
+
+        $sizes = [];
+        foreach ($connection->select(
+            'select table_schema as name, sum(data_length + index_length) as size from information_schema.tables
+             where table_schema not in (?, ?, ?, ?, ?) group by table_schema',
+            self::SYSTEM_SCHEMAS,
+        ) as $row) {
+            $sizes[(string) $row->name] = $row->size !== null ? (int) $row->size : null;
+        }
+
+        $databases = array_map(fn (array $row): array => [
+            'name' => $row['name'],
+            'size' => $sizes[$row['name']] ?? 0,
+            'charset' => $row['charset'] !== '' ? $row['charset'] : null,
+            'collation' => $row['collation'] !== '' ? $row['collation'] : null,
+        ], $this->records($connection->select(
+            'select schema_name as name, default_character_set_name as charset, default_collation_name as collation
+             from information_schema.schemata where schema_name not in (?, ?, ?, ?, ?) order by schema_name',
+            self::SYSTEM_SCHEMAS,
+        ), ['name', 'charset', 'collation']));
+
+        $number = fn (array $values, string $key): ?int => isset($values[$key]) && is_numeric($values[$key]) ? (int) $values[$key] : null;
+
+        return [
+            'version' => $this->serverVersion($connection),
+            'uptime' => $number($status, 'uptime'),
+            'charset' => $variables['character_set_server'] ?? null,
+            'collation' => $variables['collation_server'] ?? null,
+            'facts' => array_values(array_filter([
+                isset($variables['version_comment']) ? ['key' => 'version_comment', 'value' => $variables['version_comment'], 'kind' => 'text'] : null,
+                isset($variables['default_storage_engine']) ? ['key' => 'default_storage_engine', 'value' => $variables['default_storage_engine'], 'kind' => 'text'] : null,
+                $number($status, 'threads_connected') !== null ? ['key' => 'threads_connected', 'value' => (int) $number($status, 'threads_connected'), 'kind' => 'number'] : null,
+                $number($variables, 'max_connections') !== null ? ['key' => 'max_connections', 'value' => (int) $number($variables, 'max_connections'), 'kind' => 'number'] : null,
+                $number($status, 'questions') !== null ? ['key' => 'questions', 'value' => (int) $number($status, 'questions'), 'kind' => 'number'] : null,
+                $number($variables, 'innodb_buffer_pool_size') !== null ? ['key' => 'innodb_buffer_pool_size', 'value' => (int) $number($variables, 'innodb_buffer_pool_size'), 'kind' => 'bytes'] : null,
+                isset($variables['system_time_zone']) ? ['key' => 'system_time_zone', 'value' => $variables['system_time_zone'], 'kind' => 'text'] : null,
+            ])),
+            'databases' => $databases,
+            'schemas' => null,
+        ];
+    }
+
+    public function sessionId(Connection $connection): int
+    {
+        return (int) $connection->selectOne('select connection_id() as id')?->id;
+    }
+
+    public function processes(Connection $connection): array
+    {
+        $own = $this->sessionId($connection);
+
+        return array_values(array_map(function (object $row) use ($own): array {
+            $values = array_change_key_case((array) $row);
+            $id = (int) $values['id'];
+            $text = fn (string $key): ?string => isset($values[$key]) && $values[$key] !== '' ? (string) $values[$key] : null;
+
+            return [
+                'id' => $id,
+                'user' => (string) ($values['user'] ?? ''),
+                'host' => $text('host'),
+                'program' => null,
+                'database' => $text('db'),
+                'command' => $text('command'),
+                'state' => $text('state'),
+                'seconds' => isset($values['time']) && is_numeric($values['time']) ? (int) $values['time'] : null,
+                'statement' => $this->shortStatement($values['info'] ?? null),
+                'own' => $id === $own,
+            ];
+        }, $connection->select('show full processlist')));
+    }
+
+    public function endProcessStatement(int $id, bool $wholeSession): PlannedStatement
+    {
+        return new PlannedStatement(($wholeSession ? 'KILL ' : 'KILL QUERY ').$id);
+    }
+
+    public function endProcess(Connection $connection, int $id, bool $wholeSession): bool
+    {
+        try {
+            $connection->statement($this->endProcessStatement($id, $wholeSession)->sql);
+
+            return true;
+        } catch (QueryException $exception) {
+            // 1094: Unknown thread id — der Prozess ist schon weg.
+            if ($this->errorCodes($exception)[1] === 1094) {
+                return false;
+            }
+
+            throw $exception;
+        }
+    }
+
+    public function variables(Connection $connection): array
+    {
+        return $this->settingRows($connection->select('show global variables'), 'Variable_name', 'Value');
+    }
+
+    public function statusValues(Connection $connection): array
+    {
+        return $this->settingRows($connection->select('show global status'), 'Variable_name', 'Value');
+    }
+
+    public function accountsHaveHosts(): bool
+    {
+        return true;
+    }
+
+    public function accounts(Connection $connection): array
+    {
+        $current = $this->currentAccount($connection);
+        $accounts = [];
+
+        foreach ($connection->select($this->accountQuery()) as $row) {
+            $values = array_change_key_case((array) $row);
+            $account = new AccountName((string) $values['user'], (string) $values['host']);
+
+            $accounts[] = [
+                'name' => $account->name,
+                'host' => $account->host,
+                'attributes' => $this->accountAttributes($values),
+                'grants' => $this->grantsOf($connection, $account, $values),
+                'own' => $account->equals($current),
+            ];
+        }
+
+        return $accounts;
+    }
+
+    public function currentAccount(Connection $connection): AccountName
+    {
+        $account = (string) $connection->selectOne('select current_user() as account')?->account;
+        $at = (int) strrpos($account, '@');
+
+        return new AccountName(substr($account, 0, $at), substr($account, $at + 1));
+    }
+
+    public function privilegeChoices(): array
+    {
+        $database = [
+            'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER', 'INDEX', 'CREATE VIEW', 'SHOW VIEW',
+            'CREATE ROUTINE', 'ALTER ROUTINE', 'EXECUTE', 'EVENT', 'TRIGGER', 'LOCK TABLES', 'CREATE TEMPORARY TABLES',
+            'REFERENCES',
+        ];
+
+        return [
+            PrivilegeLevel::Server->value => [...$database, 'PROCESS', 'RELOAD', 'SHOW DATABASES', 'CREATE USER', 'REPLICATION CLIENT', 'ALL PRIVILEGES'],
+            PrivilegeLevel::Database->value => [...$database, 'ALL PRIVILEGES'],
+            PrivilegeLevel::Table->value => ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER', 'INDEX', 'CREATE VIEW', 'SHOW VIEW', 'TRIGGER', 'REFERENCES', 'ALL PRIVILEGES'],
+        ];
+    }
+
+    public function createAccountStatements(Connection $connection, AccountName $account, string $password): array
+    {
+        $sql = 'CREATE USER '.$this->accountLiteral($connection, $account).' IDENTIFIED BY ';
+
+        return [new PlannedStatement($sql.$this->quoteString($connection, $password), $sql.PlannedStatement::MASK)];
+    }
+
+    public function dropAccountStatements(Connection $connection, AccountName $account): array
+    {
+        return [new PlannedStatement('DROP USER '.$this->accountLiteral($connection, $account))];
+    }
+
+    public function privilegeStatements(Connection $connection, bool $grant, AccountName $account, PrivilegeTarget $target, array $privileges): array
+    {
+        $on = match ($target->level) {
+            PrivilegeLevel::Server => '*.*',
+            // Auf Datenbank-Ebene sind _ und % Platzhalter: «my_db» träfe sonst auch «myXdb».
+            PrivilegeLevel::Database => $this->quoteIdentifier(addcslashes((string) $target->database, '_%')).'.*',
+            PrivilegeLevel::Table => $this->quoteIdentifier((string) $target->database).'.'.$this->quoteIdentifier((string) $target->table),
+            PrivilegeLevel::Schema => throw new InvalidArgumentException('MySQL und MariaDB kennen keine Schemas neben den Datenbanken.'),
+        };
+
+        return [new PlannedStatement(
+            ($grant ? 'GRANT ' : 'REVOKE ').implode(', ', $this->allowedPrivileges($target->level, $privileges)).' ON '.$on
+            .($grant ? ' TO ' : ' FROM ').$this->accountLiteral($connection, $account),
+        )];
+    }
+
+    public function maintenanceOperations(): array
+    {
+        return [MaintenanceOperation::Analyze, MaintenanceOperation::Optimize, MaintenanceOperation::Check];
+    }
+
+    public function maintenanceForTables(MaintenanceOperation $operation): bool
+    {
+        return true;
+    }
+
+    public function maintenanceStatements(Connection $connection, MaintenanceOperation $operation, string $schema, ?array $tables): array
+    {
+        $keyword = match ($operation) {
+            MaintenanceOperation::Analyze => 'ANALYZE TABLE ',
+            MaintenanceOperation::Optimize => 'OPTIMIZE TABLE ',
+            MaintenanceOperation::Check => 'CHECK TABLE ',
+            MaintenanceOperation::Vacuum => throw new InvalidArgumentException('VACUUM gibt es nur bei PostgreSQL und SQLite.'),
+        };
+        $tables ??= $this->baseTables($connection, $schema);
+
+        if ($tables === []) {
+            return [];
+        }
+
+        $names = array_map(fn (string $table): string => $this->quoteIdentifier($schema).'.'.$this->quoteIdentifier($table), $tables);
+
+        return [new PlannedStatement($keyword.implode(', ', $names), objects: $tables)];
+    }
+
+    public function runMaintenance(Connection $connection, PlannedStatement $statement): array
+    {
+        return array_values(array_map(function (object $row): array {
+            $values = array_change_key_case((array) $row);
+            $type = strtolower((string) ($values['msg_type'] ?? ''));
+            $message = (string) ($values['msg_text'] ?? '');
+
+            return [
+                'table' => isset($values['table']) ? (string) $values['table'] : null,
+                'status' => match ($type) {
+                    'status' => in_array(strtolower($message), ['ok', 'table is already up to date'], true) ? 'ok' : 'error',
+                    'info', 'note' => 'note',
+                    'warning' => 'warning',
+                    default => 'error',
+                },
+                'message' => $message,
+            ];
+        }, $connection->select($statement->sql)));
+    }
+
+    /** Wie die Grammatik von MySQL: Backticks, verdoppelt. */
+    protected function quoteIdentifier(string $name): string
+    {
+        return '`'.str_replace('`', '``', $name).'`';
+    }
+
+    /** Ohne Passwort-Hash: MariaDB hängt ihn an SHOW GRANTS an — nie lesen. */
+    protected function accountQuery(): string
+    {
+        return 'select user, host, account_locked, password_expired from mysql.user order by user, host';
+    }
+
+    /**
+     * @param  array<string, mixed>  $values
+     * @return list<string>
+     */
+    protected function accountAttributes(array $values): array
+    {
+        return array_values(array_filter([
+            ($values['account_locked'] ?? 'N') === 'Y' ? 'locked' : null,
+            ($values['password_expired'] ?? 'N') === 'Y' ? 'expired' : null,
+        ]));
+    }
+
+    /**
+     * SHOW GRANTS ohne «IDENTIFIED BY PASSWORD '…'» (MariaDB) — der Hash ist ein Geheimnis.
+     *
+     * @param  array<string, mixed>  $values
+     * @return list<string>
+     */
+    protected function grantsOf(Connection $connection, AccountName $account, array $values): array
+    {
+        return array_values(array_map(
+            fn (object $row): string => (string) preg_replace('/\s+IDENTIFIED\s+(BY|VIA|WITH)\b.*$/is', '', (string) (array_values((array) $row)[0] ?? '')),
+            $connection->select('show grants for '.$this->accountLiteral($connection, $account)),
+        ));
+    }
+
+    /** 'name'@'host' — beides Zeichenketten, gequotet über PDO. */
+    protected function accountLiteral(Connection $connection, AccountName $account): string
+    {
+        return $this->quoteString($connection, $account->name).'@'.$this->quoteString($connection, (string) $account->host);
+    }
+
+    /**
+     * Ergebnis von SHOW … VARIABLES/STATUS als Name (klein) → Wert.
+     *
+     * @param  array<int, object>  $rows
+     * @return array<string, string>
+     */
+    private function keyValues(array $rows): array
+    {
+        $values = [];
+
+        foreach ($rows as $row) {
+            $columns = array_values((array) $row);
+            $values[strtolower((string) ($columns[0] ?? ''))] = (string) ($columns[1] ?? '');
+        }
+
+        return $values;
     }
 
     protected function rowEstimates(Connection $connection, string $schema): array

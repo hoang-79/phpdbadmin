@@ -5,6 +5,7 @@ namespace App\Dialects;
 use App\Connections\ConnectionProblem;
 use App\Connections\ConnectionSettings;
 use App\Enums\DatabaseDriver;
+use App\Enums\MaintenanceOperation;
 use Closure;
 use Illuminate\Database\Connection;
 use Throwable;
@@ -16,6 +17,13 @@ use Throwable;
  *
  * @phpstan-type TableSummary array{name: string, type: 'table'|'view', rows: int|null, size: int|null, comment: string|null}
  * @phpstan-type AccountWarning array{key: string, title: string, recommendation: string}
+ * @phpstan-type ServerFact array{key: string, value: string|int, kind: 'text'|'bytes'|'number'|'datetime'}
+ * @phpstan-type DatabaseSize array{name: string, size: int|null, charset: string|null, collation: string|null}
+ * @phpstan-type ServerOverview array{version: string, uptime: int|null, charset: string|null, collation: string|null, facts: list<ServerFact>, databases: list<DatabaseSize>, schemas: list<array{name: string, size: int|null}>|null}
+ * @phpstan-type ServerProcess array{id: int, user: string, host: string|null, program: string|null, database: string|null, command: string|null, state: string|null, seconds: int|null, statement: string|null, own: bool}
+ * @phpstan-type ServerSetting array{name: string, value: string, description: string|null}
+ * @phpstan-type ServerAccount array{name: string, host: string|null, attributes: list<string>, grants: list<string>, own: bool}
+ * @phpstan-type MaintenanceResult array{table: string|null, status: string, message: string}
  */
 interface Dialect
 {
@@ -149,4 +157,124 @@ interface Dialect
      * @return list<AccountWarning>
      */
     public function accountWarnings(Connection $connection): array;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Server-Verwaltung (W-01 bis W-05)
+    |--------------------------------------------------------------------------
+    |
+    | Lesen geht über jede Verbindung; was ändert, plant der Dialekt nur als Anweisungen (PlannedStatement) —
+    | ausgeführt wird erst nach Vorschau und Bestätigung über eine Verbindung ohne Schreibschutz (ServerChanges).
+    | Bezeichner sind vorher gegen den Katalog geprüft und werden hier je Segment gequotet, Zeichenketten über
+    | PDO::quote, Rechte nur aus der festen Liste.
+    |
+    */
+
+    /**
+     * Server-Übersicht (W-01): Version, Laufzeit in Sekunden, Zeichensatz und Kollation als Vorgabe des Servers,
+     * Kennzahlen und die Grösse je Datenbank (PostgreSQL zusätzlich je Schema der geöffneten Datenbank). SQLite:
+     * Datei, Seitengrösse, Journal-Modus und Version der Bibliothek, keine Laufzeit.
+     *
+     * @return ServerOverview
+     */
+    public function serverOverview(Connection $connection): array;
+
+    /** Kennung der eigenen Sitzung (CONNECTION_ID(), pg_backend_pid()); null ohne Server (SQLite). */
+    public function sessionId(Connection $connection): ?int;
+
+    /**
+     * Prozesse und Sitzungen des Servers (W-02), die eigene markiert; null, wo es keine Serverprozesse gibt (SQLite).
+     *
+     * @return list<ServerProcess>|null
+     */
+    public function processes(Connection $connection): ?array;
+
+    /**
+     * Anweisung, die einen Prozess beendet — nur die laufende Anweisung oder die ganze Sitzung (MySQL/MariaDB
+     * KILL QUERY bzw. KILL, PostgreSQL pg_cancel_backend bzw. pg_terminate_backend); null bei SQLite.
+     */
+    public function endProcessStatement(int $id, bool $wholeSession): ?PlannedStatement;
+
+    /** Beendet den Prozess; false, wenn es ihn nicht (mehr) gibt. */
+    public function endProcess(Connection $connection, int $id, bool $wholeSession): bool;
+
+    /**
+     * Einstellungen des Servers (W-03, nur lesen): SHOW GLOBAL VARIABLES, pg_settings, lesbare PRAGMAs.
+     *
+     * @return list<ServerSetting>
+     */
+    public function variables(Connection $connection): array;
+
+    /**
+     * Zustand und Zähler (W-03, nur lesen): SHOW GLOBAL STATUS, Statistik der Datenbank, Optionen der Bibliothek.
+     *
+     * @return list<ServerSetting>
+     */
+    public function statusValues(Connection $connection): array;
+
+    /** Gehört zum Konto ein Host ('app'@'%')? MySQL und MariaDB ja, PostgreSQL nein. */
+    public function accountsHaveHosts(): bool;
+
+    /**
+     * Konten bzw. Rollen mit ihren Rechten (W-04); null bei SQLite (keine Konten).
+     *
+     * @return list<ServerAccount>|null
+     */
+    public function accounts(Connection $connection): ?array;
+
+    /** Das Konto, mit dem phpdbadmin verbunden ist; null bei SQLite. */
+    public function currentAccount(Connection $connection): ?AccountName;
+
+    /**
+     * Die üblichen Rechte je Ebene (Schlüssel: PrivilegeLevel) — nur diese lassen sich erteilen oder entziehen. Leer
+     * bei SQLite.
+     *
+     * @return array<string, list<string>>
+     */
+    public function privilegeChoices(): array;
+
+    /**
+     * Konto anlegen, mit Passwort; in der Vorschau ist das Passwort maskiert.
+     *
+     * @return list<PlannedStatement>
+     */
+    public function createAccountStatements(Connection $connection, AccountName $account, string $password): array;
+
+    /**
+     * @return list<PlannedStatement>
+     */
+    public function dropAccountStatements(Connection $connection, AccountName $account): array;
+
+    /**
+     * GRANT bzw. REVOKE auf Server, Datenbank, Schema oder Tabelle.
+     *
+     * @param  list<string>  $privileges  aus privilegeChoices() der Ebene
+     * @return list<PlannedStatement>
+     */
+    public function privilegeStatements(Connection $connection, bool $grant, AccountName $account, PrivilegeTarget $target, array $privileges): array;
+
+    /**
+     * Was der Treiber an Wartung kann (W-05).
+     *
+     * @return list<MaintenanceOperation>
+     */
+    public function maintenanceOperations(): array;
+
+    /** Geht die Wartung auch für einzelne Tabellen? SQLite: VACUUM nur für die ganze Datei. */
+    public function maintenanceForTables(MaintenanceOperation $operation): bool;
+
+    /**
+     * Anweisungen für die Wartung einer Tabellenauswahl oder des ganzen Schemas (null).
+     *
+     * @param  list<string>|null  $tables
+     * @return list<PlannedStatement>
+     */
+    public function maintenanceStatements(Connection $connection, MaintenanceOperation $operation, string $schema, ?array $tables): array;
+
+    /**
+     * Führt eine Anweisung der Wartung aus und liefert das Ergebnis je Tabelle.
+     *
+     * @return list<MaintenanceResult>
+     */
+    public function runMaintenance(Connection $connection, PlannedStatement $statement): array;
 }

@@ -123,7 +123,7 @@ final class ConnectionFactory
         }
 
         $pdo->setAuthorizer(function (int $action, ?string $file): int {
-            if ($action !== self::SQLITE_ATTACH) {
+            if ($action !== self::SQLITE_ATTACH || $file === '' || $file === ':memory:') {
                 return Sqlite::OK;
             }
 
