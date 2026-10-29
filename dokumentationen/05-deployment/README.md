@@ -2,7 +2,7 @@
 
 > **PDF der Phase:** [deployment.pdf](deployment.pdf) — bei jeder Änderung neu gebaut (`python3 dokumentationen/werkzeuge/pdf-bauen.py --nur 05`).
 
-**Stand 29.10.2026:** v1.0 ist installierbar (B-05, [TB 08](../04-evolutionary-development/timebox-08-sicherheit-v1.md)). Zielbild nach R-11 (lokal und selbst gehostet) und R-30:
+**Stand 29.10.2026:** v1.3.0 veröffentlicht, mit Web-Installer; v1.0 ist installierbar (B-05, [TB 08](../04-evolutionary-development/timebox-08-sicherheit-v1.md)). Zielbild nach R-11 (lokal und selbst gehostet) und R-30:
 
 | Stufe | Ort | Bemerkung |
 |---|---|---|
@@ -59,4 +59,4 @@ Version in `config/phpdbadmin.php` (`version`). Das Archiv enthält nur, was zur
 
 ## Pipeline
 
-Regel «GitHub Actions sparsam»: je Push ein schlanker Auftrag (Pint, Larastan, vue-tsc, `vp check`, Tests auf SQLite); Matrix MySQL/MariaDB/PostgreSQL wöchentlich und von Hand; `paths-ignore` für Doku, `concurrency` mit `cancel-in-progress`, `timeout-minutes`, Caches für Composer und npm. **Noch nie gelaufen** — es gibt noch kein GitHub-Repository (Hoang).
+Regel «GitHub Actions sparsam»: je Push ein schlanker Auftrag (Pint, Larastan, vue-tsc, `vp check`, Tests auf SQLite); Matrix MySQL/MariaDB/PostgreSQL wöchentlich und von Hand; `paths-ignore` für Doku, `concurrency` mit `cancel-in-progress`, `timeout-minutes`, Caches für Composer und npm. Seit 29.10.2026 auf [github.com/hoang-79/phpdbadmin](https://github.com/hoang-79/phpdbadmin) (öffentlich); erster Lauf mit dem Push von `main` und dem Tag `v1.3.0` ([Release](https://github.com/hoang-79/phpdbadmin/releases/tag/v1.3.0)). Releases entstehen lokal (siehe oben), nicht in Actions.

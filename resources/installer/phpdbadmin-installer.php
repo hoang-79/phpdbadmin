@@ -1841,9 +1841,12 @@ final class PdaInstaller
         return new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 5]);
     }
 
+    /** «10.11.6-MariaDB-log» → «MariaDB 10.11.6», «PostgreSQL 16.2 on …» → «PostgreSQL 16.2», sonst MySQL. */
     private static function shortVersion(string $version): string
     {
-        return preg_match('/(MariaDB|PostgreSQL)?[^\d]*(\d+\.\d+(\.\d+)?)/', $version, $m) === 1 ? trim(($m[1] !== '' ? $m[1].' ' : (stripos($version, 'postgres') !== false ? 'PostgreSQL ' : 'MySQL ')).$m[2]) : $version;
+        $product = stripos($version, 'mariadb') !== false ? 'MariaDB' : (stripos($version, 'postgres') !== false ? 'PostgreSQL' : 'MySQL');
+
+        return preg_match('/(\d+\.\d+(\.\d+)?)/', $version, $m) === 1 ? $product.' '.$m[1] : $version;
     }
 
     /** Test-Mail über SMTP (STARTTLS oder TLS ab Port 465) bzw. sendmail — an die eigene Adresse. */
