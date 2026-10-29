@@ -13,6 +13,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Inertia\Testing\AssertableInertia as Assert;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Concerns\TargetDatabases;
 use Tests\TestCase;
@@ -68,6 +69,39 @@ class TableAlterControllerTest extends TestCase
                 ])
                 ->where('draft.indexes.0', ['original' => 'parents_code_unique', 'name' => 'parents_code_unique', 'columns' => ['code'], 'unique' => true, 'primary' => false])
                 ->where('editor.mode.key', 'rebuild'));
+    }
+
+    /**
+     * @return array<string, array{0: DatabaseDriver}>
+     */
+    public static function drivers(): array
+    {
+        return [...self::serverDrivers(), 'SQLite' => [DatabaseDriver::Sqlite]];
+    }
+
+    /**
+     * Der Entwurf, wie die Seite ihn liefert, geht unverändert zurück — mit dem Primärschlüssel, den MySQL, MariaDB und
+     * PostgreSQL als Index nennen — plus eine neue Spalte. Im Browser lehnte die Vorschau das ab («Diesen Index gibt es
+     * nicht»), weil der Primärschlüssel als Änderung galt.
+     */
+    #[DataProvider('drivers')]
+    public function test_the_unchanged_draft_of_the_page_plus_a_new_column_previews(DatabaseDriver $driver): void
+    {
+        [$connection, $schema] = $this->parentWithChildren($driver);
+        $this->actingAs($this->user);
+        $draft = $this->get(route('workspace.object.alter', [$connection, $schema, 'parents']))->inertiaProps('draft');
+
+        $payload = [
+            'columns' => [...array_map(fn (array $column): array => [...$column, 'changed' => false], $draft['columns']), ['name' => 'notiz', 'type' => 'string', 'length' => 255, 'nullable' => true]],
+            'indexes' => array_map(fn (array $index): array => [...$index, 'drop' => false], $draft['indexes']),
+            'foreignKeys' => array_map(fn (array $foreignKey): array => [...$foreignKey, 'drop' => false], $draft['foreignKeys']),
+        ];
+
+        $statements = $this->postJson(route('workspace.object.alter.preview', [$connection, $schema, 'parents']), $payload)
+            ->assertOk()
+            ->json('statements');
+
+        $this->assertStringContainsString('notiz', implode("\n", array_column($statements, 'sql')));
     }
 
     public function test_views_have_no_alter_page(): void

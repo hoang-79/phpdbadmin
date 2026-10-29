@@ -236,6 +236,12 @@ final class SchemaPlans
 
             $existing = $currentIndexes[$index->original] ?? null;
 
+            // Der Primärschlüssel steht im Formular nur zur Ansicht (MySQL, MariaDB und PostgreSQL nennen ihn als Index);
+            // unverändert ist er kein Fehler, löschen lässt er sich hier nicht.
+            if ($existing !== null && (bool) $existing['primary'] && ! $index->drop) {
+                continue;
+            }
+
             if ($existing === null || (bool) $existing['primary']) {
                 throw ValidationException::withMessages(["indexes.{$position}.original" => __('Diesen Index gibt es nicht (der Primärschlüssel lässt sich hier nicht löschen).')]);
             }

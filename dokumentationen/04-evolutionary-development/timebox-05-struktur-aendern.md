@@ -1,6 +1,6 @@
 # Timebox 05 — Struktur ändern
 
-**Stand:** 29.10.2026 · ✅ gebaut und getestet in drei Scheiben auf einem eigenen Zweig (Arbeitskopie), parallel zu TB 04 — Browser-Durchlauf und Zusammenführen im Hauptstrang offen.
+**Stand:** 29.10.2026 · ✅ abgeschlossen — gebaut auf einem eigenen Zweig parallel zu TB 04, zusammengeführt mit `dd818d9`, im Browser geprüft.
 
 ## Ziel
 
@@ -126,6 +126,12 @@ Prüfkette vor jedem Commit: `vp check`, `vue-tsc`, Pint, Larastan, PHPUnit — 
 - SQLite-Tabellen mit Inline-`UNIQUE` (`sqlite_autoindex_…`): Laravels Umbau will den internen Index neu anlegen (vertauschte Argumente in `str_starts_with`) und scheitert — zurückgerollt, nichts verloren, aber nicht änderbar. Nicht getestet.
 - `MaintenanceController` (TB 09) nutzt `trans_choice()` und zeigt auf Deutsch englische Mehrzahl — besser an einer Stelle lösen (Basalto: `SourceLocaleTranslator`, Lektion «Deutsche Mehrzahl fällt auf Englisch zurück» im Vault).
 - Laravels `compileColumns` für MySQL setzt den Tabellennamen über `quoteString()` ohne Escape ein — die Strukturansicht (S-01) scheitert an Tabellennamen mit `'`. Vorbestehend, nicht in TB 05 behoben.
+
+## Nach dem Zusammenführen
+
+- `canWrite` hiess im Arbeitsbildschirm schon «Recht schreiben» (TB 04, V-11); TB 05 hatte es als «Recht und kein Schreibschutz» eingeführt. Jetzt bleibt `canWrite` das Recht, und `structureBlock()` sagt aus Recht, Schreibschutz und Freigabe auf Zeit, ob Strukturänderungen gehen. Die Freigabe auf Zeit gilt jetzt auch hier (Request und Seiten).
+- **Befund im Browser (MariaDB):** Eine neue Spalte liess sich nicht vorschauen — «Diesen Index gibt es nicht». Der Entwurf der Seite enthält den Primärschlüssel als Index (MySQL, MariaDB, PostgreSQL nennen ihn so, SQLite ebenfalls), das Formular schickt ihn unverändert zurück, und der Plan hielt ihn für eine Änderung. Behoben; neuer Test `test_the_unchanged_draft_of_the_page_plus_a_new_column_previews` schickt je Treiber den Entwurf genau so zurück, wie die Seite ihn liefert (ohne Fix scheitern alle vier). Die bisherigen Tests bauten die Nutzlast von Hand und sahen den Fall nicht.
+- Durchlauf: Spalte anlegen (Vorschau «nicht rückrollbar — Anweisung für Anweisung», eine Anweisung, angewendet), Spalte löschen (Hinweis «löscht Daten, ≈ 40 Zeilen», Knopf erst nach dem Tabellennamen).
 
 ## Gelernt
 
