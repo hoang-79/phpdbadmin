@@ -7,8 +7,12 @@ import {
     structure as structureRoute,
     view as viewRoute,
 } from '@/routes/workspace/object';
-import { object as objectRoute } from '@/routes/workspace';
-import type { GridQueryState, Workspace } from '@/types';
+import {
+    definition as definitionRoute,
+    object as objectRoute,
+} from '@/routes/workspace';
+import { create as definitionCreateRoute } from '@/routes/workspace/definition';
+import type { GridQueryState, ObjectKindKey, Workspace } from '@/types';
 
 /**
  * Adressen im Arbeitsbildschirm. Wayfinder setzt Parameter unverändert ein; Namen von Schemas und Tabellen dürfen
@@ -135,12 +139,90 @@ export function viewUrl(workspace: Workspace, object: string): string {
     });
 }
 
-/** Ziel eines Eintrags im Navigator: Tabellen und Sichten öffnen die Daten, übrige Objekte noch nicht. */
+const definitionKinds: ObjectKindKey[] = [
+    'view',
+    'function',
+    'procedure',
+    'trigger',
+    'event',
+    'sequence',
+    'type',
+];
+
+/** Ist das eine Art mit eigener Detailseite (S-06)? */
+export function isDefinitionKind(kind: string): kind is ObjectKindKey {
+    return (definitionKinds as string[]).includes(kind);
+}
+
+/**
+ * Detailseite eines Objekts (S-06). Der Zusatz unterscheidet bei PostgreSQL Trigger gleichen Namens (Tabelle) und
+ * überladene Routinen (Parameter).
+ */
+export function definitionHref(
+    workspace: Workspace,
+    kind: ObjectKindKey,
+    name: string,
+    qualifier: string | null = null,
+    schema: string | null = workspace.schema,
+): string {
+    return definitionRoute.url(
+        [
+            workspace.connection.id,
+            encodeURIComponent(schema ?? ''),
+            kind,
+            encodeURIComponent(name),
+        ],
+        {
+            query: {
+                ...dbQuery(workspace),
+                ...(qualifier !== null ? { qualifier } : {}),
+            },
+        },
+    );
+}
+
+/** Seite zum Anlegen eines Objekts dieser Art im gewählten Schema. */
+export function definitionCreateHref(
+    workspace: Workspace,
+    kind: ObjectKindKey,
+): string {
+    return definitionCreateRoute.url(
+        [
+            workspace.connection.id,
+            encodeURIComponent(workspace.schema ?? ''),
+            kind,
+        ],
+        { query: dbQuery(workspace) },
+    );
+}
+
+/**
+ * Ziel eines Eintrags im Navigator: Tabellen und Sichten öffnen die Daten, Routinen, Trigger, Ereignisse, Sequenzen
+ * und Typen ihre Detailseite. Trigger tragen ihre Tabelle mit (PostgreSQL: gleicher Name an mehreren Tabellen).
+ */
 export function objectHref(
     workspace: Workspace,
-    item: { name: string; kind: string },
+    item: { name: string; kind: string; detail?: string | null },
 ): string | null {
-    return item.kind === 'table' || item.kind === 'view'
-        ? dataHref(workspace, item.name)
-        : null;
+    if (item.kind === 'table' || item.kind === 'view') {
+        return dataHref(workspace, item.name);
+    }
+
+    if (!isDefinitionKind(item.kind)) {
+        return null;
+    }
+
+    return definitionHref(
+        workspace,
+        item.kind,
+        item.name,
+        item.kind === 'trigger' && workspace.connection.driver === 'pgsql'
+            ? (item.detail ?? null)
+            : null,
+    );
+}
+
+/** Adresse mit der gewählten Datenbank (PostgreSQL mit «alle Datenbanken») — für JSON-Anfragen. */
+export function withDb(workspace: Workspace): { query: QueryParams } {
+    return { query: dbQuery(workspace) };
 }

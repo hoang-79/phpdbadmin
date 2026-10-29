@@ -5,3 +5,4 @@ export * from './workspace';
 export * from './server';
 export * from './admin';
 export * from './transfers';
+export * from './objects';

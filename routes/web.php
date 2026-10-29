@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ObjectKind;
 use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Account\LocaleController;
 use App\Http\Controllers\Account\OnboardingController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Connections\SharingController;
 use App\Http\Controllers\Connections\TestConnectionController;
 use App\Http\Controllers\PaletteController;
 use App\Http\Controllers\Workspace\ConnectionPasswordController;
+use App\Http\Controllers\Workspace\DefinitionController;
 use App\Http\Controllers\Workspace\ImportController;
 use App\Http\Controllers\Workspace\ObjectController;
 use App\Http\Controllers\Workspace\RowChangeController;
@@ -71,6 +73,15 @@ Route::middleware('auth')->group(function () {
             Route::post('changes/preview', [RowChangeController::class, 'preview'])->name('workspace.object.changes.preview');
             Route::post('changes', [RowChangeController::class, 'apply'])->name('workspace.object.changes');
             Route::post('changes/{audit}/undo', [RowChangeController::class, 'undo'])->whereNumber('audit')->name('workspace.object.changes.undo');
+        });
+
+        // Objekte neben den Tabellen (S-06): Sichten, Routinen, Trigger, Ereignisse, Sequenzen, Typen — ansehen mit
+        // Zugang, anlegen, ändern und löschen mit «schreiben», Vorschau zuerst.
+        Route::prefix('s/{schema}/x/{kind}')->where(['schema' => '[^/]+', 'kind' => ObjectKind::pattern()])->group(function () {
+            Route::get('/', [DefinitionController::class, 'create'])->name('workspace.definition.create');
+            Route::post('preview', [DefinitionController::class, 'preview'])->name('workspace.definition.preview');
+            Route::post('/', [DefinitionController::class, 'apply'])->name('workspace.definition.apply');
+            Route::get('{name}', [DefinitionController::class, 'detail'])->where('name', '[^/]+')->name('workspace.definition');
         });
 
         // Server-Verwaltung (W-01 bis W-05): ansehen mit Zugang, ändern nur mit «verwalten» und ohne Schreibschutz.

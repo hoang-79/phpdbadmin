@@ -3,6 +3,7 @@
 namespace App\Services\Catalog;
 
 use App\Connections\TargetConnections;
+use App\Dialects\Objects\ObjectDialects;
 use App\Enums\DatabaseDriver;
 use App\Models\DatabaseConnection;
 
@@ -121,6 +122,13 @@ final class Catalog
 
         if ($sequences !== null) {
             $groups[] = ['key' => 'sequences', 'label' => __('Sequenzen'), 'items' => array_map(fn (string $name): array => $item($name, 'sequence'), $sequences), 'note' => null];
+        }
+
+        // Eigene Typen (S-06): Aufzählungen, zusammengesetzte Typen, Domänen, Bereiche — nur PostgreSQL.
+        $types = ObjectDialects::for($connection->driver)->types($target, $schema);
+
+        if ($types !== null) {
+            $groups[] = ['key' => 'types', 'label' => __('Typen'), 'items' => array_map(fn (array $type): array => $item($type['name'], 'type', detail: $type['variant']), $types), 'note' => null];
         }
 
         return $groups;

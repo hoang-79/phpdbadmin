@@ -22,7 +22,7 @@ final class AuditPresenter
         'account' => ['account.', 'passkey.'],
         'connection' => ['connection.'],
         'data' => ['data.'],
-        'schema' => ['schema.'],
+        'schema' => ['schema.', 'object.'],
         'sql' => ['sql.'],
         'transfer' => ['export.', 'import.', 'transfer.'],
         'audit' => ['audit.'],

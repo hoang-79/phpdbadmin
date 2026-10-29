@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import {
     ChevronDown,
     ChevronRight,
@@ -9,16 +9,23 @@ import {
     FunctionSquare,
     Hash,
     Layers,
+    Plus,
     Search,
+    Shapes,
     Table2,
     Zap,
 } from '@lucide/vue';
 import { onBeforeUnmount, onMounted, ref, computed } from 'vue';
 import { formatRows } from '@/lib/environment';
 import { t } from '@/lib/i18n';
-import { objectHref, schemaHref } from '@/lib/workspace';
+import { definitionCreateHref, objectHref, schemaHref } from '@/lib/workspace';
 import { workspace as workspaceRoute } from '@/routes';
-import type { NavigatorGroup, NavigatorItem, Workspace } from '@/types';
+import type {
+    NavigatorGroup,
+    NavigatorItem,
+    ObjectKindKey,
+    Workspace,
+} from '@/types';
 
 /**
  * Navigator (O-01, Wireframe 05): Verbindung → Datenbank → Schema (PostgreSQL) → Objektgruppen → Objekte, mit Filter.
@@ -37,7 +44,36 @@ const collapsed = ref<Record<string, boolean>>({
     triggers: true,
     events: true,
     sequences: true,
+    types: true,
 });
+
+// Detailseite eines Objekts (S-06): Art und Name kommen als Seiten-Prop `current`.
+const page = usePage<{ current?: { kind: string; name: string } | null }>();
+
+function isCurrent(item: NavigatorItem): boolean {
+    const current = page.props.current;
+
+    return current
+        ? current.kind === item.kind && current.name === item.name
+        : props.selected === item.name &&
+              (item.kind === 'table' || item.kind === 'view');
+}
+
+// Neues Objekt je Gruppe (S-06) — nur, wer hier schreiben darf.
+const createKinds: Record<string, ObjectKindKey> = {
+    views: 'view',
+    routines: 'function',
+    triggers: 'trigger',
+    events: 'event',
+    sequences: 'sequence',
+    types: 'type',
+};
+const mayCreate = computed(
+    () =>
+        props.workspace.connection.canWrite &&
+        (!props.workspace.connection.readOnly ||
+            props.workspace.connection.unlockedUntil !== null),
+);
 
 const term = computed(() => filter.value.trim().toLowerCase());
 
@@ -75,6 +111,7 @@ const icons: Record<string, unknown> = {
     trigger: Zap,
     event: Clock,
     sequence: Hash,
+    type: Shapes,
 };
 
 function isOpen(group: NavigatorGroup): boolean {
@@ -200,32 +237,60 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
 
                     <ul v-if="name === workspace.schema" class="pl-4">
                         <li v-for="group in groups" :key="group.key">
-                            <button
-                                type="button"
-                                class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-background"
-                                :aria-expanded="isOpen(group)"
-                                @click="toggle(group)"
-                            >
-                                <component
-                                    :is="
-                                        isOpen(group)
-                                            ? ChevronDown
-                                            : ChevronRight
-                                    "
-                                    class="size-3.5 shrink-0 text-text-secondary"
-                                />
-                                <span>{{ group.label }}</span>
-                                <span
-                                    class="ml-auto text-xs text-muted-foreground tabular-nums"
-                                    >{{
-                                        group.note
-                                            ? '—'
-                                            : term
-                                              ? `${group.visible.length} / ${group.items.length}`
-                                              : group.items.length
-                                    }}</span
+                            <div class="flex items-center">
+                                <button
+                                    type="button"
+                                    class="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-background"
+                                    :aria-expanded="isOpen(group)"
+                                    @click="toggle(group)"
                                 >
-                            </button>
+                                    <component
+                                        :is="
+                                            isOpen(group)
+                                                ? ChevronDown
+                                                : ChevronRight
+                                        "
+                                        class="size-3.5 shrink-0 text-text-secondary"
+                                    />
+                                    <span>{{ group.label }}</span>
+                                    <span
+                                        class="ml-auto text-xs text-muted-foreground tabular-nums"
+                                        >{{
+                                            group.note
+                                                ? '—'
+                                                : term
+                                                  ? `${group.visible.length} / ${group.items.length}`
+                                                  : group.items.length
+                                        }}</span
+                                    >
+                                </button>
+                                <Link
+                                    v-if="
+                                        mayCreate &&
+                                        !group.note &&
+                                        createKinds[group.key]
+                                    "
+                                    :href="
+                                        definitionCreateHref(
+                                            workspace,
+                                            createKinds[group.key],
+                                        )
+                                    "
+                                    class="ml-0.5 inline-grid size-7 shrink-0 place-items-center rounded-md text-text-secondary outline-none hover:bg-background focus-visible:ring-2 focus-visible:ring-ring"
+                                    :aria-label="
+                                        t('Neu in «:group»', {
+                                            group: group.label,
+                                        })
+                                    "
+                                    :title="
+                                        t('Neu in «:group»', {
+                                            group: group.label,
+                                        })
+                                    "
+                                >
+                                    <Plus class="size-3.5" />
+                                </Link>
+                            </div>
 
                             <template v-if="isOpen(group)">
                                 <p
@@ -253,13 +318,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                                                 'flex items-center gap-2 rounded-md py-1.5 pr-2 pl-6',
                                                 objectHref(workspace, item) &&
                                                     'hover:bg-background',
-                                                selected === item.name &&
-                                                    (item.kind === 'table' ||
-                                                        item.kind === 'view') &&
+                                                isCurrent(item) &&
                                                     'bg-accent font-medium shadow-[inset_3px_0_0_var(--primary)]',
                                             ]"
                                             :aria-current="
-                                                selected === item.name
+                                                isCurrent(item)
                                                     ? 'page'
                                                     : undefined
                                             "

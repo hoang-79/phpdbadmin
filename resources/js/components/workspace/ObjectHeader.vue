@@ -5,18 +5,18 @@ import { computed } from 'vue';
 import { useOpenTabs } from '@/composables/useOpenTabs';
 import { formatBytes } from '@/lib/format';
 import { t, tc } from '@/lib/i18n';
-import { dataHref, structureHref } from '@/lib/workspace';
+import { dataHref, definitionHref, structureHref } from '@/lib/workspace';
 import { sql as sqlRoute } from '@/routes/workspace';
 import type { ObjectStructure, Workspace } from '@/types';
 
 /**
  * Kopf eines Objekts (Wireframe 05, 08): Name, Art und Kennzahlen, darunter die Reiter. Reiter erscheinen, sobald es
- * ihre Ansicht gibt.
+ * ihre Ansicht gibt; Sichten haben zusätzlich ihre Definition (S-06).
  */
 const props = defineProps<{
     workspace: Workspace;
     object: ObjectStructure['object'];
-    active: 'data' | 'structure' | 'sql';
+    active: 'data' | 'structure' | 'definition' | 'sql';
 }>();
 
 const facts = computed(() =>
@@ -53,6 +53,20 @@ const tabs = computed(() => [
         label: t('Struktur'),
         href: structureHref(props.workspace, props.object.name),
     },
+    // Sichten: Definition ansehen und ändern (S-06).
+    ...(props.object.kind === 'view'
+        ? [
+              {
+                  key: 'definition',
+                  label: t('Definition'),
+                  href: definitionHref(
+                      props.workspace,
+                      'view',
+                      props.object.name,
+                  ),
+              },
+          ]
+        : []),
     {
         key: 'sql',
         label: t('SQL'),
