@@ -67,7 +67,7 @@ class TransferController extends TransferWorkspaceController
                 'transfers' => $this->recent($user, $connection),
                 'mode' => $this->mode($connection),
                 'canWrite' => $this->canWrite($user, $connection),
-                'today' => now()->format('Y-m-d'),
+                'today' => now($user->timezone)->format('Y-m-d'),
             ]);
         });
     }
@@ -116,7 +116,7 @@ class TransferController extends TransferWorkspaceController
                     'content' => $request->input('content', 'both'),
                     'drop' => $request->boolean('drop'),
                 ],
-                'file_name' => $this->fileName($table ?? $schema, $format),
+                'file_name' => $this->fileName($table ?? $schema, $format, $this->user($request)->timezone),
                 'expires_at' => now()->addHours((int) config('phpdbadmin.transfers.retention_hours', 24)),
             ]);
 
@@ -198,11 +198,11 @@ class TransferController extends TransferWorkspaceController
         });
     }
 
-    /** «orders-2026-10-29.csv» — nur Zeichen, die jedes Dateisystem kennt. */
-    private function fileName(string $name, TransferFormat $format): string
+    /** «orders-2026-10-29.csv» in der Zeitzone des Kontos — nur Zeichen, die jedes Dateisystem kennt. */
+    private function fileName(string $name, TransferFormat $format, string $timezone): string
     {
         $safe = trim((string) preg_replace('/[^\p{L}\p{N}._-]+/u', '_', $name), '._');
 
-        return ($safe !== '' ? $safe : 'export').'-'.now()->format('Y-m-d').'.'.$format->extension();
+        return ($safe !== '' ? $safe : 'export').'-'.now($timezone)->format('Y-m-d').'.'.$format->extension();
     }
 }

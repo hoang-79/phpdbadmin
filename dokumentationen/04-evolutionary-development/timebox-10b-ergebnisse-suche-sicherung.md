@@ -1,6 +1,6 @@
 # Timebox 10b — Ergebnisse bearbeiten, Suchen und Ersetzen, Sicherung, Excel
 
-**Stand:** 29.10.2026 · ✅ gebaut und getestet in vier Scheiben auf einem eigenen Zweig (Arbeitskopie), parallel zu TB 05, TB 10a und TB 11 — Sichtprüfung im Browser und Zusammenführen im Hauptstrang offen.
+**Stand:** 29.10.2026 · ✅ abgeschlossen — gebaut auf einem eigenen Zweig, zusammengeführt und im Browser geprüft.
 
 ## Ziel
 
@@ -115,6 +115,10 @@ Neu: `XlsxExportTest` (8), `SingleTableSelectTest` (27, Unit), `EditableResultTe
 - Sicherung über einen SSH-Tunnel (TB 11): die Werkzeuge verbinden heute zur geprüften Adresse, nicht durch den Tunnel.
 - Gepackte Sicherungen (`.gz`) hochladen; Sicherung einzelner Schemas bei PostgreSQL; Wiederherstellung in eine neue Datenbank (legt sie an).
 - Herd liefert mariadb 10.11.6 ohne `--sandbox` — mit einem neueren Client stellt MariaDB über den Client wieder her (beide Wege getestet über MySQL bzw. MariaDB).
+
+## Nach dem Zusammenführen
+
+Zusammengeführt mit `3d9fe36`. Sicherung und Wiederherstellung sind für Verbindungen über einen SSH-Tunnel (TB 11) gesperrt, mit Hinweis auf der Seite — die Werkzeuge verbänden sonst direkt zur Adresse hinter dem Tunnel, aus Sicht des phpdbadmin-Servers (Test). Durchlauf im Browser (MariaDB): Abfrage auf `customers` als «bearbeitbar · phpdbadmin_demo.customers» erkannt, Zelle geändert, Änderungsleiste mit «SQL ansehen» und «Verwerfen»; Suche «Bern» über das Schema: 88 Treffer in zwei Tabellen in 0,5 s mit Link ins gefilterte Raster; Sicherung der Demo-Datenbank (121 KB SQL) in der Anfrage fertig. **Befund:** Der Dateiname der Sicherung trug die Uhrzeit in UTC («-0148»), die Liste daneben die Ortszeit («fertig 02:48») — Dateinamen von Sicherungen und Exporten folgen jetzt der Zeitzone des Kontos (Test um 23:30 UTC).
 
 ## Gelernt
 

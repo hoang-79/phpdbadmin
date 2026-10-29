@@ -82,6 +82,8 @@ class TransferControllerTest extends TestCase
     public function test_export_without_worker_runs_in_the_request_and_offers_the_file(): void
     {
         Storage::fake(Transfer::DISK);
+        // 23:30 UTC ist in Zürich schon der nächste Tag — der Dateiname folgt dem Konto.
+        $this->travelTo(now()->setTimezone('UTC')->setTime(23, 30));
         $connection = $this->sqliteSamples();
 
         $this->actingAs($this->user)->post(route('workspace.transfers.export', $connection), [
@@ -92,10 +94,11 @@ class TransferControllerTest extends TestCase
         $transfer = Transfer::query()->sole();
         $this->assertSame(TransferStatus::Done, $transfer->status);
         $this->assertFalse($transfer->in_background);
-        $this->assertSame('kunden-'.now()->format('Y-m-d').'.csv', $transfer->file_name);
+        $this->assertSame('kunden-'.now('Europe/Zurich')->format('Y-m-d').'.csv', $transfer->file_name);
+        $this->assertNotSame(now('UTC')->format('Y-m-d'), now('Europe/Zurich')->format('Y-m-d'));
 
         $download = $this->get(route('workspace.transfers.download', [$connection, $transfer->id]))->assertOk();
-        $this->assertStringContainsString('kunden-'.now()->format('Y-m-d').'.csv', (string) $download->headers->get('content-disposition'));
+        $this->assertStringContainsString('kunden-'.now('Europe/Zurich')->format('Y-m-d').'.csv', (string) $download->headers->get('content-disposition'));
         $this->assertStringStartsWith("id,name,notiz,betrag,wert,aktiv,erstellt,meta\r\n1,Jürg Müller,,", $download->streamedContent());
     }
 

@@ -99,7 +99,7 @@ class BackupController extends TransferWorkspaceController
                     'open_database' => $driver === DatabaseDriver::Postgres ? $database : null,
                     'objects' => $request->boolean('objects', true),
                 ],
-                'file_name' => $this->fileName($driver === DatabaseDriver::Sqlite ? pathinfo($database, PATHINFO_FILENAME) : $database, $format),
+                'file_name' => $this->fileName($driver === DatabaseDriver::Sqlite ? pathinfo($database, PATHINFO_FILENAME) : $database, $format, $this->user($request)->timezone),
                 'expires_at' => now()->addHours((int) config('phpdbadmin.transfers.retention_hours', 24)),
             ]);
             $transfer->user()->associate($this->user($request));
@@ -243,12 +243,12 @@ class BackupController extends TransferWorkspaceController
         }
     }
 
-    /** «shop-2026-10-29-0315.sql» — nur Zeichen, die jedes Dateisystem kennt. */
-    private function fileName(string $name, TransferFormat $format): string
+    /** «shop-2026-10-29-0315.sql» in der Zeitzone des Kontos — nur Zeichen, die jedes Dateisystem kennt. */
+    private function fileName(string $name, TransferFormat $format, string $timezone): string
     {
         $safe = trim((string) preg_replace('/[^\p{L}\p{N}._-]+/u', '_', $name), '._');
 
-        return ($safe !== '' ? $safe : 'sicherung').'-'.now()->format('Y-m-d-Hi').'.'.$format->extension();
+        return ($safe !== '' ? $safe : 'sicherung').'-'.now($timezone)->format('Y-m-d-Hi').'.'.$format->extension();
     }
 
     private function wrongFileText(DatabaseDriver $driver): string
