@@ -6,6 +6,7 @@ import {
     Lock,
     LockOpen,
     Pencil,
+    Search,
     Server,
     Undo2,
 } from '@lucide/vue';
@@ -19,7 +20,7 @@ import {
 import { t } from '@/lib/i18n';
 import { home } from '@/routes';
 import { edit } from '@/routes/connections';
-import { server } from '@/routes/workspace';
+import { search, server } from '@/routes/workspace';
 import { index as transfers } from '@/routes/workspace/transfers';
 import type { Workspace } from '@/types';
 
@@ -133,6 +134,13 @@ const short = { local: 'LOKAL', test: 'TEST', production: 'PROD' };
                 <Link :href="transfers(connection.id)" class="gap-2"
                     ><ArrowDownUp class="size-4" />{{
                         t('Export und Import')
+                    }}</Link
+                >
+            </DropdownMenuItem>
+            <DropdownMenuItem as-child>
+                <Link :href="search(connection.id)" class="gap-2"
+                    ><Search class="size-4" />{{
+                        t('Suchen in allen Tabellen')
                     }}</Link
                 >
             </DropdownMenuItem>

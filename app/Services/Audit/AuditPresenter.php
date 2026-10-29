@@ -127,6 +127,7 @@ final class AuditPresenter
             'connection.unshared' => __('Teilen beendet'),
             'connection.permission' => __('Recht geändert'),
             'audit.exported' => __('Protokoll exportiert'),
+            'data.replace' => __('Suchen und Ersetzen'),
             default => $this->categoryLabel($action) ?? $action,
         };
     }

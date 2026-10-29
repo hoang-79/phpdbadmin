@@ -15,6 +15,8 @@ use App\Http\Controllers\Workspace\ConnectionPasswordController;
 use App\Http\Controllers\Workspace\ImportController;
 use App\Http\Controllers\Workspace\ObjectController;
 use App\Http\Controllers\Workspace\RowChangeController;
+use App\Http\Controllers\Workspace\SearchController;
+use App\Http\Controllers\Workspace\SearchReplaceController;
 use App\Http\Controllers\Workspace\Server;
 use App\Http\Controllers\Workspace\SqlController;
 use App\Http\Controllers\Workspace\TransferController;
@@ -71,7 +73,13 @@ Route::middleware('auth')->group(function () {
             Route::post('changes/preview', [RowChangeController::class, 'preview'])->name('workspace.object.changes.preview');
             Route::post('changes', [RowChangeController::class, 'apply'])->name('workspace.object.changes');
             Route::post('changes/{audit}/undo', [RowChangeController::class, 'undo'])->whereNumber('audit')->name('workspace.object.changes.undo');
+            // Suchen und Ersetzen (D-08): Vorschau, dann in einer Transaktion; Rückgängig wie beim Bearbeiten.
+            Route::post('replace/preview', [SearchReplaceController::class, 'preview'])->name('workspace.object.replace.preview');
+            Route::post('replace', [SearchReplaceController::class, 'apply'])->name('workspace.object.replace');
         });
+
+        // Suche über ein ganzes Schema (D-08), nur lesen.
+        Route::get('search', [SearchController::class, 'index'])->name('workspace.search');
 
         // Server-Verwaltung (W-01 bis W-05): ansehen mit Zugang, ändern nur mit «verwalten» und ohne Schreibschutz.
         Route::get('server', Server\OverviewController::class)->name('workspace.server');

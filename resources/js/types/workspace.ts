@@ -216,6 +216,18 @@ export type ResultSource = {
     columns: (GridColumn | null)[];
 };
 
+/** Suche über ein ganzes Schema (D-08): Treffer je Tabelle und was ungesucht blieb. */
+export type SchemaSearchOutcome = {
+    tables: { table: string; hits: number; more: boolean; columns: string[] }[];
+    searched: number;
+    total: number;
+    unsearched: string[];
+    failed: { table: string; message: string }[];
+    stoppedBy: 'time' | 'hits' | null;
+    hits: number;
+    durationMs: number;
+};
+
 export type SqlResult = {
     sql: string;
     status: 'ok' | 'error' | 'cancelled' | 'timeout' | 'skipped';

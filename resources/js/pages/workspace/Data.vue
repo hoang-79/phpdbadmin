@@ -6,6 +6,7 @@ import {
     Download,
     Eye,
     Plus,
+    Replace,
     RotateCcw,
     Undo2,
 } from '@lucide/vue';
@@ -29,6 +30,7 @@ import DataGrid from '@/components/workspace/data/DataGrid.vue';
 import type { RowMeta } from '@/components/workspace/data/DataGrid.vue';
 import FilterBar from '@/components/workspace/data/FilterBar.vue';
 import MobileRows from '@/components/workspace/data/MobileRows.vue';
+import ReplaceSheet from '@/components/workspace/data/ReplaceSheet.vue';
 import RowDetailSheet from '@/components/workspace/data/RowDetailSheet.vue';
 import ObjectHeader from '@/components/workspace/ObjectHeader.vue';
 import { rowId, useRowChanges } from '@/composables/useRowChanges';
@@ -82,6 +84,7 @@ const props = defineProps<{
 
 const changes = useRowChanges();
 const previewOpen = ref(false);
+const replaceOpen = ref(false);
 const undoing = ref(false);
 
 /** Neue Zeilen oben, darunter die geladenen mit eingesetzten Änderungen. */
@@ -501,6 +504,15 @@ function stepRow(step: number): void {
                     v-if="editing.allowed"
                     size="sm"
                     variant="outline"
+                    :disabled="changes.total.value > 0"
+                    @click="replaceOpen = true"
+                >
+                    <Replace />{{ t('Suchen und Ersetzen') }}
+                </Button>
+                <Button
+                    v-if="editing.allowed"
+                    size="sm"
+                    variant="outline"
                     @click="insertRow()"
                 >
                     <Plus />{{ t('Zeile einfügen') }}
@@ -815,6 +827,19 @@ function stepRow(step: number): void {
             "
             @duplicate="(values) => insertRow(values)"
             @toggle-delete="detailKey && changes.toggleDelete(detailKey)"
+        />
+
+        <ReplaceSheet
+            v-if="editing.allowed"
+            v-model:open="replaceOpen"
+            :workspace="workspace"
+            :object="object.name"
+            :columns="columns"
+            @applied="
+                router.reload({
+                    only: ['grid', 'gridError', 'lastChange', 'object'],
+                })
+            "
         />
 
         <ChangePreviewSheet
