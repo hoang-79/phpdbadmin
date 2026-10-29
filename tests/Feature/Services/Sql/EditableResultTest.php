@@ -15,6 +15,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
+use Tests\Concerns\SqliteWorkerFolders;
 use Tests\Concerns\TargetDatabases;
 use Tests\TestCase;
 
@@ -27,6 +28,7 @@ use Tests\TestCase;
 class EditableResultTest extends TestCase
 {
     use RefreshDatabase;
+    use SqliteWorkerFolders;
     use TargetDatabases;
 
     private string $folder;
@@ -47,9 +49,9 @@ class EditableResultTest extends TestCase
         @mkdir($this->folder, 0777, true);
         config([
             'phpdbadmin.connections.allowed_hosts' => ['127.0.0.1'],
-            'phpdbadmin.connections.sqlite_paths' => [$this->folder],
             'cache.default' => 'array',
         ]);
+        $this->allowSqliteFolders([$this->folder]);
         $this->user = User::factory()->create();
     }
 

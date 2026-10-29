@@ -45,7 +45,8 @@ class HostPolicyTest extends TestCase
             'Adresse auf der Liste' => [['127.0.0.1'], '127.0.0.1', '127.0.0.1'],
             'Adresse im Netz' => [['10.0.0.0/8'], '10.1.2.3', '10.1.2.3'],
             'Name auf der Liste' => [['localhost'], 'localhost', '127.0.0.1'],
-            'Name, dessen Adressen im Netz liegen' => [['127.0.0.0/8'], 'localhost', '127.0.0.1'],
+            // Linux löst localhost auch zu ::1 auf (macOS nicht) — alle Adressen müssen erlaubt sein.
+            'Name, dessen Adressen im Netz liegen' => [['127.0.0.0/8', '::1/128'], 'localhost', '127.0.0.1'],
             'Gross- und Kleinschreibung' => [['127.0.0.1', 'localhost'], 'LOCALHOST', '127.0.0.1'],
             'IPv6 in Klammern' => [['::1'], '[::1]', '::1'],
         ];
@@ -223,7 +224,7 @@ class HostPolicyTest extends TestCase
             'erlaubter Name bleibt Name' => [['db.intern'], 'db.intern', 'db.intern'],
             'Name unter erlaubtem Platzhalter' => [['*.intern'], 'Kunden.DB.intern', 'kunden.db.intern'],
             'Adresse im Netz' => [['10.0.0.0/8'], '10.1.2.3', '10.1.2.3'],
-            'Name, der hier auf erlaubte Adressen auflöst' => [['127.0.0.0/8'], 'localhost', '127.0.0.1'],
+            'Name, der hier auf erlaubte Adressen auflöst' => [['127.0.0.0/8', '::1/128'], 'localhost', '127.0.0.1'],
         ];
     }
 

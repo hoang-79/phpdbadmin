@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use PDO;
+use Tests\Concerns\SqliteWorkerFolders;
 use Tests\TestCase;
 
 /**
@@ -19,6 +20,7 @@ use Tests\TestCase;
 class SqlControllerTest extends TestCase
 {
     use RefreshDatabase;
+    use SqliteWorkerFolders;
 
     private string $folder;
 
@@ -30,7 +32,7 @@ class SqlControllerTest extends TestCase
 
         $this->folder = storage_path('framework/testing/sql-'.getmypid());
         @mkdir($this->folder, 0777, true);
-        config(['phpdbadmin.connections.sqlite_paths' => [$this->folder]]);
+        $this->allowSqliteFolders([$this->folder]);
         $this->user = User::factory()->create();
     }
 

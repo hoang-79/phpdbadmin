@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Process;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
+use Tests\Concerns\SqliteWorkerFolders;
 use Tests\Concerns\TargetDatabases;
 use Tests\TestCase;
 
@@ -23,6 +24,7 @@ use Tests\TestCase;
 class QueryRunnerTest extends TestCase
 {
     use RefreshDatabase;
+    use SqliteWorkerFolders;
     use TargetDatabases;
 
     private string $folder;
@@ -37,9 +39,9 @@ class QueryRunnerTest extends TestCase
         @mkdir($this->folder, 0777, true);
         config([
             'phpdbadmin.connections.allowed_hosts' => ['127.0.0.1'],
-            'phpdbadmin.connections.sqlite_paths' => [$this->folder],
             'cache.default' => 'array',
         ]);
+        $this->allowSqliteFolders([$this->folder]);
     }
 
     protected function tearDown(): void
