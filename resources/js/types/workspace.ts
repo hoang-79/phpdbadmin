@@ -203,6 +203,19 @@ export type RowDetailData = {
     }[];
 };
 
+/**
+ * Herkunft eines Ergebnisses (Q-05): eine Tabelle mit vollständigem Primärschlüssel — dann bearbeitbar über die
+ * Endpunkte des Rasters. `columns` je Spalte des Ergebnisses die Spalte der Tabelle oder null (nur lesen).
+ */
+export type ResultSource = {
+    editable: boolean;
+    reason: string | null;
+    schema: string | null;
+    table: string | null;
+    keyColumns: number[];
+    columns: (GridColumn | null)[];
+};
+
 export type SqlResult = {
     sql: string;
     status: 'ok' | 'error' | 'cancelled' | 'timeout' | 'skipped';
@@ -212,6 +225,7 @@ export type SqlResult = {
     affected: number | null;
     durationMs: number;
     message: string | null;
+    source?: ResultSource | null;
 };
 
 export type SqlHistoryEntry = {

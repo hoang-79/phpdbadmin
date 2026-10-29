@@ -11,14 +11,14 @@ use PDOStatement;
 
 /**
  * Liest ein Ergebnis bis zur Zeilengrenze (Q-03) — im Dienst und im SQLite-Arbeitsprozess gleich. Werte wie im Raster
- * (Cells), Spalten mit dem Typ, den der Treiber nennt.
+ * (Cells), Spalten mit dem Typ und der Tabelle, die der Treiber nennt.
  *
  * @phpstan-import-type Cell from Cells
  */
 final class ResultReader
 {
     /**
-     * @return array{0: list<array{name: string, type: string|null}>, 1: list<list<Cell>>, 2: bool, 3: int|null}
+     * @return array{0: list<array{name: string, type: string|null, table: string|null}>, 1: list<list<Cell>>, 2: bool, 3: int|null}
      */
     public static function read(PDOStatement|false $statement, int $limit, ?Closure $stopRest): array
     {
@@ -35,7 +35,13 @@ final class ResultReader
         $columns = [];
         for ($index = 0; $index < $statement->columnCount(); $index++) {
             $meta = $statement->getColumnMeta($index) ?: [];
-            $columns[] = ['name' => (string) ($meta['name'] ?? $index), 'type' => isset($meta['native_type']) ? strtolower((string) $meta['native_type']) : null];
+            $columns[] = [
+                'name' => (string) ($meta['name'] ?? $index),
+                'type' => isset($meta['native_type']) ? strtolower((string) $meta['native_type']) : null,
+                // Herkunft (Q-05): Tabelle bzw. bei MySQL/MariaDB ihr Alias; MySQL meldet berechnete Spalten leer,
+                // PostgreSQL und SQLite lassen die Angabe weg (null).
+                'table' => isset($meta['table']) ? (string) $meta['table'] : null,
+            ];
         }
 
         $rows = [];

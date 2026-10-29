@@ -29,7 +29,7 @@ use function Illuminate\Support\php_binary;
  *
  * @phpstan-import-type Cell from Cells
  *
- * @phpstan-type Result array{sql: string, status: 'ok'|'error'|'cancelled'|'timeout'|'skipped', columns: list<array{name: string, type: string|null}>, rows: list<list<Cell>>, truncated: bool, affected: int|null, durationMs: float, message: string|null}
+ * @phpstan-type Result array{sql: string, status: 'ok'|'error'|'cancelled'|'timeout'|'skipped', columns: list<array{name: string, type: string|null, table: string|null}>, rows: list<list<Cell>>, truncated: bool, affected: int|null, durationMs: float, message: string|null}
  */
 final class QueryRunner
 {
@@ -181,7 +181,7 @@ final class QueryRunner
      * Eine Anweisung ausführen und höchstens `$limit` Zeilen lesen. MySQL/MariaDB ungepuffert (der Rest wird mit
      * KILL QUERY verworfen), PostgreSQL über einen Server-Cursor, damit nie das ganze Ergebnis im Speicher landet.
      *
-     * @return array{0: list<array{name: string, type: string|null}>, 1: list<list<Cell>>, 2: bool, 3: int|null}
+     * @return array{0: list<array{name: string, type: string|null, table: string|null}>, 1: list<list<Cell>>, 2: bool, 3: int|null}
      */
     private function fetch(DatabaseDriver $driver, Connection $target, string $sql, int $limit, bool $isRead, Closure $stopRest): array
     {

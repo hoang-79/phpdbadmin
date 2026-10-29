@@ -51,6 +51,8 @@ const props = defineProps<{
     loading: boolean;
     rowMeta?: RowMeta[];
     editable?: boolean;
+    /** Spalten (Index in der Zeile), die trotz `editable` nur lesen — Ausdrücke im Ergebnis einer Abfrage. */
+    readOnlyColumns?: number[];
 }>();
 
 const emit = defineEmits<{
@@ -64,7 +66,7 @@ const emit = defineEmits<{
     resize: [column: string, width: number];
     hide: [column: string];
     visibleRange: [first: number, last: number];
-    edit: [row: number, column: string, value: EditValue];
+    edit: [row: number, column: string, value: EditValue, index: number];
 }>();
 
 const editing = ref<{ row: number; col: number; draft: string } | null>(null);
@@ -73,14 +75,20 @@ function metaOf(row: number): RowMeta {
     return props.rowMeta?.[row] ?? null;
 }
 
+/**
+ * Gekürzter Text (über 1'000 Zeichen) wird nicht in der Zelle bearbeitet — gespeichert würde sonst nur der Anfang;
+ * dafür gibt es das Zeilen-Detail mit dem ganzen Wert.
+ */
 function canEdit(row: number, col: number): boolean {
-    const column = props.columns[col]?.column;
+    const entry = props.columns[col];
 
     return (
         !!props.editable &&
-        !!column &&
-        column.kind !== 'binary' &&
-        metaOf(row)?.state !== 'deleted'
+        !!entry &&
+        entry.column.kind !== 'binary' &&
+        metaOf(row)?.state !== 'deleted' &&
+        !isTruncatedCell(props.rows[row]?.[entry.index] ?? null) &&
+        !props.readOnlyColumns?.includes(entry.index)
     );
 }
 
@@ -93,7 +101,7 @@ function startEditing(row: number, col: number): void {
     const cell = props.rows[row]?.[index] ?? null;
 
     if (column.kind === 'boolean') {
-        emit('edit', row, column.name, cell === null ? true : !cell);
+        emit('edit', row, column.name, cell === null ? true : !cell, index);
 
         return;
     }
@@ -124,7 +132,7 @@ function commitEditing(move: 0 | 1 = 0): void {
         cell === null || typeof cell === 'object' ? null : String(cell);
 
     if (current.draft !== original) {
-        emit('edit', current.row, column.name, current.draft);
+        emit('edit', current.row, column.name, current.draft, index);
     }
 
     if (move) {
@@ -142,7 +150,13 @@ function setNull(): void {
     }
 
     editing.value = null;
-    emit('edit', current.row, props.columns[current.col].column.name, null);
+    emit(
+        'edit',
+        current.row,
+        props.columns[current.col].column.name,
+        null,
+        props.columns[current.col].index,
+    );
     scroller.value?.focus();
 }
 
