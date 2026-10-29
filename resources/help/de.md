@@ -1,6 +1,6 @@
 ## Anmelden {#anmelden}
 
-phpdbadmin kennt kein Passwort für Konten. Sie melden sich mit einem **Passkey** an (Fingerabdruck, Gesicht oder Geräte-PIN) oder mit einem **Code per Mail**, der 10 Minuten gilt. Passkeys verwalten Sie unter _Konto → Sicherheit_.
+phpdbadmin kennt kein Passwort für Konten. Sie melden sich mit einem **Passkey** an (Fingerabdruck, Gesicht oder Geräte-PIN) oder mit einem **Code per Mail**, der 10 Minuten gilt. Den Code tippen Sie Ziffer für Ziffer oder fügen ihn am Stück ein — sobald alle sechs Ziffern stehen, meldet phpdbadmin Sie an. Passkeys verwalten Sie unter _Konto → Sicherheit_.
 
 Neue Konten entstehen nur per **Einladung** durch eine Administratorin oder einen Administrator.
 

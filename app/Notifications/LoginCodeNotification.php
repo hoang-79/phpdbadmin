@@ -8,6 +8,7 @@ use Illuminate\Notifications\Notification;
 
 /**
  * Der Code per Mail (A-02): sechs Ziffern, zehn Minuten gültig. In der Sprache des Kontos (User::preferredLocale).
+ * Eigene Vorlage (resources/views/mail): ein Kästchen je Ziffer, darunter der Code am Stück zum Markieren.
  */
 class LoginCodeNotification extends Notification
 {
@@ -29,14 +30,16 @@ class LoginCodeNotification extends Notification
     {
         $isLogin = $this->purpose === LoginCode::PURPOSE_LOGIN;
         $appName = (string) config('app.name');
+        // Der Code steht bewusst nicht im Betreff: Betreffzeilen erscheinen auf gesperrten Bildschirmen.
+        $subject = $isLogin ? __('Ihr Anmeldecode für :app', ['app' => $appName]) : __('Ihr Bestätigungscode für :app', ['app' => $appName]);
 
         return (new MailMessage)
-            // Der Code steht bewusst nicht im Betreff: Betreffzeilen erscheinen auf gesperrten Bildschirmen.
-            ->subject($isLogin ? __('Ihr Anmeldecode für :app', ['app' => $appName]) : __('Ihr Bestätigungscode für :app', ['app' => $appName]))
-            ->greeting(__('Guten Tag'))
-            ->line($isLogin ? __('Ihr Code für die Anmeldung bei :app:', ['app' => $appName]) : __('Ihr Code zum Bestätigen:'))
-            ->line('**'.$this->code.'**')
-            ->line(__('Er ist :minutes Minuten gültig und nur einmal verwendbar.', ['minutes' => $this->minutes]))
-            ->line(__('Haben Sie keinen Code angefordert, können Sie diese Nachricht ignorieren.'));
+            ->subject($subject)
+            ->view(['mail.html.login-code', 'mail.text.login-code'], [
+                'subject' => $subject,
+                'intro' => $isLogin ? __('Ihr Code für die Anmeldung bei :app:', ['app' => $appName]) : __('Ihr Code zum Bestätigen:'),
+                'code' => $this->code,
+                'minutes' => $this->minutes,
+            ]);
     }
 }

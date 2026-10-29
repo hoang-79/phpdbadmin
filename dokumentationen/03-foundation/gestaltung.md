@@ -114,7 +114,8 @@ Beide Schriften werden wie heute Instrument Sans über `laravel-vite-plugin/font
 | **Detail-Schublade** | alle Felder einer Zeile, lange Werte (JSON formatiert, Binärdaten mit Grösse und Herunterladen), Verweise vor und zurück — inline, nie ein Fenster in der Schublade |
 | **Fehlerkarte** | Klartext oben («Die Spalte `total` darf nicht leer sein»), darunter der Originaltext des Servers mit Code, aufklappbar; nie gebundene Werte (maskiert) |
 | **Leerzustand** | Symbol, ein Satz, nächster Schritt als Knopf («Zeile einfügen», «Daten importieren») |
-| **Code-Eingabe** | ein Feld für sechs Ziffern, `autocomplete="one-time-code"`, Einfügen aus der Mail; kein Zerlegen in sechs Kästchen |
+| **Code-Eingabe** | ein Feld je Ziffer (Wunsch Hoang, 29.10.2026 — ersetzt «ein Feld, keine Kästchen»); `one-time-code` und Einfügen verteilen den Code auf alle Felder, Rücktaste und Pfeile springen; sind alle sechs gefüllt, schickt die Seite selbst ab — kein Knopf «Anmelden». Falscher Code: Felder leer, Fokus vorne, Fehler darunter |
+| **Mails** | eigenes Layout (`resources/views/mail`): Logo eingebettet (Content-ID), weisse Karte auf `flaeche`, Fusszeile mit Absender-Host; Stile inline. Code-Mail: ein Kästchen je Ziffer, darunter der Code am Stück zum Markieren per Doppelklick; die Vorschauzeile im Posteingang nennt nie den Code. Einladung mit Knopf und Link darunter |
 | **Befehlspalette** | ⌘K / Ctrl+K; Objekte, Aktionen, Verbindungen, zuletzt Benutztes; Pfeiltasten und Enter |
 | **Warnschild Konto** | an der Verbindung: «Dieses Konto darf Dateien auf dem Server lesen» mit Link zur Empfehlung (V-10) |
 
@@ -142,6 +143,6 @@ Kurz und funktional: 120–160 ms für Schubladen und Menüs, keine Animation im
 | G-03 | Umgebungsfarben | lokal Schiefer, Test Bernstein, Produktion Rot — mit Punkt-Symbol und Präfix im Seitentitel |
 | G-04 | Dichte | Standard 32 px Zeilenhöhe, «kompakt» 28 px je Konto wählbar |
 | G-05 | Dunkelmodus | gleichwertig, folgt dem System, umschaltbar im Kontomenü |
-| G-06 | Wortmarke | «phpdbadmin» in JetBrains Mono, «db» im Akzent; ein Zeichen folgt vor dem ersten öffentlichen Auftritt (als Pfade, nicht als Text) |
+| G-06 | Logo | **Logo-Kit seit 29.10.2026** ([`resources/brand`](../../resources/brand/README.md)): Bildmarke = «db»-Ligatur mit gemeinsamem Stamm aus JetBrains Mono Bold, weiss auf Petrol im abgerundeten Quadrat; Schriftzug «phpdbadmin» in JetBrains Mono SemiBold, «db» im Akzent — beides als Pfade. Logo quer und gestapelt, je hell, dunkel, schwarz, weiss; Favicons, Apple-Symbol, Link-Vorschau, Mail-Logo. In der App zeichnet `Wordmark.vue` Bildmarke und Schriftzug mit den Akzentvariablen |
 | G-07 | Datenraster auf dem Telefon | Kartenliste statt Tabelle |
 | G-08 | Bestätigungen | Namenseingabe nur bei zerstörenden Handlungen und auf Produktion — sonst genügt die Vorschau |

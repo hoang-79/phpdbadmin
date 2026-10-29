@@ -1,6 +1,6 @@
 ## Signing in {#anmelden}
 
-phpdbadmin has no passwords for accounts. You sign in with a **passkey** (fingerprint, face or device PIN) or with a **code by email** that is valid for 10 minutes. Manage your passkeys under _Account → Security_.
+phpdbadmin has no passwords for accounts. You sign in with a **passkey** (fingerprint, face or device PIN) or with a **code by email** that is valid for 10 minutes. Type the code digit by digit or paste it in one go — as soon as all six digits are in, phpdbadmin signs you in. Manage your passkeys under _Account → Security_.
 
 New accounts are created only by **invitation** from an administrator.
 

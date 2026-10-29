@@ -3,11 +3,10 @@ import { Form, Head, Link, setLayoutProps } from '@inertiajs/vue3';
 import { Mail, RefreshCw } from '@lucide/vue';
 import { useIntervalFn } from '@vueuse/core';
 import { ref } from 'vue';
+import CodeInput from '@/components/CodeInput.vue';
 import InputError from '@/components/InputError.vue';
 import Interpolate from '@/components/Interpolate.vue';
 import Notice from '@/components/Notice.vue';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { formatCountdown, formatTime } from '@/lib/format';
@@ -28,6 +27,7 @@ setLayoutProps({
 });
 
 const waitSeconds = ref(props.resendInSeconds);
+const codeInput = ref<InstanceType<typeof CodeInput> | null>(null);
 useIntervalFn(() => {
     waitSeconds.value = Math.max(0, waitSeconds.value - 1);
 }, 1000);
@@ -55,46 +55,38 @@ useIntervalFn(() => {
         </Interpolate>
     </Notice>
 
+    <!-- Kein Knopf: Sobald alle sechs Ziffern stehen, schickt die Seite selbst ab (Wunsch Hoang, 29.10.2026). -->
     <Form
         v-bind="verify.form()"
-        class="flex flex-col gap-5"
-        #default="{ errors, processing }"
+        class="flex flex-col gap-1.5"
+        #default="{ errors, processing, submit }"
+        @error="codeInput?.clear()"
     >
-        <div class="flex flex-col gap-1.5">
-            <Label for="code" class="text-[13px]">{{
-                t('Code aus der Mail')
-            }}</Label>
-            <Input
-                id="code"
-                name="code"
-                inputmode="numeric"
-                autocomplete="one-time-code"
-                maxlength="9"
-                required
-                autofocus
-                class="h-13 font-mono text-2xl tracking-[0.35em] md:text-2xl"
-                :aria-invalid="errors.code ? true : undefined"
-                aria-describedby="code-hint"
-            />
-            <InputError :message="errors.code" />
-            <p id="code-hint" class="text-xs text-muted-foreground">
-                {{
-                    t(
-                        'Sechs Ziffern. Sie können den Code auch aus der Mail einfügen — Ihr Gerät schlägt ihn oft schon vor.',
-                    )
-                }}
-            </p>
-        </div>
-
-        <Button
-            type="submit"
-            size="lg"
-            class="w-full text-[15px]"
-            :disabled="processing"
+        <Label for="code" class="text-[13px]">{{
+            t('Code aus der Mail')
+        }}</Label>
+        <CodeInput
+            id="code"
+            ref="codeInput"
+            :invalid="!!errors.code"
+            describedby="code-hint"
+            @complete="submit()"
+        />
+        <InputError :message="errors.code" />
+        <p
+            id="code-hint"
+            class="flex min-h-5 items-center gap-1.5 text-xs text-muted-foreground"
+            aria-live="polite"
         >
-            <Spinner v-if="processing" />
-            {{ t('Anmelden') }}
-        </Button>
+            <template v-if="processing">
+                <Spinner class="size-3.5" />{{ t('Code wird geprüft …') }}
+            </template>
+            <template v-else>{{
+                t(
+                    'Sechs Ziffern. Sie können den Code auch aus der Mail einfügen — Ihr Gerät schlägt ihn oft schon vor. Sobald alle Ziffern stehen, melden wir Sie an.',
+                )
+            }}</template>
+        </p>
     </Form>
 
     <div class="flex flex-wrap items-center justify-between gap-2 text-sm">

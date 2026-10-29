@@ -30,15 +30,17 @@ class InvitationNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $appName = (string) config('app.name');
+        $subject = __('Einladung zu :app', ['app' => $appName]);
 
         return (new MailMessage)
-            ->subject(__('Einladung zu :app', ['app' => $appName]))
-            ->greeting(__('Guten Tag'))
-            ->line($this->inviterName === null
-                ? __('Die Administration lädt Sie zu :app ein.', ['app' => $appName])
-                : __(':name lädt Sie zu :app ein.', ['name' => $this->inviterName, 'app' => $appName]))
-            ->action(__('Einladung annehmen'), $this->url)
-            ->line(__('Der Link gilt bis :time Uhr.', ['time' => $this->expiresAt->timezone((string) config('app.timezone'))->format('d.m.Y, H:i')]))
-            ->line(__('Ein Passwort gibt es nicht: Sie melden sich mit einem Code per Mail oder mit einem Passkey an.'));
+            ->subject($subject)
+            ->view(['mail.html.invitation', 'mail.text.invitation'], [
+                'subject' => $subject,
+                'intro' => $this->inviterName === null
+                    ? __('Die Administration lädt Sie zu :app ein.', ['app' => $appName])
+                    : __(':name lädt Sie zu :app ein.', ['name' => $this->inviterName, 'app' => $appName]),
+                'url' => $this->url,
+                'validity' => __('Der Link gilt bis :time Uhr.', ['time' => $this->expiresAt->timezone((string) config('app.timezone'))->format('d.m.Y, H:i')]),
+            ]);
     }
 }
