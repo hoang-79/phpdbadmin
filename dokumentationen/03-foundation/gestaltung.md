@@ -104,7 +104,7 @@ Beide Schriften werden wie heute Instrument Sans über `laravel-vite-plugin/font
 | Baustein | Verhalten |
 |---|---|
 | **Kopfleiste** | Verbindungs-Chip (Umgebung, Name, Treiber-Schild, Schloss bei Schreibschutz) · Befehlspalette-Feld mit ⌘K · Kontomenü |
-| **Navigator** | Baum Verbindung → Datenbank → Schema → Gruppe → Objekt; Suche oben; Gespeichertes und Verlauf unten; Breite am rechten Rand ziehbar (180–640 px, höchstens 60 % des Fensters; Pfeiltasten ±16 px, mit Umschalt ±64 px; Doppelklick: 256 px), im Browser gemerkt; auf schmalen Fenstern als Schublade |
+| **Navigator** | Baum Verbindung → Datenbank → Schema → Gruppe → Objekt; Suche oben; Gespeichertes und Verlauf unten; geöffnete Datenbank und geöffnetes Schema über den Pfeil zuklappbar (der Name führt zur Übersicht, der Filter klappt wieder auf); Breite am rechten Rand ziehbar (180–640 px, höchstens 60 % des Fensters; Pfeiltasten ±16 px, mit Umschalt ±64 px; Doppelklick: 256 px), im Browser gemerkt; auf schmalen Fenstern als Schublade |
 | **Reiter** | Daten · Struktur · Beziehungen · SQL je Objekt; offene Objekte als Reiterleiste, die umbricht statt zu scrollen |
 | **Filterleiste** | Bedingungen als Chips («status = offen»), «+ Filter», Umschalter «WHERE frei»; Zeilenzahl rechts (genau oder «≈») |
 | **Datenraster** | virtualisiert; erste Spalte fixiert; Spaltenbreite ziehbar und gemerkt; waagrechtes Scrollen nur hier, mit Verlaufskante und Chevron (P-10) |

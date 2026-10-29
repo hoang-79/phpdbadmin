@@ -16,7 +16,7 @@ import {
     Waypoints,
     Zap,
 } from '@lucide/vue';
-import { onBeforeUnmount, onMounted, ref, computed } from 'vue';
+import { onBeforeUnmount, onMounted, ref, computed, watch } from 'vue';
 import { formatRows } from '@/lib/environment';
 import { t } from '@/lib/i18n';
 import {
@@ -120,6 +120,23 @@ const icons: Record<string, unknown> = {
     type: Shapes,
 };
 
+// Geöffnete Datenbank und geöffnetes Schema lassen sich zuklappen; nach einem Wechsel stehen sie wieder offen.
+const databaseCollapsed = ref(false);
+const schemaCollapsed = ref(false);
+const databaseOpen = computed(
+    () => term.value !== '' || !databaseCollapsed.value,
+);
+const schemaOpen = computed(() => term.value !== '' || !schemaCollapsed.value);
+
+watch(
+    () => props.workspace.database,
+    () => (databaseCollapsed.value = false),
+);
+watch(
+    () => props.workspace.schema,
+    () => (schemaCollapsed.value = false),
+);
+
 function isOpen(group: NavigatorGroup): boolean {
     return term.value !== '' || !collapsed.value[group.key];
 }
@@ -183,13 +200,17 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                 <Database class="size-4 shrink-0 text-text-secondary" />
                 <span class="truncate">{{ name }}</span>
             </Link>
-            <div
+            <button
                 v-if="workspace.databaseLabel"
-                class="flex items-center gap-2 px-2 py-1.5 font-medium"
+                type="button"
+                class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left font-medium hover:bg-background"
+                :aria-expanded="databaseOpen"
                 :aria-current="workspace.databases ? 'location' : undefined"
+                :title="databaseOpen ? t('Zuklappen') : t('Aufklappen')"
+                @click="databaseCollapsed = !databaseCollapsed"
             >
-                <ChevronDown
-                    v-if="workspace.databases"
+                <component
+                    :is="databaseOpen ? ChevronDown : ChevronRight"
                     class="size-3.5 shrink-0 text-text-secondary"
                 />
                 <Database class="size-4 shrink-0 text-text-secondary" />
@@ -199,26 +220,62 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                     >{{ workspace.connection.driverLabel }}
                     {{ workspace.connection.serverVersion }}</span
                 >
-            </div>
+            </button>
 
-            <ul :class="workspace.databaseLabel ? 'pl-3' : ''">
+            <ul
+                v-if="databaseOpen"
+                :class="workspace.databaseLabel ? 'pl-3' : ''"
+            >
                 <li v-for="name in workspace.schemas" :key="name">
-                    <Link
-                        :href="schemaHref(workspace, name)"
-                        :class="[
-                            'flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-background',
-                            name === workspace.schema && 'font-medium',
-                        ]"
-                        :aria-current="
-                            name === workspace.schema ? 'page' : undefined
-                        "
+                    <div
+                        v-if="name === workspace.schema"
+                        class="flex items-center rounded-md font-medium"
                     >
-                        <component
-                            :is="
-                                name === workspace.schema
-                                    ? ChevronDown
-                                    : ChevronRight
+                        <!-- Der Pfeil klappt zu und auf, der Name führt zur Übersicht. -->
+                        <button
+                            type="button"
+                            class="flex shrink-0 items-center self-stretch rounded-md pr-1.5 pl-2 text-text-secondary outline-none hover:bg-background focus-visible:ring-2 focus-visible:ring-ring"
+                            :aria-expanded="schemaOpen"
+                            :aria-label="name"
+                            :title="
+                                schemaOpen ? t('Zuklappen') : t('Aufklappen')
                             "
+                            @click="schemaCollapsed = !schemaCollapsed"
+                        >
+                            <component
+                                :is="schemaOpen ? ChevronDown : ChevronRight"
+                                class="size-3.5"
+                            />
+                        </button>
+                        <Link
+                            :href="schemaHref(workspace, name)"
+                            class="flex min-w-0 flex-1 items-center gap-2 rounded-md py-1.5 pr-2 pl-0.5 hover:bg-background"
+                            aria-current="page"
+                            @click="schemaCollapsed = false"
+                        >
+                            <component
+                                :is="
+                                    workspace.schemaKind === 'schema'
+                                        ? Layers
+                                        : Database
+                                "
+                                class="size-4 shrink-0 text-text-secondary"
+                            />
+                            <span class="truncate">{{ name }}</span>
+                            <span
+                                v-if="!workspace.databaseLabel"
+                                class="ml-auto shrink-0 text-xs font-normal text-muted-foreground"
+                                >{{ workspace.connection.driverLabel }}
+                                {{ workspace.connection.serverVersion }}</span
+                            >
+                        </Link>
+                    </div>
+                    <Link
+                        v-else
+                        :href="schemaHref(workspace, name)"
+                        class="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-background"
+                    >
+                        <ChevronRight
                             class="size-3.5 shrink-0 text-text-secondary"
                         />
                         <component
@@ -230,18 +287,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                             class="size-4 shrink-0 text-text-secondary"
                         />
                         <span class="truncate">{{ name }}</span>
-                        <span
-                            v-if="
-                                !workspace.databaseLabel &&
-                                name === workspace.schema
-                            "
-                            class="ml-auto shrink-0 text-xs font-normal text-muted-foreground"
-                            >{{ workspace.connection.driverLabel }}
-                            {{ workspace.connection.serverVersion }}</span
-                        >
                     </Link>
 
-                    <ul v-if="name === workspace.schema" class="pl-4">
+                    <ul
+                        v-if="name === workspace.schema && schemaOpen"
+                        class="pl-4"
+                    >
                         <li>
                             <Link
                                 :href="diagramHref(workspace)"
