@@ -4,6 +4,7 @@ import {
     ArrowRight,
     Code,
     Copy,
+    FileCode,
     Info,
     KeyRound,
     Link2,
@@ -16,6 +17,7 @@ import { toast } from 'vue-sonner';
 import ObjectHeader from '@/components/workspace/ObjectHeader.vue';
 import { titlePrefix } from '@/lib/environment';
 import { t } from '@/lib/i18n';
+import { migrationHref } from '@/lib/migration';
 import { structureHref } from '@/lib/workspace';
 import type { ObjectStructure, StructureColumn, Workspace } from '@/types';
 
@@ -142,6 +144,14 @@ async function copyDdl(): Promise<void> {
                         >{{ section.count }}</span
                     >
                 </a>
+                <Link
+                    v-if="!isView"
+                    :href="migrationHref(workspace, structure.object.name)"
+                    class="inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[13px] outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+                    ><FileCode class="size-3.5" />{{
+                        t('Laravel-Migration')
+                    }}</Link
+                >
                 <span
                     class="ml-auto hidden items-center gap-1.5 text-[13px] text-text-secondary lg:inline-flex"
                 >

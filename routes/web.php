@@ -14,6 +14,7 @@ use App\Http\Controllers\Connections\TestConnectionController;
 use App\Http\Controllers\PaletteController;
 use App\Http\Controllers\Workspace\ConnectionPasswordController;
 use App\Http\Controllers\Workspace\ImportController;
+use App\Http\Controllers\Workspace\MigrationController;
 use App\Http\Controllers\Workspace\ObjectController;
 use App\Http\Controllers\Workspace\RowChangeController;
 use App\Http\Controllers\Workspace\Server;
@@ -64,6 +65,8 @@ Route::middleware('auth')->group(function () {
         Route::prefix('s/{schema}/o/{object}')->where(['schema' => '[^/]+', 'object' => '[^/]+'])->group(function () {
             Route::get('/', [ObjectController::class, 'data'])->name('workspace.object');
             Route::get('structure', [ObjectController::class, 'structure'])->name('workspace.object.structure');
+            // Laravel-Migration aus der Tabelle (S-09).
+            Route::get('migration', MigrationController::class)->name('workspace.object.migration');
             Route::get('rows', [ObjectController::class, 'rows'])->name('workspace.object.rows');
             Route::get('count', [ObjectController::class, 'count'])->name('workspace.object.count');
             Route::get('row', [ObjectController::class, 'row'])->name('workspace.object.row');
