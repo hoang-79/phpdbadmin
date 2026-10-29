@@ -2,23 +2,27 @@
 
 Datenbanken im Browser verwalten — **MariaDB, MySQL, PostgreSQL und SQLite** in einer Oberfläche. Selbst gehostet, Anmeldung ohne Passwort (Code per Mail und Passkey), Deutsch und Englisch.
 
-- **Ansehen:** Navigator über Datenbanken, Schemas und Objekte; Datenraster mit Filtern, Suche, Fremdschlüsseln in beide Richtungen und Zeilen-Detail; Struktur mit Indizes, Fremdschlüsseln, Triggern und DDL.
-- **Ändern ohne Angst:** jede Änderung zuerst als SQL-Vorschau (mit den Zeilen, die `ON DELETE CASCADE` mitlöscht), dann in einer Transaktion angewendet und rückgängig zu machen. Verbindungen sind nach Umgebung markiert (lokal, Test, Produktion); Produktion verlangt den Namen der Verbindung, schreibgeschützte Verbindungen lassen sich mit Grund für 15 Minuten freigeben.
-- **SQL-Editor** mit Vervollständigung aus dem Katalog, Zeit- und Zeilengrenze, Abbrechen auf dem Server, Verlauf und gespeicherten Abfragen; Befehlspalette mit ⌘K.
-- **Export und Import** (CSV, JSON, SQL) im Hintergrund, Statistik nach Importen.
+- **Ansehen:** Navigator über Datenbanken, Schemas und Objekte (Tabellen, Sichten, Routinen, Trigger, Sequenzen, Typen); Datenraster mit Filtern, Suche, Fremdschlüsseln in beide Richtungen und Zeilen-Detail; Struktur mit Indizes, Fremdschlüsseln, Triggern und DDL; Beziehungsdiagramm als SVG; Suche über ein ganzes Schema.
+- **Ändern ohne Angst:** jede Änderung zuerst als SQL-Vorschau (mit den Zeilen, die `ON DELETE CASCADE` mitlöscht), dann in einer Transaktion angewendet und rückgängig zu machen — im Raster, in Ergebnissen des SQL-Editors und beim Suchen und Ersetzen. Verbindungen sind nach Umgebung markiert (lokal, Test, Produktion); Produktion verlangt den Namen der Verbindung, schreibgeschützte Verbindungen lassen sich mit Grund für 15 Minuten freigeben.
+- **Struktur ändern:** Tabellen anlegen und ändern, Sichten und Routinen bearbeiten — je Treiber richtig angewendet (SQLite nach dem Umbauverfahren, PostgreSQL in einer Transaktion), mit Vorschau des genauen SQL.
+- **SQL-Editor** mit Vervollständigung aus dem Katalog, Zeit- und Zeilengrenze, Abbrechen auf dem Server, EXPLAIN als Baum mit Hinweisen, Verlauf und gespeicherten Abfragen; Befehlspalette mit ⌘K; auf Wunsch SQL-Hilfe mit KI (nur mit eigenem Schlüssel, nur das Schema wird gesendet).
+- **Export, Import, Sicherung:** CSV, JSON, SQL und Excel im Hintergrund; Sicherung und Wiederherstellung über `mysqldump`, `pg_dump` und `sqlite3`; Statistik nach Importen.
+- **Vergleichen:** zwei Schemas gegenüberstellen — auch zwischen verschiedenen Datenbanken — mit Änderungsskript im Dialekt des Ziels; Laravel-Migration aus einer Tabelle.
+- **Verbinden:** direkt oder über einen SSH-Tunnel; lokal mit Laravel Herd schlägt das Formular die Herd-Dienste und Sites vor.
 - **Server-Verwaltung:** Prozesse, Variablen, Konten und Rechte, Wartung.
-- **Mehrere Konten:** Rechte je Verbindung (lesen, schreiben, verwalten), Teilen, Einladungen und ein Protokoll jeder schreibenden Aktion — ohne Werte.
+- **Mehrere Konten:** Rechte je Verbindung (lesen, schreiben, verwalten), Teilen, Einladungen, aktive Sitzungen und ein Protokoll jeder schreibenden Aktion — ohne Werte.
 
 ## Voraussetzungen
 
-|               |                                                                                                                                                   |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| PHP           | 8.5 mit `pdo`, `mbstring`, `openssl`, `ctype`, `fileinfo`, `tokenizer`; je nach Datenbank `pdo_mysql`, `pdo_pgsql`, `pdo_sqlite`; `zip` für Excel |
-| Composer      | 2                                                                                                                                                 |
-| Node.js       | 22 oder neuer (nur zum Bauen der Oberfläche)                                                                                                      |
-| Webserver     | beliebig mit PHP-FPM, Dokumentenwurzel `public/` — oder Laravel Herd, Valet, `php artisan serve`                                                  |
-| App-Datenbank | SQLite (Vorgabe), MariaDB, MySQL oder PostgreSQL — getrennt von den Datenbanken, die Sie verwalten                                                |
-| HTTPS         | für Passkeys nötig (ausser auf `localhost`)                                                                                                       |
+|               |                                                                                                                                                               |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PHP           | 8.5 mit `pdo`, `mbstring`, `openssl`, `ctype`, `fileinfo`, `tokenizer`; je nach Datenbank `pdo_mysql`, `pdo_pgsql`, `pdo_sqlite`; `zip` für Excel             |
+| Composer      | 2                                                                                                                                                             |
+| Node.js       | 22 oder neuer (nur zum Bauen der Oberfläche)                                                                                                                  |
+| Webserver     | beliebig mit PHP-FPM, Dokumentenwurzel `public/` — oder Laravel Herd, Valet, `php artisan serve`                                                              |
+| App-Datenbank | SQLite (Vorgabe), MariaDB, MySQL oder PostgreSQL — getrennt von den Datenbanken, die Sie verwalten                                                            |
+| HTTPS         | für Passkeys nötig (ausser auf `localhost`)                                                                                                                   |
+| Optional      | `ssh` für SSH-Tunnel; `mysqldump`/`mariadb-dump`, `pg_dump`/`pg_restore`/`psql`, `sqlite3` für Sicherung und Wiederherstellung (Pfade in `PHPDBADMIN_TOOL_*`) |
 
 ## Installation
 
