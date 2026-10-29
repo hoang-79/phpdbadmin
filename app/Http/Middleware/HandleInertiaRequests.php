@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\User;
+use App\Services\Ai\SqlAssistant;
 use App\Support\Translations;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -56,6 +57,8 @@ class HandleInertiaRequests extends Middleware
                     'email' => $user->email,
                     'role' => $user->role->value,
                     'isAdmin' => $user->isAdmin(),
+                    // KI-Hilfe (Q-08): eingeschaltet und Schlüssel hinterlegt — nie der Schlüssel selbst.
+                    'ai' => SqlAssistant::enabled() ? ['hasKey' => filled($user->ai_api_key)] : null,
                 ] : null,
             ],
         ];

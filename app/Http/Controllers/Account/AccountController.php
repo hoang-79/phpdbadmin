@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\Ai\SqlAssistant;
+use App\Services\Auth\ActiveSessions;
 use App\Support\RecentConfirmation;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -36,6 +38,8 @@ class AccountController extends Controller
                 'lastUsedAt' => $passkey->last_used_at?->toIso8601String(),
             ])->values(),
             'canManagePasskeys' => RecentConfirmation::holds($request),
+            'aiKey' => SqlAssistant::enabled() ? ['hint' => filled($user->ai_api_key) ? '…'.substr((string) $user->ai_api_key, -4) : null] : null,
+            'sessions' => ActiveSessions::available() ? app(ActiveSessions::class)->of($user, $request->session()->getId()) : null,
         ]);
     }
 }

@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Account\AccountController;
+use App\Http\Controllers\Account\AiKeyController;
 use App\Http\Controllers\Account\LocaleController;
 use App\Http\Controllers\Account\OnboardingController;
+use App\Http\Controllers\Account\SessionController;
 use App\Http\Controllers\Admin\AccountController as AdminAccountController;
 use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\InvitationController as AdminInvitationController;
@@ -17,6 +19,7 @@ use App\Http\Controllers\Workspace\ImportController;
 use App\Http\Controllers\Workspace\ObjectController;
 use App\Http\Controllers\Workspace\RowChangeController;
 use App\Http\Controllers\Workspace\Server;
+use App\Http\Controllers\Workspace\SqlAssistController;
 use App\Http\Controllers\Workspace\SqlController;
 use App\Http\Controllers\Workspace\TransferController;
 use App\Http\Controllers\Workspace\WorkspaceController;
@@ -64,6 +67,8 @@ Route::middleware('auth')->group(function () {
         Route::get('sql/history', [SqlController::class, 'searchHistory'])->name('workspace.sql.history');
         Route::post('sql/saved', [SqlController::class, 'save'])->name('workspace.sql.saved.store');
         Route::delete('sql/saved/{query}', [SqlController::class, 'forget'])->name('workspace.sql.saved.destroy');
+        // SQL-Hilfe mit KI (Q-08): nur eingeschaltet, nur mit eigenem Schlüssel.
+        Route::post('sql/assist', SqlAssistController::class)->middleware('throttle:ai-assist')->name('workspace.sql.assist');
         Route::prefix('s/{schema}/o/{object}')->where(['schema' => '[^/]+', 'object' => '[^/]+'])->group(function () {
             Route::get('/', [ObjectController::class, 'data'])->name('workspace.object');
             Route::get('structure', [ObjectController::class, 'structure'])->name('workspace.object.structure');
@@ -129,4 +134,11 @@ Route::middleware('auth')->group(function () {
     // Kein Profil (A-05): das Konto zeigt Sicherheit und Darstellung.
     Route::get('account', [AccountController::class, 'show'])->name('account');
     Route::put('account/locale', LocaleController::class)->name('account.locale');
+    // Eigener Schlüssel für die KI-Hilfe (Q-08).
+    Route::put('account/ai-key', [AiKeyController::class, 'update'])->name('account.ai-key.update');
+    Route::delete('account/ai-key', [AiKeyController::class, 'destroy'])->name('account.ai-key.destroy');
+
+    // Aktive Sitzungen beenden (A-08).
+    Route::delete('account/sessions', [SessionController::class, 'destroyOthers'])->name('account.sessions.destroy-others');
+    Route::delete('account/sessions/{session}', [SessionController::class, 'destroy'])->where('session', '[0-9a-f]{32}')->name('account.sessions.destroy');
 });

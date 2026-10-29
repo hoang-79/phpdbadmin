@@ -7,10 +7,22 @@ export type User = {
     email: string;
     role: UserRole;
     isAdmin: boolean;
+    /** KI-Hilfe (Q-08): null, wenn die Installation sie nicht eingeschaltet hat. */
+    ai: { hasKey: boolean } | null;
 };
 
 export type Auth = {
     user: User | null;
+};
+
+/** Aktive Sitzung (A-08); `key` ist ein HMAC der Sitzungskennung, nie die Kennung selbst. */
+export type ActiveSession = {
+    key: string;
+    current: boolean;
+    ip: string | null;
+    browser: string | null;
+    os: string | null;
+    lastActiveAt: string;
 };
 
 export type Passkey = {

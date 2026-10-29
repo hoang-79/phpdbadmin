@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { LogOut } from '@lucide/vue';
+import AiKeyCard from '@/components/account/AiKeyCard.vue';
 import AppearanceCard from '@/components/account/AppearanceCard.vue';
 import PasskeyCard from '@/components/account/PasskeyCard.vue';
+import SessionsCard from '@/components/account/SessionsCard.vue';
 import Notice from '@/components/Notice.vue';
 import { Button } from '@/components/ui/button';
 import { getInitials } from '@/composables/useInitials';
 import { formatDate } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import { logout } from '@/routes';
-import type { Passkey } from '@/types';
+import type { ActiveSession, Passkey } from '@/types';
 
 /** Konto (A-05, Wireframe 13): Sicherheit und Darstellung — keine Profilseite. */
 defineProps<{
@@ -22,6 +24,10 @@ defineProps<{
     };
     passkeys: Passkey[];
     canManagePasskeys: boolean;
+    /** null, wenn der Sitzungstreiber nicht `database` ist — dann gibt es keine Liste. */
+    sessions: ActiveSession[] | null;
+    /** null, wenn die Installation die KI-Hilfe nicht eingeschaltet hat. */
+    aiKey: { hint: string | null } | null;
 }>();
 </script>
 
@@ -100,6 +106,18 @@ defineProps<{
             />
 
             <AppearanceCard class="lg:col-start-2 lg:row-start-2" />
+
+            <AiKeyCard
+                v-if="aiKey"
+                class="lg:col-start-2 lg:row-start-3"
+                :hint="aiKey.hint"
+            />
+
+            <SessionsCard
+                v-if="sessions"
+                class="lg:col-start-1 lg:row-start-3"
+                :sessions="sessions"
+            />
         </div>
     </div>
 </template>

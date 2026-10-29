@@ -27,6 +27,7 @@ use Laravel\Fortify\PasskeyAuthenticatable;
  * @property string $theme
  * @property string $density
  * @property string $timezone
+ * @property string|null $ai_api_key
  * @property CarbonImmutable|null $last_login_at
  * @property CarbonImmutable|null $disabled_at
  * @property CarbonImmutable|null $created_at
@@ -45,6 +46,13 @@ class User extends Authenticatable implements HasLocalePreference, PasskeyUser
      * @var string
      */
     protected $rememberTokenName = '';
+
+    /**
+     * Der eigene Schlüssel für die KI-Hilfe (Q-08) verlässt den Server nur in Richtung des Anbieters.
+     *
+     * @var list<string>
+     */
+    protected $hidden = ['ai_api_key'];
 
     /**
      * Vorgaben wie in der Migration — sonst fehlen sie einem frisch angelegten Modell bis zum Neuladen.
@@ -67,6 +75,7 @@ class User extends Authenticatable implements HasLocalePreference, PasskeyUser
             'role' => UserRole::class,
             'last_login_at' => 'datetime',
             'disabled_at' => 'datetime',
+            'ai_api_key' => 'encrypted',
         ];
     }
 

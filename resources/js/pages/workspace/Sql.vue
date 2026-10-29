@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import {
     Bookmark,
     CircleAlert,
@@ -13,10 +13,12 @@ import {
     Search,
     Square,
     Trash2,
+    Sparkles,
     WandSparkles,
 } from '@lucide/vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import Notice from '@/components/Notice.vue';
+import AiAssistDialog from '@/components/workspace/sql/AiAssistDialog.vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -305,6 +307,16 @@ async function loadMore(index: number): Promise<void> {
     }
 }
 
+const page = usePage();
+const ai = computed(() => page.props.auth.user?.ai ?? null);
+const assistOpen = ref(false);
+
+/** Vorschlag der KI-Hilfe ans Ende hängen — der Text im Editor bleibt, nichts läuft von selbst. */
+function insertSuggestion(sql: string): void {
+    text.value = text.value.trim() ? `${text.value.trimEnd()}\n\n${sql}` : sql;
+    editorRef.value?.focus();
+}
+
 function format(): void {
     text.value = formatSql(text.value);
 }
@@ -434,6 +446,14 @@ const statusIcons: Record<string, unknown> = {
                 </div>
                 <Button size="sm" variant="outline" @click="format">
                     <WandSparkles />{{ t('Formatieren') }}
+                </Button>
+                <Button
+                    v-if="ai && workspace.schema"
+                    size="sm"
+                    variant="outline"
+                    @click="assistOpen = true"
+                >
+                    <Sparkles />{{ t('KI fragen') }}
                 </Button>
                 <Button
                     size="sm"
@@ -796,5 +816,13 @@ const statusIcons: Record<string, unknown> = {
                 </form>
             </DialogContent>
         </Dialog>
+
+        <AiAssistDialog
+            v-if="ai && workspace.schema"
+            v-model:open="assistOpen"
+            :workspace="workspace"
+            :has-key="ai.hasKey"
+            @insert="insertSuggestion"
+        />
     </div>
 </template>

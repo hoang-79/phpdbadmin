@@ -131,4 +131,25 @@ return [
         'statement_timeout_ms' => (int) env('PHPDBADMIN_TRANSFERS_STATEMENT_TIMEOUT_MS', 600000),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | SQL-Hilfe mit KI (Q-08)
+    |--------------------------------------------------------------------------
+    |
+    | Aus, bis die Installation sie einschaltet. Dann braucht jedes Konto seinen eigenen Schlüssel (Konto → KI-Hilfe);
+    | gesendet werden nur die Frage und das Schema (Tabellen, Spalten, Typen, Schlüssel) — nie Daten, nie der Text
+    | im Editor. Claude über die Messages API von Anthropic.
+    |
+    */
+
+    'ai' => [
+        'enabled' => (bool) env('PHPDBADMIN_AI', false),
+        'model' => (string) env('PHPDBADMIN_AI_MODEL', 'claude-opus-5-5'),
+        'effort' => (string) env('PHPDBADMIN_AI_EFFORT', 'medium'),
+        'endpoint' => (string) env('PHPDBADMIN_AI_ENDPOINT', 'https://api.anthropic.com/v1/messages'),
+        'timeout_seconds' => (int) env('PHPDBADMIN_AI_TIMEOUT', 120),
+        // So viel Schema geht höchstens mit; darüber werden Tabellen weggelassen und die Antwort sagt es.
+        'max_schema_chars' => (int) env('PHPDBADMIN_AI_MAX_SCHEMA_CHARS', 60000),
+    ],
+
 ];

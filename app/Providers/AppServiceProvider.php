@@ -7,6 +7,7 @@ use App\Connections\TargetConnections;
 use App\Models\DatabaseConnection;
 use App\Models\User;
 use App\Support\QueueHeartbeat;
+use App\Support\SourceLocaleTranslator;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -20,11 +21,20 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Translation\Translator;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Deutsch ist die Quellsprache: Mehrzahl auf Deutsch bleibt Deutsch (SourceLocaleTranslator).
+        $this->app->extend('translator', function (Translator $translator): SourceLocaleTranslator {
+            $source = new SourceLocaleTranslator($translator->getLoader(), $translator->getLocale());
+            $source->setFallback($translator->getFallback());
+
+            return $source;
+        });
+
         // Je Auflösung neu aus der Konfiguration, damit Änderungen (und Tests) sofort gelten.
         $this->app->bind(HostPolicy::class, fn (): HostPolicy => HostPolicy::fromConfig());
 
@@ -52,6 +62,10 @@ class AppServiceProvider extends ServiceProvider
         // «Verbindung testen» baut echte Verbindungen auf: je Konto höchstens zwanzig je Minute.
         RateLimiter::for('connection-test', fn (Request $request): Limit => Limit::perMinute(20)
             ->by('connection-test:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
+
+        // KI-Hilfe (Q-08): kostet das Konto Geld — je Konto höchstens zehn Anfragen je Minute.
+        RateLimiter::for('ai-assist', fn (Request $request): Limit => Limit::perMinute(10)
+            ->by('ai-assist:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
 
         // Einladungen verschicken Mails: je Konto höchstens zwanzig je Stunde.
         RateLimiter::for('invitations', fn (Request $request): Limit => Limit::perHour(20)
