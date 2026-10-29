@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { Columns3, RotateCcw } from '@lucide/vue';
+import {
+    ClipboardCopy,
+    Columns3,
+    Eye,
+    Plus,
+    RotateCcw,
+    Undo2,
+} from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
+import { toast } from 'vue-sonner';
 import Notice from '@/components/Notice.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,16 +17,35 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import ChangePreviewSheet from '@/components/workspace/data/ChangePreviewSheet.vue';
 import DataGrid from '@/components/workspace/data/DataGrid.vue';
+import type { RowMeta } from '@/components/workspace/data/DataGrid.vue';
 import FilterBar from '@/components/workspace/data/FilterBar.vue';
 import MobileRows from '@/components/workspace/data/MobileRows.vue';
 import RowDetailSheet from '@/components/workspace/data/RowDetailSheet.vue';
 import ObjectHeader from '@/components/workspace/ObjectHeader.vue';
-import { ApiError, getJson, putJson } from '@/lib/api';
+import { rowId, useRowChanges } from '@/composables/useRowChanges';
+import type { EditValue } from '@/composables/useRowChanges';
+import { ApiError, getJson, postJson, putJson } from '@/lib/api';
+import { formatTime } from '@/lib/format';
 import { titlePrefix } from '@/lib/environment';
 import { formatSort, parseSort, toggleSort } from '@/lib/grid';
-import { formatNumber, t } from '@/lib/i18n';
-import { countUrl, dataHref, rowsUrl, viewUrl } from '@/lib/workspace';
+import { formatNumber, t, tc } from '@/lib/i18n';
+import {
+    countUrl,
+    dataHref,
+    gridParams,
+    rowsUrl,
+    viewUrl,
+} from '@/lib/workspace';
+import { copy as copyRoute } from '@/routes/workspace/object';
+import { undo as undoRoute } from '@/routes/workspace/object/changes';
 import type {
     Cell,
     FilterOperatorOption,
@@ -44,7 +71,187 @@ const props = defineProps<{
     query: GridQueryState;
     operators: FilterOperatorOption[];
     view: GridView;
+    editing: {
+        allowed: boolean;
+        reason: 'view' | 'right' | 'readonly' | 'key' | null;
+    };
+    lastChange: { auditId: number; at: string | null; rows: number } | null;
 }>();
+
+const changes = useRowChanges();
+const previewOpen = ref(false);
+const undoing = ref(false);
+
+/** Neue Zeilen oben, darunter die geladenen mit eingesetzten Änderungen. */
+const displayRows = computed<Cell[][]>(() => [
+    ...changes.inserts.value.map((row) =>
+        props.columns.map((column) =>
+            column.name in row.values ? (row.values[column.name] as Cell) : '',
+        ),
+    ),
+    ...rows.value.map((row, index) => {
+        const edit = changes.edits.value.get(rowId(keys.value[index] ?? []));
+
+        return edit
+            ? row.map((cell, column) =>
+                  (props.columns[column]?.name ?? '') in edit.values
+                      ? (edit.values[props.columns[column].name] as Cell)
+                      : cell,
+              )
+            : row;
+    }),
+]);
+
+const rowMeta = computed<RowMeta[]>(() => [
+    ...changes.inserts.value.map(() => ({
+        state: 'new' as const,
+        changed: [],
+    })),
+    ...rows.value.map((_, index) => {
+        const id = rowId(keys.value[index] ?? []);
+
+        if (changes.deletes.value.has(id)) {
+            return { state: 'deleted' as const, changed: [] };
+        }
+
+        const edit = changes.edits.value.get(id);
+
+        return edit ? { state: null, changed: Object.keys(edit.values) } : null;
+    }),
+]);
+
+function onEdit(displayIndex: number, column: string, value: EditValue): void {
+    const insertCount = changes.inserts.value.length;
+
+    if (displayIndex < insertCount) {
+        changes.setInsertCell(
+            changes.inserts.value[displayIndex].id,
+            column,
+            value,
+        );
+
+        return;
+    }
+
+    const index = displayIndex - insertCount;
+    const position = props.columns.findIndex((item) => item.name === column);
+    const cell = rows.value[index]?.[position] ?? null;
+    const original: EditValue =
+        cell === null || typeof cell === 'object'
+            ? null
+            : typeof value === 'string'
+              ? String(cell)
+              : cell;
+
+    changes.setCell(keys.value[index] ?? [], column, value, original);
+}
+
+function onOpen(displayIndex: number): void {
+    const index = displayIndex - changes.inserts.value.length;
+
+    if (index >= 0) {
+        openRow(index);
+    }
+}
+
+function insertRow(values: Record<string, EditValue> = {}): void {
+    changes.insert(values);
+}
+
+function onApplied(result: {
+    auditId: number;
+    inserted: number;
+    updated: number;
+    deleted: number;
+}): void {
+    toast.success(
+        t('Angewendet: :inserted neu, :updated geändert, :deleted gelöscht.', {
+            inserted: result.inserted,
+            updated: result.updated,
+            deleted: result.deleted,
+        }),
+    );
+    changes.discard();
+    router.reload({ only: ['grid', 'gridError', 'lastChange', 'object'] });
+}
+
+async function undoLast(): Promise<void> {
+    if (!props.lastChange) {
+        return;
+    }
+
+    undoing.value = true;
+
+    try {
+        await postJson(
+            undoRoute.url(
+                [
+                    props.workspace.connection.id,
+                    encodeURIComponent(props.workspace.schema ?? ''),
+                    encodeURIComponent(props.object.name),
+                    props.lastChange.auditId,
+                ],
+                {
+                    query: props.workspace.database
+                        ? { db: props.workspace.database }
+                        : {},
+                },
+            ),
+            {},
+        );
+        toast.success(t('Rückgängig gemacht.'));
+        router.reload({ only: ['grid', 'gridError', 'lastChange', 'object'] });
+    } catch (error) {
+        toast.error(
+            error instanceof ApiError && 'message' in error.failure
+                ? String((error.failure as { message: string }).message)
+                : t('Rückgängig ging nicht.'),
+        );
+    } finally {
+        undoing.value = false;
+    }
+}
+
+async function copyAs(format: 'tsv' | 'markdown' | 'insert'): Promise<void> {
+    try {
+        const result = await getJson<{ text: string; rows: number }>(
+            copyRoute.url(
+                [
+                    props.workspace.connection.id,
+                    encodeURIComponent(props.workspace.schema ?? ''),
+                    encodeURIComponent(props.object.name),
+                ],
+                {
+                    query: {
+                        ...(props.workspace.database
+                            ? { db: props.workspace.database }
+                            : {}),
+                        ...gridParams(props.query),
+                        format,
+                    },
+                },
+            ),
+        );
+        await navigator.clipboard.writeText(result.text);
+        toast.success(
+            tc(':count Zeile kopiert.|:count Zeilen kopiert.', result.rows),
+        );
+    } catch {
+        toast.error(t('Kopieren ging nicht.'));
+    }
+}
+
+const readOnlyHint = computed(
+    () =>
+        ({
+            view: t('Sicht — nur lesen'),
+            right: t('Ihr Konto darf hier nur lesen'),
+            readonly: t(
+                'schreibgeschützt — Schutz auf Zeit aufheben im Menü der Verbindung',
+            ),
+            key: t('ohne Primärschlüssel — nur lesen'),
+        })[props.editing.reason ?? 'view'],
+);
 
 const rows = ref<Cell[][]>([]);
 const keys = ref<(string | null)[][]>([]);
@@ -275,7 +482,18 @@ function stepRow(step: number): void {
     <Head :title="title" />
 
     <div class="flex h-full min-h-0 flex-col">
-        <ObjectHeader :workspace="workspace" :object="object" active="data" />
+        <ObjectHeader :workspace="workspace" :object="object" active="data">
+            <template #actions>
+                <Button
+                    v-if="editing.allowed"
+                    size="sm"
+                    variant="outline"
+                    @click="insertRow()"
+                >
+                    <Plus />{{ t('Zeile einfügen') }}
+                </Button>
+            </template>
+        </ObjectHeader>
 
         <FilterBar
             :columns="columns"
@@ -307,7 +525,7 @@ function stepRow(step: number): void {
 
         <template v-else-if="grid">
             <div
-                v-if="!rows.length"
+                v-if="!displayRows.length"
                 class="m-4 flex flex-col items-center gap-3 rounded-lg border border-dashed px-6 py-12 text-center sm:mx-6"
             >
                 <p class="font-semibold">
@@ -331,7 +549,9 @@ function stepRow(step: number): void {
                     class="hidden md:block"
                     :workspace="workspace"
                     :columns="visibleColumns"
-                    :rows="rows"
+                    :rows="displayRows"
+                    :row-meta="rowMeta"
+                    :editable="editing.allowed"
                     :labels="labels"
                     :widths="widths"
                     :sort="sort"
@@ -339,7 +559,8 @@ function stepRow(step: number): void {
                     :loading="loadingMore"
                     @sort="onSort"
                     @load-more="loadMore"
-                    @open="openRow"
+                    @open="onOpen"
+                    @edit="onEdit"
                     @resize="resize"
                     @hide="toggleColumn"
                     @visible-range="(first, last) => (visible = [first, last])"
@@ -358,6 +579,72 @@ function stepRow(step: number): void {
 
             <div v-if="loadFailure" class="border-t px-4 py-2 sm:px-6">
                 <Notice variant="danger">{{ loadFailure }}</Notice>
+            </div>
+
+            <div
+                v-if="changes.total.value > 0"
+                class="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-t bg-accent/60 px-4 py-2.5 text-[13px] sm:px-6"
+                role="status"
+            >
+                <b class="text-sm font-semibold">{{
+                    tc(
+                        ':count Änderung noch nicht angewendet|:count Änderungen noch nicht angewendet',
+                        changes.total.value,
+                    )
+                }}</b>
+                <span
+                    v-if="changes.counts.value.cells"
+                    class="inline-flex items-center gap-1.5"
+                    ><i
+                        class="size-3 rounded-sm bg-[var(--cell-changed)] ring-1 ring-border"
+                    />{{
+                        tc(
+                            ':count Zelle geändert|:count Zellen geändert',
+                            changes.counts.value.cells,
+                        )
+                    }}</span
+                >
+                <span
+                    v-if="changes.counts.value.inserts"
+                    class="inline-flex items-center gap-1.5"
+                    ><i
+                        class="size-3 rounded-sm bg-[var(--cell-new)] ring-1 ring-border"
+                    />{{
+                        tc(
+                            ':count Zeile neu|:count Zeilen neu',
+                            changes.counts.value.inserts,
+                        )
+                    }}</span
+                >
+                <span
+                    v-if="changes.counts.value.deletes"
+                    class="inline-flex items-center gap-1.5"
+                    ><i
+                        class="size-3 rounded-sm bg-[var(--cell-deleted)] ring-1 ring-border"
+                    />{{
+                        tc(
+                            ':count Zeile zum Löschen|:count Zeilen zum Löschen',
+                            changes.counts.value.deletes,
+                        )
+                    }}</span
+                >
+                <span class="ml-auto flex gap-2">
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        @click="previewOpen = true"
+                        ><Eye />{{ t('SQL ansehen') }}</Button
+                    >
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        @click="changes.discard()"
+                        ><RotateCcw />{{ t('Verwerfen') }}</Button
+                    >
+                    <Button size="sm" @click="previewOpen = true">{{
+                        t('Anwenden …')
+                    }}</Button>
+                </span>
             </div>
 
             <footer
@@ -429,6 +716,49 @@ function stepRow(step: number): void {
                 <span v-if="!canOpenRows" class="text-text-secondary">{{
                     t('ohne Primärschlüssel — Zeilen nur im Raster')
                 }}</span>
+                <span v-if="!editing.allowed" class="hidden lg:inline">{{
+                    readOnlyHint
+                }}</span>
+                <DropdownMenu>
+                    <DropdownMenuTrigger
+                        class="inline-flex items-center gap-1 rounded-sm outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                        <ClipboardCopy class="size-3.5" />{{
+                            t('Kopieren als …')
+                        }}
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                        <DropdownMenuItem @select="copyAs('tsv')">{{
+                            t('TSV (Tabellenkalkulation)')
+                        }}</DropdownMenuItem>
+                        <DropdownMenuItem @select="copyAs('markdown')">{{
+                            t('Markdown-Tabelle')
+                        }}</DropdownMenuItem>
+                        <DropdownMenuItem @select="copyAs('insert')">{{
+                            t('INSERT-Anweisungen')
+                        }}</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                <span v-if="lastChange" class="inline-flex items-center gap-1">
+                    <Undo2 class="size-3.5" />{{
+                        t('Zuletzt angewendet :time · :rows', {
+                            time: formatTime(lastChange.at),
+                            rows: tc(
+                                ':count Zeile|:count Zeilen',
+                                lastChange.rows,
+                            ),
+                        })
+                    }}
+                    ·
+                    <button
+                        type="button"
+                        class="text-primary underline disabled:opacity-60"
+                        :disabled="undoing"
+                        @click="undoLast"
+                    >
+                        {{ t('Rückgängig machen') }}
+                    </button>
+                </span>
                 <span class="ml-auto tabular-nums">{{
                     t('erste Seite in :ms ms', {
                         ms: formatNumber(grid.durationMs),
@@ -451,6 +781,35 @@ function stepRow(step: number): void {
             @close="detailIndex = null"
             @previous="stepRow(-1)"
             @next="stepRow(1)"
+            :editable="editing.allowed"
+            :pending="
+                detailKey
+                    ? (changes.edits.value.get(rowId(detailKey))?.values ??
+                      null)
+                    : null
+            "
+            :deleted="
+                detailKey ? changes.deletes.value.has(rowId(detailKey)) : false
+            "
+            @edit="
+                (column, value) =>
+                    detailIndex !== null &&
+                    onEdit(
+                        detailIndex + changes.inserts.value.length,
+                        column,
+                        value,
+                    )
+            "
+            @duplicate="(values) => insertRow(values)"
+            @toggle-delete="detailKey && changes.toggleDelete(detailKey)"
+        />
+
+        <ChangePreviewSheet
+            v-model:open="previewOpen"
+            :workspace="workspace"
+            :object="object.name"
+            :changes="previewOpen ? changes.payload() : []"
+            @applied="onApplied"
         />
     </div>
 </template>

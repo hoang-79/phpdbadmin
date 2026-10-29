@@ -109,6 +109,9 @@ function quoteName(name: string): string {
                 class="inline-flex items-center gap-1 rounded-full border border-destructive bg-destructive-soft px-2 py-px text-xs font-medium text-destructive sm:hidden"
                 ><Lock class="size-3" />{{ t('schreibgeschützt') }}</span
             >
+            <div class="ml-auto flex items-center gap-2">
+                <slot name="actions" />
+            </div>
         </div>
         <p
             v-if="object.comment"

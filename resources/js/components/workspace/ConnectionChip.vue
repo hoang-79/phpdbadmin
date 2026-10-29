@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { ChevronDown, Lock, Pencil, Server, Undo2 } from '@lucide/vue';
+import {
+    ChevronDown,
+    Lock,
+    LockOpen,
+    Pencil,
+    Server,
+    Undo2,
+} from '@lucide/vue';
+import { computed } from 'vue';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -13,13 +21,22 @@ import { edit } from '@/routes/connections';
 import { server } from '@/routes/workspace';
 import type { Workspace } from '@/types';
 
-/** Verbindung im Kopf (V-04, Wireframe 05): Umgebung als Farbe, Symbol und Wort; Schloss bei Schreibschutz. */
+/**
+ * Verbindung im Kopf (V-04, Wireframe 05): Umgebung als Farbe, Symbol und Wort; Schloss bei Schreibschutz. Im Menü
+ * lässt sich der Schreibschutz auf Zeit aufheben (V-11).
+ */
 defineProps<{
     connection: Workspace['connection'];
     compact?: boolean;
 }>();
 
-const words = { local: 'lokal', test: 'Test', production: 'produktion' };
+const emit = defineEmits<{ unlock: [] }>();
+
+const words = computed(() => ({
+    local: t('lokal'),
+    test: t('Test'),
+    production: t('Produktion'),
+}));
 const short = { local: 'LOKAL', test: 'TEST', production: 'PROD' };
 </script>
 
@@ -34,7 +51,12 @@ const short = { local: 'LOKAL', test: 'TEST', production: 'PROD' };
                       ? 'border-env-test text-env-test'
                       : 'text-foreground',
             ]"
-            :aria-label="`Verbindung ${connection.name}, Umgebung ${words[connection.environment]}`"
+            :aria-label="
+                t('Verbindung :name, Umgebung :environment', {
+                    name: connection.name,
+                    environment: words[connection.environment],
+                })
+            "
         >
             <svg
                 viewBox="0 0 10 10"
@@ -70,7 +92,7 @@ const short = { local: 'LOKAL', test: 'TEST', production: 'PROD' };
                     {{ connection.name }}</template
                 >
                 <template v-else
-                    >{{ words[connection.environment] }} ·
+                    >{{ words[connection.environment].toLowerCase() }} ·
                     {{ connection.name }}</template
                 >
             </span>
@@ -80,17 +102,24 @@ const short = { local: 'LOKAL', test: 'TEST', production: 'PROD' };
                 >{{ connection.driverLabel }}
                 {{ connection.serverVersion }}</span
             >
-            <Lock
-                v-if="connection.readOnly"
+            <LockOpen
+                v-if="connection.readOnly && connection.unlockedUntil"
                 class="size-3.5 shrink-0"
-                aria-label="schreibgeschützt"
+                :aria-label="t('Schreiben auf Zeit erlaubt')"
+            />
+            <Lock
+                v-else-if="connection.readOnly"
+                class="size-3.5 shrink-0"
+                :aria-label="t('schreibgeschützt')"
             />
             <ChevronDown class="size-3.5 shrink-0 opacity-70" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" class="w-60">
             <DropdownMenuItem v-if="connection.canManage" as-child>
                 <Link :href="edit(connection.id)" class="gap-2"
-                    ><Pencil class="size-4" />Verbindung bearbeiten</Link
+                    ><Pencil class="size-4" />{{
+                        t('Verbindung bearbeiten')
+                    }}</Link
                 >
             </DropdownMenuItem>
             <DropdownMenuItem as-child>
@@ -100,8 +129,21 @@ const short = { local: 'LOKAL', test: 'TEST', production: 'PROD' };
             </DropdownMenuItem>
             <DropdownMenuItem as-child>
                 <Link :href="home()" class="gap-2"
-                    ><Undo2 class="size-4" />Alle Verbindungen</Link
+                    ><Undo2 class="size-4" />{{ t('Alle Verbindungen') }}</Link
                 >
+            </DropdownMenuItem>
+            <DropdownMenuItem
+                v-if="
+                    connection.readOnly &&
+                    connection.canWrite &&
+                    !connection.unlockedUntil
+                "
+                class="gap-2"
+                @select="emit('unlock')"
+            >
+                <LockOpen class="size-4" />{{
+                    t('Schreibschutz für 15 Minuten aufheben …')
+                }}
             </DropdownMenuItem>
         </DropdownMenuContent>
     </DropdownMenu>

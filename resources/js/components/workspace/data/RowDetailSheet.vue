@@ -5,10 +5,15 @@ import {
     ArrowRight,
     ChevronDown,
     ChevronUp,
+    Copy,
+    CopyPlus,
     KeyRound,
+    Trash2,
 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
+import { toast } from 'vue-sonner';
 import Notice from '@/components/Notice.vue';
+import { Button } from '@/components/ui/button';
 import {
     Sheet,
     SheetContent,
@@ -16,11 +21,14 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import FieldEditor from '@/components/workspace/data/FieldEditor.vue';
+import type { EditValue } from '@/composables/useRowChanges';
 import { ApiError, getJson } from '@/lib/api';
 import { formatBytes } from '@/lib/format';
 import { isBinaryCell, isTruncatedCell } from '@/lib/grid';
 import { formatNumber, t, tc } from '@/lib/i18n';
 import { dataHref, rowUrl } from '@/lib/workspace';
+import { copy as copyRoute } from '@/routes/workspace/object';
 import type { Cell, GridColumn, RowDetailData, Workspace } from '@/types';
 
 /**
@@ -35,9 +43,102 @@ const props = defineProps<{
     rowNumber: number | null;
     hasPrevious: boolean;
     hasNext: boolean;
+    editable?: boolean;
+    pending?: Record<string, EditValue> | null;
+    deleted?: boolean;
 }>();
 
-const emit = defineEmits<{ close: []; previous: []; next: [] }>();
+const emit = defineEmits<{
+    close: [];
+    previous: [];
+    next: [];
+    edit: [column: string, value: EditValue];
+    duplicate: [values: Record<string, EditValue>];
+    toggleDelete: [];
+}>();
+
+/** Feld bearbeitbar, wenn das Raster es ist und der Wert ganz geladen ist (keine Binärdaten, nicht gekürzt). */
+function canEdit(cell: Cell): boolean {
+    return (
+        !!props.editable &&
+        !props.deleted &&
+        !isBinaryCell(cell) &&
+        !isTruncatedCell(cell)
+    );
+}
+
+function currentValue(column: GridColumn, cell: Cell): Cell | EditValue {
+    return props.pending && column.name in props.pending
+        ? props.pending[column.name]
+        : cell;
+}
+
+function duplicate(): void {
+    if (!detail.value) {
+        return;
+    }
+
+    const values: Record<string, EditValue> = {};
+
+    props.columns.forEach((column, index) => {
+        const cell = currentValue(column, detail.value!.values[index]);
+
+        if (!column.primary && cell !== null && typeof cell !== 'object') {
+            values[column.name] = cell;
+        }
+    });
+
+    emit('duplicate', values);
+}
+
+async function copyRow(format: 'tsv' | 'insert' | 'json'): Promise<void> {
+    if (!detail.value || !props.rowKey) {
+        return;
+    }
+
+    try {
+        const text =
+            format === 'json'
+                ? JSON.stringify(
+                      Object.fromEntries(
+                          props.columns.map((column, index) => [
+                              column.name,
+                              detail.value!.values[index],
+                          ]),
+                      ),
+                      null,
+                      2,
+                  )
+                : (
+                      await getJson<{ text: string }>(
+                          copyRoute.url(
+                              [
+                                  props.workspace.connection.id,
+                                  encodeURIComponent(
+                                      props.workspace.schema ?? '',
+                                  ),
+                                  encodeURIComponent(props.object),
+                              ],
+                              {
+                                  query: {
+                                      ...(props.workspace.database
+                                          ? { db: props.workspace.database }
+                                          : {}),
+                                      format,
+                                      key: props.rowKey.map(
+                                          (part) => part ?? '',
+                                      ),
+                                  },
+                              },
+                          ),
+                      )
+                  ).text;
+        await navigator.clipboard.writeText(text);
+        toast.success(t('Zeile kopiert.'));
+    } catch {
+        toast.error(t('Kopieren ging nicht.'));
+    }
+}
 
 const detail = ref<RowDetailData | null>(null);
 const failure = ref<string | null>(null);
@@ -203,8 +304,22 @@ function filterHref(
                                 >
                             </dt>
                             <dd class="min-w-0">
+                                <FieldEditor
+                                    v-if="canEdit(detail.values[index])"
+                                    :column="column"
+                                    :value="
+                                        currentValue(
+                                            column,
+                                            detail.values[index],
+                                        )
+                                    "
+                                    @update="
+                                        (value) =>
+                                            emit('edit', column.name, value)
+                                    "
+                                />
                                 <span
-                                    v-if="detail.values[index] === null"
+                                    v-else-if="detail.values[index] === null"
                                     class="text-sm text-muted-foreground italic"
                                     >NULL</span
                                 >
@@ -360,6 +475,29 @@ function filterHref(
                         <p v-else class="text-sm text-text-secondary">
                             {{ t('Diese Zeile hat keine Verweise.') }}
                         </p>
+                        <h3 class="mt-3 text-[15px] font-semibold">
+                            {{ t('Zeile kopieren als') }}
+                        </h3>
+                        <div class="flex flex-wrap gap-2">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                @click="copyRow('json')"
+                                ><Copy />JSON</Button
+                            >
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                @click="copyRow('insert')"
+                                ><Copy />INSERT</Button
+                            >
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                @click="copyRow('tsv')"
+                                ><Copy />TSV</Button
+                            >
+                        </div>
                         <p
                             v-if="rowNumber !== null"
                             class="mt-2 text-xs text-muted-foreground"
@@ -372,6 +510,30 @@ function filterHref(
                         </p>
                     </aside>
                 </div>
+            </div>
+            <div
+                v-if="editable && detail"
+                class="flex flex-wrap items-center gap-2 border-t p-3"
+            >
+                <Button size="sm" variant="outline" @click="duplicate">
+                    <CopyPlus />{{ t('Duplizieren') }}
+                </Button>
+                <Button
+                    size="sm"
+                    :variant="deleted ? 'outline' : 'destructive'"
+                    @click="emit('toggleDelete')"
+                >
+                    <Trash2 />{{
+                        deleted
+                            ? t('Löschmarke entfernen')
+                            : t('Zum Löschen markieren')
+                    }}
+                </Button>
+                <span class="ml-auto text-[12px] text-text-secondary">{{
+                    t(
+                        'Änderungen landen in der Änderungsleiste und werden erst mit «Anwenden» geschrieben.',
+                    )
+                }}</span>
             </div>
         </SheetContent>
     </Sheet>

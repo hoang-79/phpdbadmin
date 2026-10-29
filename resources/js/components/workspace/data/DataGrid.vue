@@ -23,6 +23,7 @@ import {
     isNumericColumn,
     isTruncatedCell,
 } from '@/lib/grid';
+import type { EditValue } from '@/composables/useRowChanges';
 import type { SortItem } from '@/lib/grid';
 import { t } from '@/lib/i18n';
 import { dataHref } from '@/lib/workspace';
@@ -31,8 +32,14 @@ import type { Cell, GridColumn, Workspace } from '@/types';
 /**
  * Datenraster (D-01, O-05, Wireframe 05): rendert nur die sichtbaren Zeilen, lädt beim Scrollen nach. Klick auf
  * eine Überschrift sortiert (mit Umschalt kommt die Spalte zur Sortierung dazu), am Rand zieht man die Breite.
- * Tastatur: Pfeile, Pos1/Ende, Bild auf/ab, Eingabe öffnet die Zeile.
+ * Tastatur: Pfeile, Pos1/Ende, Bild auf/ab, Eingabe öffnet die Zeile — oder bearbeitet die Zelle, wenn das Raster
+ * bearbeitbar ist (D-04); geänderte Zellen, neue und zum Löschen markierte Zeilen sind farbig.
  */
+export type RowMeta = {
+    state: 'new' | 'deleted' | null;
+    changed: string[];
+} | null;
+
 const props = defineProps<{
     workspace: Workspace;
     columns: { column: GridColumn; index: number }[];
@@ -42,6 +49,8 @@ const props = defineProps<{
     sort: SortItem[];
     hasMore: boolean;
     loading: boolean;
+    rowMeta?: RowMeta[];
+    editable?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -55,7 +64,103 @@ const emit = defineEmits<{
     resize: [column: string, width: number];
     hide: [column: string];
     visibleRange: [first: number, last: number];
+    edit: [row: number, column: string, value: EditValue];
 }>();
+
+const editing = ref<{ row: number; col: number; draft: string } | null>(null);
+
+function metaOf(row: number): RowMeta {
+    return props.rowMeta?.[row] ?? null;
+}
+
+function canEdit(row: number, col: number): boolean {
+    const column = props.columns[col]?.column;
+
+    return (
+        !!props.editable &&
+        !!column &&
+        column.kind !== 'binary' &&
+        metaOf(row)?.state !== 'deleted'
+    );
+}
+
+function startEditing(row: number, col: number): void {
+    if (!canEdit(row, col)) {
+        return;
+    }
+
+    const { column, index } = props.columns[col];
+    const cell = props.rows[row]?.[index] ?? null;
+
+    if (column.kind === 'boolean') {
+        emit('edit', row, column.name, cell === null ? true : !cell);
+
+        return;
+    }
+
+    editing.value = {
+        row,
+        col,
+        draft:
+            cell === null || typeof cell === 'object'
+                ? cell && 'text' in cell
+                    ? cell.text
+                    : ''
+                : String(cell),
+    };
+}
+
+function commitEditing(move: 0 | 1 = 0): void {
+    const current = editing.value;
+
+    if (!current) {
+        return;
+    }
+
+    editing.value = null;
+    const { column, index } = props.columns[current.col];
+    const cell = props.rows[current.row]?.[index] ?? null;
+    const original =
+        cell === null || typeof cell === 'object' ? null : String(cell);
+
+    if (current.draft !== original) {
+        emit('edit', current.row, column.name, current.draft);
+    }
+
+    if (move) {
+        moveTo(current.row, current.col + 1);
+    }
+
+    scroller.value?.focus();
+}
+
+function setNull(): void {
+    const current = editing.value;
+
+    if (!current) {
+        return;
+    }
+
+    editing.value = null;
+    emit('edit', current.row, props.columns[current.col].column.name, null);
+    scroller.value?.focus();
+}
+
+function onEditorKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        commitEditing();
+    } else if (event.key === 'Tab') {
+        event.preventDefault();
+        commitEditing(1);
+    } else if (event.key === 'Escape') {
+        event.preventDefault();
+        editing.value = null;
+        scroller.value?.focus();
+    }
+
+    event.stopPropagation();
+}
 
 const ROW_HEIGHT = 32;
 const NUMBER_WIDTH = 56;
@@ -258,6 +363,22 @@ function onKeydown(event: KeyboardEvent): void {
                 ? moveTo(props.rows.length - 1, props.columns.length - 1)
                 : moveTo(current.row, props.columns.length - 1),
         Enter: () => {
+            if (!active.value) {
+                return;
+            }
+
+            if (props.editable && canEdit(active.value.row, active.value.col)) {
+                startEditing(active.value.row, active.value.col);
+            } else {
+                emit('open', active.value.row);
+            }
+        },
+        F2: () => {
+            if (active.value) {
+                startEditing(active.value.row, active.value.col);
+            }
+        },
+        ' ': () => {
             if (active.value) {
                 emit('open', active.value.row);
             }
@@ -423,7 +544,13 @@ const activeId = computed(() =>
                     :key="String(item.key)"
                     role="row"
                     :aria-rowindex="item.index + 2"
-                    class="absolute left-0 flex w-full border-b text-sm hover:bg-muted/60"
+                    :class="[
+                        'absolute left-0 flex w-full border-b text-sm hover:bg-muted/60',
+                        metaOf(item.index)?.state === 'new' &&
+                            'bg-[var(--cell-new)]',
+                        metaOf(item.index)?.state === 'deleted' &&
+                            'bg-[var(--cell-deleted)] text-text-secondary line-through',
+                    ]"
                     :style="{
                         height: `${ROW_HEIGHT}px`,
                         transform: `translateY(${item.start}px)`,
@@ -445,7 +572,14 @@ const activeId = computed(() =>
                             tabindex="-1"
                             @click="emit('open', item.index)"
                         >
-                            {{ item.index + 1 }}
+                            <template v-if="metaOf(item.index)?.state === 'new'"
+                                >+</template
+                            ><template
+                                v-else-if="
+                                    metaOf(item.index)?.state === 'deleted'
+                                "
+                                >–</template
+                            ><template v-else>{{ item.index + 1 }}</template>
                         </button>
                     </div>
                     <div
@@ -461,13 +595,54 @@ const activeId = computed(() =>
                             active?.row === item.index &&
                                 active?.col === position &&
                                 'outline-2 -outline-offset-2 outline-primary',
+                            metaOf(item.index)?.changed.includes(column.name) &&
+                                'bg-[var(--cell-changed)] font-medium',
+                            editable && 'select-none',
                         ]"
                         :style="{ width: `${widthOf(column)}px` }"
                         @click="active = { row: item.index, col: position }"
-                        @dblclick="emit('open', item.index)"
+                        @dblclick="
+                            editable
+                                ? startEditing(item.index, position)
+                                : emit('open', item.index)
+                        "
                     >
-                        <Link
+                        <span
                             v-if="
+                                editing &&
+                                editing.row === item.index &&
+                                editing.col === position
+                            "
+                            class="-mx-2 flex h-full w-[calc(100%+1rem)] items-center gap-1 bg-background px-1 ring-2 ring-primary ring-inset"
+                        >
+                            <input
+                                v-model="editing.draft"
+                                v-focus
+                                type="text"
+                                class="h-full min-w-0 flex-1 bg-transparent px-1 font-mono text-[13px] outline-none"
+                                :aria-label="
+                                    t('Wert für :column', {
+                                        column: column.name,
+                                    })
+                                "
+                                @keydown="onEditorKeydown"
+                                @focus="
+                                    ($event.target as HTMLInputElement).select()
+                                "
+                                @blur="commitEditing()"
+                            />
+                            <button
+                                v-if="column.nullable"
+                                type="button"
+                                class="shrink-0 rounded-sm border px-1 text-[11px] text-text-secondary hover:bg-muted"
+                                :title="t('Auf NULL setzen')"
+                                @mousedown.prevent="setNull"
+                            >
+                                NULL
+                            </button>
+                        </span>
+                        <Link
+                            v-else-if="
                                 referenceHref(column, rows[item.index][index])
                             "
                             :href="

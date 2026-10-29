@@ -37,7 +37,12 @@ const groups = computed(() => [
                 label: t('Anfang und Ende der Zeile'),
             },
             { keys: [command, t('Pos1')], label: t('Erste Zelle') },
-            { keys: ['↵'], label: t('Zeile im Detail öffnen') },
+            {
+                keys: ['↵', 'F2'],
+                label: t('Zelle bearbeiten (wenn erlaubt), sonst Zeile öffnen'),
+            },
+            { keys: [t('Leertaste')], label: t('Zeile im Detail öffnen') },
+            { keys: ['⇥'], label: t('Beim Bearbeiten: übernehmen und weiter') },
             {
                 keys: [t('Umschalt'), t('Klick')],
                 label: t('Weitere Spalte zur Sortierung'),

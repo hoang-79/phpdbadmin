@@ -1,8 +1,17 @@
 <script setup lang="ts">
-import { Link, usePage } from '@inertiajs/vue3';
-import { Keyboard, PanelLeft, Search } from '@lucide/vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { Keyboard, LockOpen, PanelLeft, Search } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import AccountMenu from '@/components/AccountMenu.vue';
+import InputError from '@/components/InputError.vue';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import Wordmark from '@/components/Wordmark.vue';
 import CommandPalette from '@/components/workspace/CommandPalette.vue';
 import ConnectionChip from '@/components/workspace/ConnectionChip.vue';
@@ -16,8 +25,11 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Toaster } from '@/components/ui/sonner';
+import { formatTime } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import { home } from '@/routes';
+import { unlock as unlockRoute } from '@/routes/workspace';
+import { destroy as lockRoute } from '@/routes/workspace/unlock';
 import type { Workspace } from '@/types';
 
 /**
@@ -30,6 +42,39 @@ const selected = computed(() => page.props.selected ?? null);
 const navigatorOpen = ref(false);
 const shortcutsOpen = ref(false);
 const paletteOpen = ref(false);
+const unlockOpen = ref(false);
+const unlockReason = ref('');
+const unlockError = ref<string | null>(null);
+
+function unlock(): void {
+    if (!workspace.value) {
+        return;
+    }
+
+    router.post(
+        unlockRoute.url(workspace.value.connection.id),
+        { reason: unlockReason.value },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                unlockOpen.value = false;
+                unlockReason.value = '';
+                unlockError.value = null;
+            },
+            onError: (errors) => {
+                unlockError.value = errors.reason ?? null;
+            },
+        },
+    );
+}
+
+function lockAgain(): void {
+    if (workspace.value) {
+        router.delete(lockRoute.url(workspace.value.connection.id), {
+            preserveScroll: true,
+        });
+    }
+}
 const isMac =
     typeof navigator !== 'undefined' &&
     /Mac|iPhone|iPad/.test(navigator.platform);
@@ -96,11 +141,37 @@ watch(
             </Link>
             <!-- Das Dropdown rendert kein eigenes Element — die Klassen stehen deshalb aussen. -->
             <div v-if="workspace" class="min-w-0 sm:hidden">
-                <ConnectionChip :connection="workspace.connection" compact />
+                <ConnectionChip
+                    :connection="workspace.connection"
+                    compact
+                    @unlock="unlockOpen = true"
+                />
             </div>
             <div v-if="workspace" class="hidden min-w-0 sm:block">
-                <ConnectionChip :connection="workspace.connection" />
+                <ConnectionChip
+                    :connection="workspace.connection"
+                    @unlock="unlockOpen = true"
+                />
             </div>
+            <span
+                v-if="workspace?.connection.unlockedUntil"
+                class="hidden items-center gap-1.5 rounded-full border border-dashed border-destructive px-2.5 py-1 text-[13px] text-destructive lg:inline-flex"
+                role="status"
+            >
+                <LockOpen class="size-3.5" />{{
+                    t('Schreiben erlaubt bis :time', {
+                        time: formatTime(workspace.connection.unlockedUntil),
+                    })
+                }}
+                ·
+                <button
+                    type="button"
+                    class="font-medium underline"
+                    @click="lockAgain"
+                >
+                    {{ t('wieder sperren') }}
+                </button>
+            </span>
             <div class="flex flex-1 justify-center">
                 <button
                     type="button"
@@ -169,6 +240,51 @@ watch(
         </Sheet>
 
         <ShortcutsDialog v-model:open="shortcutsOpen" />
+        <Dialog v-if="workspace" v-model:open="unlockOpen">
+            <DialogContent class="sm:max-w-md">
+                <DialogTitle>{{
+                    t('Schreibschutz auf Zeit aufheben')
+                }}</DialogTitle>
+                <DialogDescription>{{
+                    t(
+                        '«:name» wird für 15 Minuten beschreibbar — nur für Sie, mit Grund im Protokoll. Danach gilt der Schutz wieder.',
+                        {
+                            name: workspace.connection.name,
+                        },
+                    )
+                }}</DialogDescription>
+                <form class="flex flex-col gap-3" @submit.prevent="unlock">
+                    <label class="flex flex-col gap-1 text-sm">
+                        <span class="font-medium">{{ t('Grund') }}</span>
+                        <input
+                            v-model="unlockReason"
+                            v-focus
+                            type="text"
+                            maxlength="500"
+                            :placeholder="
+                                t('z. B. Tippfehler im Kundennamen korrigieren')
+                            "
+                            class="h-9 rounded-md border bg-background px-2"
+                        />
+                        <InputError :message="unlockError ?? undefined" />
+                    </label>
+                    <DialogFooter class="gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            @click="unlockOpen = false"
+                            >{{ t('Abbrechen') }}</Button
+                        >
+                        <Button
+                            type="submit"
+                            variant="destructive"
+                            :disabled="unlockReason.trim().length < 3"
+                            >{{ t('Für 15 Minuten freigeben') }}</Button
+                        >
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
         <CommandPalette
             v-model:open="paletteOpen"
             :workspace="workspace"
