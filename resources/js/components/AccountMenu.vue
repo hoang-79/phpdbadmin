@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { ChevronDown, LogOut, Palette, ShieldCheck } from '@lucide/vue';
+import { ChevronDown, LogOut, Palette, ShieldCheck, Users } from '@lucide/vue';
 import { computed } from 'vue';
 import {
     DropdownMenu,
@@ -13,6 +13,7 @@ import {
 import { getInitials } from '@/composables/useInitials';
 import { t } from '@/lib/i18n';
 import { account, logout } from '@/routes';
+import { index as adminAccounts } from '@/routes/admin/accounts';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
@@ -54,6 +55,14 @@ function signOut(): void {
                     <Palette class="size-4" />{{ t('Darstellung') }}
                 </Link>
             </DropdownMenuItem>
+            <template v-if="user.isAdmin">
+                <DropdownMenuSeparator />
+                <DropdownMenuItem as-child>
+                    <Link :href="adminAccounts()" class="gap-2.5">
+                        <Users class="size-4" />{{ t('Verwaltung') }}
+                    </Link>
+                </DropdownMenuItem>
+            </template>
             <DropdownMenuSeparator />
             <DropdownMenuItem as-child>
                 <Link

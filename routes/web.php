@@ -3,6 +3,8 @@
 use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Account\LocaleController;
 use App\Http\Controllers\Account\OnboardingController;
+use App\Http\Controllers\Admin\AccountController as AdminAccountController;
+use App\Http\Controllers\Admin\InvitationController as AdminInvitationController;
 use App\Http\Controllers\Connections\ConnectionController;
 use App\Http\Controllers\Connections\SharingController;
 use App\Http\Controllers\Connections\TestConnectionController;
@@ -36,6 +38,22 @@ Route::middleware('auth')->group(function () {
         Route::get('s/{schema}', [WorkspaceController::class, 'schema'])->where('schema', '[^/]+')->name('workspace.schema');
         Route::get('s/{schema}/o/{object}/structure', [ObjectController::class, 'structure'])
             ->where(['schema' => '[^/]+', 'object' => '[^/]+'])->name('workspace.object.structure');
+    });
+
+    // Verwaltung (Wireframe 14): Konten, Einladungen, Rechte — nur Administratoren (403 für alle anderen).
+    Route::middleware('can:administrate')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('accounts', [AdminAccountController::class, 'index'])->name('accounts.index');
+        Route::get('accounts/{account}', [AdminAccountController::class, 'show'])->name('accounts.show');
+        Route::patch('accounts/{account}', [AdminAccountController::class, 'update'])->name('accounts.update');
+        Route::put('accounts/{account}/role', [AdminAccountController::class, 'updateRole'])->name('accounts.role');
+        Route::put('accounts/{account}/status', [AdminAccountController::class, 'updateStatus'])->name('accounts.status');
+        Route::put('accounts/{account}/permissions', [AdminAccountController::class, 'updatePermissions'])->name('accounts.permissions');
+        Route::delete('accounts/{account}', [AdminAccountController::class, 'destroy'])->name('accounts.destroy');
+
+        Route::get('invitations', [AdminInvitationController::class, 'index'])->name('invitations.index');
+        Route::post('invitations', [AdminInvitationController::class, 'store'])->middleware('throttle:invitations')->name('invitations.store');
+        Route::post('invitations/{invitation}/resend', [AdminInvitationController::class, 'resend'])->middleware('throttle:invitations')->name('invitations.resend');
+        Route::delete('invitations/{invitation}', [AdminInvitationController::class, 'destroy'])->name('invitations.destroy');
     });
 
     // Kein Profil (A-05): das Konto zeigt Sicherheit und Darstellung.

@@ -28,7 +28,7 @@ const options = computed<
 <template>
     <fieldset
         :disabled="props.disabled"
-        class="inline-flex max-w-full flex-wrap overflow-hidden rounded-md border disabled:opacity-60"
+        class="inline-flex overflow-hidden rounded-md border disabled:opacity-60"
     >
         <legend class="sr-only">{{ label }}</legend>
         <label

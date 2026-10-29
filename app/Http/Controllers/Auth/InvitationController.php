@@ -54,7 +54,7 @@ class InvitationController extends Controller
             );
         });
 
-        if ($user === null) {
+        if ($user === null || $user->isDisabled()) {
             throw ValidationException::withMessages([
                 'name' => __('Diese Einladung ist abgelaufen oder wurde schon angenommen.'),
             ]);

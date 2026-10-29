@@ -42,6 +42,10 @@ class AppServiceProvider extends ServiceProvider
         // «Verbindung testen» baut echte Verbindungen auf: je Konto höchstens zwanzig je Minute.
         RateLimiter::for('connection-test', fn (Request $request): Limit => Limit::perMinute(20)
             ->by('connection-test:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
+
+        // Einladungen verschicken Mails: je Konto höchstens zwanzig je Stunde.
+        RateLimiter::for('invitations', fn (Request $request): Limit => Limit::perHour(20)
+            ->by('invitations:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
     }
 
     /**
