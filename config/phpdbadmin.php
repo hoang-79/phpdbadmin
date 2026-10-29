@@ -128,4 +128,18 @@ return [
         'statement_timeout_ms' => (int) env('PHPDBADMIN_TRANSFERS_STATEMENT_TIMEOUT_MS', 600000),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Schemavergleich (S-08)
+    |--------------------------------------------------------------------------
+    |
+    | Höchstzahl der Tabellen je Seite: der Vergleich liest je Tabelle Spalten, Indizes, Fremdschlüssel und Checks in
+    | der Anfrage. Darüber meldet die Seite «zu viele Tabellen».
+    |
+    */
+
+    'compare' => [
+        'max_tables' => (int) env('PHPDBADMIN_COMPARE_MAX_TABLES', 500),
+    ],
+
 ];

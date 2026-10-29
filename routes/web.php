@@ -6,6 +6,7 @@ use App\Http\Controllers\Account\OnboardingController;
 use App\Http\Controllers\Admin\AccountController as AdminAccountController;
 use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\InvitationController as AdminInvitationController;
+use App\Http\Controllers\CompareController;
 use App\Http\Controllers\Connections\ConnectionController;
 use App\Http\Controllers\Connections\FavoriteController;
 use App\Http\Controllers\Connections\SharingController;
@@ -99,6 +100,9 @@ Route::middleware('auth')->group(function () {
             Route::get('{transfer}/download', [TransferController::class, 'download'])->whereUlid('transfer')->name('download');
         });
     });
+
+    // Schemavergleich (S-08): zwei Verbindungen, die das Konto sieht; ausgeführt wird nichts.
+    Route::get('compare', CompareController::class)->name('compare');
 
     // Befehlspalette ⌘K (O-02): Suchquelle für das Wechseln der Verbindung.
     Route::get('palette', PaletteController::class)->name('palette');
