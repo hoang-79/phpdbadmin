@@ -364,7 +364,7 @@ final class BackupRunner
 
         try {
             $this->run($transfer, 'psql', [
-                $tool['path'], '--no-password', '--no-psqlrc', '--quiet', '--set=ON_ERROR_STOP=1', '--single-transaction', '--file='.$restricted,
+                $tool['path'], '--no-password', '--no-psqlrc', '--quiet', '--set=ON_ERROR_STOP=1', '--file='.$restricted,
             ], $environment, null, $progress);
         } finally {
             @unlink($restricted);
@@ -429,6 +429,10 @@ final class BackupRunner
      * Schlüssel lehnt psql jeden Befehl mit Backslash ab. Die `\restrict`- und `\unrestrict`-Zeilen von pg_dump selbst
      * (ausserhalb von COPY-Daten) fallen weg; alles andere geht unverändert durch. Geschrieben neben die hochgeladene
      * Datei; psql liest sie selbst (`--file`).
+     *
+     * Die Transaktion steht als `BEGIN`/`COMMIT` in der Datei, nicht als `--single-transaction`: psql bis Version 14
+     * schreibt mit `--single-transaction` fest, was vor einem abgelehnten Backslash-Befehl lief (geprüft mit 14.24) —
+     * so bricht psql mit ON_ERROR_STOP ab, ohne `COMMIT` zu erreichen, und der Server rollt alles zurück.
      */
     private function restricted(string $file): string
     {
@@ -441,8 +445,9 @@ final class BackupRunner
         }
 
         try {
-            fwrite($target, '\\restrict '.bin2hex(random_bytes(24))."\n");
+            fwrite($target, '\\restrict '.bin2hex(random_bytes(24))."\nBEGIN;\n");
             $inCopy = false;
+            $last = "\n";
 
             while (($line = fgets($source)) !== false) {
                 $trimmed = rtrim($line, "\r\n");
@@ -456,7 +461,10 @@ final class BackupRunner
                 }
 
                 fwrite($target, $line);
+                $last = $line;
             }
+
+            fwrite($target, (str_ends_with($last, "\n") ? '' : "\n")."COMMIT;\n");
         } finally {
             fclose($source);
             fclose($target);
