@@ -2,16 +2,14 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\UserRole;
 use App\Models\User;
-use App\Services\Audit\AuditLog;
+use App\Services\Setup\FirstAccount;
 use App\Services\Setup\SystemCheck;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 use function Laravel\Prompts\text;
@@ -26,17 +24,14 @@ use function Laravel\Prompts\text;
 #[Description('Erstes Administratorkonto anlegen und den Link zur Ersteinrichtung ausgeben')]
 class InstallCommand extends Command
 {
-    /** Gültigkeit des Einrichtungslinks in Minuten. */
-    private const int LINK_MINUTES = 30;
-
-    public function handle(AuditLog $audit, SystemCheck $check): int
+    public function handle(FirstAccount $account, SystemCheck $check): int
     {
         if (! $this->prepare($check)) {
             return self::FAILURE;
         }
 
-        if (User::query()->exists()) {
-            return $this->reissueLink();
+        if ($account->exists()) {
+            return $this->reissueLink($account);
         }
 
         if (! $this->input->isInteractive() && (blank($this->option('name')) || blank($this->option('email')))) {
@@ -48,29 +43,18 @@ class InstallCommand extends Command
         $name = $this->option('name') ?: text('Name', required: true);
         $email = $this->option('email') ?: text('E-Mail-Adresse', required: true);
 
-        $validator = Validator::make(
-            ['name' => $name, 'email' => $email],
-            ['name' => ['required', 'string', 'max:255'], 'email' => ['required', 'email', 'max:255']],
-        );
-
-        if ($validator->fails()) {
-            foreach ($validator->errors()->all() as $message) {
+        try {
+            $user = $account->create((string) $name, (string) $email);
+        } catch (ValidationException $exception) {
+            foreach ($exception->validator->errors()->all() as $message) {
                 $this->components->error($message);
             }
 
             return self::FAILURE;
         }
 
-        $user = User::query()->create([
-            'name' => trim((string) $name),
-            'email' => mb_strtolower(trim((string) $email)),
-            'role' => UserRole::Admin,
-        ]);
-
-        $audit->record('account.installed', $user, target: $user->email);
-
         $this->components->info('Administratorkonto für '.$user->email.' angelegt.');
-        $this->printLink($user);
+        $this->printLink($account, $user);
 
         return self::SUCCESS;
     }
@@ -78,13 +62,13 @@ class InstallCommand extends Command
     /**
      * Es gibt schon ein Konto: nur dann ein neuer Link, wenn die Ersteinrichtung nie abgeschlossen wurde.
      */
-    private function reissueLink(): int
+    private function reissueLink(FirstAccount $account): int
     {
-        $admin = User::query()->where('role', UserRole::Admin->value)->oldest('id')->first();
+        $admin = $account->unfinishedAdmin();
 
-        if (User::query()->count() === 1 && $admin !== null && $admin->last_login_at === null) {
+        if ($admin !== null) {
             $this->components->warn('Die Ersteinrichtung für '.$admin->email.' ist noch nicht abgeschlossen — hier ein neuer Link.');
-            $this->printLink($admin);
+            $this->printLink($account, $admin);
 
             return self::SUCCESS;
         }
@@ -125,12 +109,12 @@ class InstallCommand extends Command
         return true;
     }
 
-    private function printLink(User $user): void
+    private function printLink(FirstAccount $account, User $user): void
     {
-        $url = URL::temporarySignedRoute('setup.show', now()->addMinutes(self::LINK_MINUTES), ['user' => $user->id]);
+        $url = $account->setupUrl($user);
 
         $this->newLine();
-        $this->line('  <options=bold>Ersteinrichtung</> (gültig '.self::LINK_MINUTES.' Minuten, nur bis zur ersten Anmeldung):');
+        $this->line('  <options=bold>Ersteinrichtung</> (gültig '.FirstAccount::LINK_MINUTES.' Minuten, nur bis zur ersten Anmeldung):');
         $this->line('  '.$url);
         $this->newLine();
         $this->components->bulletList([
