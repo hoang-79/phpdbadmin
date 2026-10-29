@@ -1,6 +1,7 @@
 import { useForm, useHttp, usePage } from '@inertiajs/vue3';
 import type { ComputedRef, Ref } from 'vue';
 import { computed, ref, watch } from 'vue';
+import { t } from '@/lib/i18n';
 import type { SchemaFailure, SchemaPayload, SchemaPlanPreview } from '@/types';
 
 type Confirmation = { confirmName: string; confirmation: string };
@@ -31,6 +32,8 @@ export function useSchemaChange(options: {
     const plan = ref<SchemaPlanPreview | null>(null);
     const loading = ref(false);
     const failure = ref<SchemaFailure | null>(null);
+    /** Abgelehnt ohne Prüfmeldung (Sitzung abgelaufen, Recht entzogen, Server weg) — sonst bliebe es still. */
+    const requestError = ref<string | null>(null);
     let sequence = 0;
 
     const errors = computed<Record<string, string | undefined>>(() => ({
@@ -45,13 +48,14 @@ export function useSchemaChange(options: {
                 text && !['confirm_name', 'confirmation'].includes(field),
         );
 
-        return entries[0]?.[1] ?? null;
+        return entries[0]?.[1] ?? requestError.value;
     });
 
     async function refresh(): Promise<void> {
         sequence += 1;
         const current = sequence;
         loading.value = true;
+        requestError.value = null;
         http.clearErrors();
 
         try {
@@ -65,6 +69,12 @@ export function useSchemaChange(options: {
         } catch {
             if (current === sequence) {
                 plan.value = null;
+
+                if (Object.keys(http.errors).length === 0) {
+                    requestError.value = t(
+                        'Die Vorschau liess sich nicht laden — laden Sie die Seite neu.',
+                    );
+                }
             }
         } finally {
             if (current === sequence) {
@@ -91,6 +101,7 @@ export function useSchemaChange(options: {
         plan.value = null;
         loading.value = false;
         failure.value = null;
+        requestError.value = null;
         http.clearErrors();
         form.clearErrors();
     }

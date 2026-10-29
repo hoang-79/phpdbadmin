@@ -225,6 +225,7 @@
     "Die Verbindung zur Datenbank ist abgerissen: :reason": "The connection to the database was lost: :reason",
     "Die verschlüsselte Verbindung kam nicht zustande. Unterstützt der Server SSL? Sonst SSL auf «Aus» stellen — nur in vertrauenswürdigen Netzen.": "The encrypted connection could not be established. Does the server support SSL? Otherwise set SSL to “Off” — only on trusted networks.",
     "Die Vorgabe ist zu lang.": "The default is too long.",
+    "Die Vorschau liess sich nicht laden — laden Sie die Seite neu.": "The preview could not be loaded — reload the page.",
     "Die Zeile liess sich nicht laden.": "The row could not be loaded.",
     "Die Zeilen liessen sich nicht laden.": "The rows could not be loaded.",
     "Die Zeitgrenze ist abgelaufen.": "The time limit was reached.",

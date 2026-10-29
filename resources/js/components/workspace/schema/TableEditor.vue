@@ -108,7 +108,7 @@ function addIndex(): void {
 
 function addForeignKey(): void {
     const foreignKey = newForeignKey();
-    foreignKey.table = props.editor.tables[0] ?? '';
+    chooseTarget(foreignKey, props.editor.tables[0] ?? '');
     draft.value.foreignKeys.push(foreignKey);
 }
 
@@ -135,12 +135,12 @@ function targetColumns(foreignKey: ForeignKeyDraft): string[] {
     return props.targets?.[foreignKey.table] ?? [];
 }
 
+/** Ziel wählen; als Zielspalte «id», sonst die erste — solange der Katalog lädt, noch keine. */
 function chooseTarget(foreignKey: ForeignKeyDraft, table: string): void {
     foreignKey.table = table;
     const columns = targetColumns(foreignKey);
-    foreignKey.references = [
-        columns.includes('id') ? 'id' : (columns[0] ?? ''),
-    ];
+    const pick = columns.includes('id') ? 'id' : columns[0];
+    foreignKey.references = pick ? [pick] : [];
 }
 
 function setForeignColumn(foreignKey: ForeignKeyDraft, column: string): void {
@@ -555,6 +555,9 @@ const fieldClass =
                                             )
                                         "
                                     >
+                                        <option value="">
+                                            {{ t('Spalte …') }}
+                                        </option>
                                         <option
                                             v-for="name in targetColumns(
                                                 foreignKey,
