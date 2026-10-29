@@ -77,7 +77,7 @@
   <text x="300" y="175" class="mono" text-anchor="start">token_hash</text>
   <text x="300" y="192" class="mono" text-anchor="start">invited_by →</text>
   <text x="300" y="209" class="mono" text-anchor="start">expires_at, accepted_at</text>
-  <rect x="560" y="80" width="250" height="191" rx="6" class="ausbau"/>
+  <rect x="560" y="80" width="250" height="242" rx="6" class="ausbau"/>
   <rect x="560" y="80" width="250" height="26" rx="6" class="kern"/>
   <text x="570" y="98" class="hw" text-anchor="start">connections</text>
   <text x="570" y="124" class="mono" text-anchor="start">id (ULID)</text>
@@ -86,9 +86,12 @@
   <text x="570" y="175" class="mono" text-anchor="start">host, port, database</text>
   <text x="570" y="192" class="mono" text-anchor="start">username, password 🔒</text>
   <text x="570" y="209" class="mono" text-anchor="start">sqlite_path, options</text>
-  <text x="570" y="226" class="mono" text-anchor="start">environment, read_only</text>
-  <text x="570" y="243" class="mono" text-anchor="start">server_version</text>
-  <text x="570" y="260" class="mono" text-anchor="start">account_warnings (json)</text>
+  <text x="570" y="226" class="mono" text-anchor="start">ssh_host, ssh_port</text>
+  <text x="570" y="243" class="mono" text-anchor="start">ssh_username, ssh_key_path</text>
+  <text x="570" y="260" class="mono" text-anchor="start">ssh_key 🔒, ssh_passphrase 🔒</text>
+  <text x="570" y="277" class="mono" text-anchor="start">environment, read_only</text>
+  <text x="570" y="294" class="mono" text-anchor="start">server_version</text>
+  <text x="570" y="311" class="mono" text-anchor="start">account_warnings (json)</text>
   <rect x="290" y="290" width="230" height="123" rx="6" class="kernhell"/>
   <rect x="290" y="290" width="230" height="26" rx="6" class="kern"/>
   <text x="300" y="308" class="hw" text-anchor="start">connection_user</text>
@@ -152,7 +155,7 @@
   <path d="M850 130 L812 130" class="pfeil"/>
   <path d="M850 290 L812 190" class="pfeil"/>
   <path d="M850 440 L812 230" class="pfeil"/>
-  <path d="M685 360 L685 258" class="pfeil"/>
+  <path d="M685 360 L685 324" class="pfeil"/>
   <path d="M685 560 L685 498" class="pfeil"/>
   <path d="M530 540 L558 240" class="pfeil"/>
   <text x="30" y="676" class="s" text-anchor="start">Pfeile: Fremdschlüssel von der verweisenden zur referenzierten Tabelle; die Arbeitstabellen verweisen zusätzlich über user_id auf users (nicht gezeichnet).</text>

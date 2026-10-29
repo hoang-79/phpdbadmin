@@ -7,3 +7,4 @@ export * from './admin';
 export * from './transfers';
 export * from './schema';
 export * from './objects';
+export * from './compare';

@@ -21,6 +21,7 @@ class TestConnectionRequest extends FormRequest
         return [
             ...$this->settingsRules(),
             'connection' => ['nullable', 'string', 'size:26'],
+            'herd_source' => ['nullable', 'string', 'max:64'],
         ];
     }
 

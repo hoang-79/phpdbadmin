@@ -76,6 +76,17 @@ export type EditableConnection = {
     sslmode: string;
     environment: ConnectionEnvironment;
     readOnly: boolean;
+    /** SSH-Tunnel (V-08): ob Schlüssel und Passphrase gespeichert sind — nie sie selbst. */
+    ssh: {
+        enabled: boolean;
+        host: string | null;
+        port: number | null;
+        username: string | null;
+        keyPath: string | null;
+        hasKey: boolean;
+        hasPassphrase: boolean;
+        hostKey: string | null;
+    };
 };
 
 export type TestStep = {
@@ -92,6 +103,8 @@ export type ConnectionTestResult = {
     version: string | null;
     testedAt: string;
     warnings: AccountWarning[];
+    /** Fingerabdruck des SSH-Servers, sobald angenommen (V-08). */
+    hostKey: string | null;
     problem: {
         kind: string;
         title: string;
@@ -100,4 +113,23 @@ export type ConnectionTestResult = {
         code: string | null;
         serverMessage: string | null;
     } | null;
+};
+
+/** Vorschlag aus Laravel Herd (V-07) — ohne Passwort, nur ob es eines gibt. */
+export type HerdSuggestion = {
+    id: string;
+    origin: 'service' | 'site';
+    name: string;
+    driver: DatabaseDriver;
+    driverLabel: string;
+    host: string | null;
+    port: number | null;
+    username: string | null;
+    database: string | null;
+    hasPassword: boolean;
+    sqlitePath: string | null;
+    running: boolean | null;
+    version: string | null;
+    folder: string | null;
+    allowed: boolean;
 };

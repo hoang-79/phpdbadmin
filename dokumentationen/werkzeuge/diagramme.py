@@ -774,7 +774,7 @@ def er_app_datenbank() -> Zeichnung:
     pk = tabelle(30, 290, "passkeys", ["id", "user_id →", "name", "credential_id ∪", "credential (json)", "last_used_at"])
     lc = tabelle(30, 480, "login_codes", ["id", "email_hash", "code_hash", "attempts", "expires_at, consumed_at", "ip_hash"])
     inv = tabelle(290, 80, "invitations", ["id", "email", "role", "token_hash", "invited_by →", "expires_at, accepted_at"])
-    c = tabelle(560, 80, "connections", ["id (ULID)", "owner_id →, shared", "name, group, driver", "host, port, database", "username, password 🔒", "sqlite_path, options", "environment, read_only", "server_version", "account_warnings (json)"], "ausbau", 250)
+    c = tabelle(560, 80, "connections", ["id (ULID)", "owner_id →, shared", "name, group, driver", "host, port, database", "username, password 🔒", "sqlite_path, options", "ssh_host, ssh_port", "ssh_username, ssh_key_path", "ssh_key 🔒, ssh_passphrase 🔒", "environment, read_only", "server_version", "account_warnings (json)"], "ausbau", 250)
     cu = tabelle(290, 290, "connection_user", ["connection_id →", "user_id →", "permission", "favorite", "last_opened_at"])
     qh = tabelle(850, 80, "query_history", ["id", "user_id →", "connection_id →", "sql (longText)", "status, duration_ms", "row_count"], "kernhell", 300)
     sq = tabelle(850, 250, "saved_queries", ["id", "user_id →", "connection_id →", "name, sql", "parameters (json), shared"], "kernhell", 300)
@@ -790,7 +790,7 @@ def er_app_datenbank() -> Zeichnung:
     z.pfeil(850, 130, 812, 130)            # query_history → connections
     z.pfeil(850, 290, 812, 190)            # saved_queries → connections
     z.pfeil(850, 440, 812, 230)            # table_views → connections
-    z.pfeil(685, 360, 685, 258)            # audit_log → connections
+    z.pfeil(685, 360, 685, 324)            # audit_log → connections
     z.pfeil(685, 560, 685, 498)            # change_snapshots → audit_log
     z.pfeil(530, 540, 558, 240)            # transfers → connections
     z.text(30, 676, "Pfeile: Fremdschlüssel von der verweisenden zur referenzierten Tabelle; die Arbeitstabellen verweisen zusätzlich über user_id auf users (nicht gezeichnet).", "s")

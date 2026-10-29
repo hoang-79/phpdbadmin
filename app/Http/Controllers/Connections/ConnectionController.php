@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Connections;
 
 use App\Connections\ConnectionSettings;
 use App\Connections\ConnectionTester;
+use App\Connections\HerdDiscovery;
+use App\Connections\HerdSuggestion;
 use App\Connections\HostPolicy;
+use App\Connections\KnownHosts;
 use App\Enums\ConnectionEnvironment;
 use App\Enums\DatabaseDriver;
 use App\Enums\SslMode;
@@ -23,7 +26,8 @@ use Inertia\Response;
 
 /**
  * Startseite = Verbindungsübersicht (A-04, Wireframe 03); anlegen und bearbeiten (V-01, Wireframe 04). Passwörter
- * gehen nie an den Browser (V-03) — die Seite erfährt nur, ob eines gespeichert ist.
+ * gehen nie an den Browser (V-03) — die Seite erfährt nur, ob eines gespeichert ist. Dasselbe gilt für Schlüssel und
+ * Passphrase eines SSH-Tunnels (V-08).
  */
 class ConnectionController extends Controller
 {
@@ -50,31 +54,37 @@ class ConnectionController extends Controller
         ]);
     }
 
-    public function create(Request $request, HostPolicy $policy): Response
-    {
-        return Inertia::render('connections/Form', [
-            'connection' => null,
-            ...$this->formOptions($this->user($request), $policy),
-        ]);
-    }
-
-    public function store(ConnectionRequest $request, ConnectionTester $tester): RedirectResponse
+    public function create(Request $request, HostPolicy $policy, HerdDiscovery $herd): Response
     {
         $user = $this->user($request);
 
-        $connection = new DatabaseConnection($this->attributes($request));
+        return Inertia::render('connections/Form', [
+            'connection' => null,
+            ...$this->formOptions($user, $policy),
+            // Vorschläge aus Laravel Herd (V-07): nur lokal und nur für Administratoren; nachgeladen, ohne Passwörter.
+            'herd' => $user->isAdmin() && $herd->enabled()
+                ? Inertia::defer(fn (): array => array_map(fn (HerdSuggestion $suggestion): array => $suggestion->toArray(), $herd->suggestions()))
+                : null,
+        ]);
+    }
+
+    public function store(ConnectionRequest $request, ConnectionTester $tester, HerdDiscovery $herd): RedirectResponse
+    {
+        $user = $this->user($request);
+
+        $connection = new DatabaseConnection([...$this->attributes($request), ...$this->sshSecrets($request, null), ...$this->herdPassword($request, $user, $herd)]);
         $connection->owner_id = $user->id;
         $connection->save();
 
         $this->recordVersion($connection, $tester);
-        $this->audit->record('connection.created', $user, context: ['driver' => $connection->driver->value], connection: $connection);
+        $this->audit->record('connection.created', $user, context: ['driver' => $connection->driver->value, 'ssh' => $connection->usesSsh()], connection: $connection);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Verbindung «:name» gespeichert.', ['name' => $connection->name])]);
 
         return to_route('home');
     }
 
-    public function edit(Request $request, DatabaseConnection $connection, HostPolicy $policy): Response
+    public function edit(Request $request, DatabaseConnection $connection, HostPolicy $policy, KnownHosts $knownHosts): Response
     {
         $user = $this->user($request);
         Gate::authorize('manage', $connection);
@@ -96,6 +106,17 @@ class ConnectionController extends Controller
                 'sslmode' => $connection->sslMode()->value,
                 'environment' => $connection->environment->value,
                 'readOnly' => $connection->read_only,
+                // SSH-Tunnel (V-08): ob ein Schlüssel und eine Passphrase gespeichert sind — nie sie selbst.
+                'ssh' => [
+                    'enabled' => $connection->usesSsh(),
+                    'host' => $connection->ssh_host,
+                    'port' => $connection->ssh_port,
+                    'username' => $connection->ssh_username,
+                    'keyPath' => $connection->ssh_key_path,
+                    'hasKey' => $connection->ssh_key !== null,
+                    'hasPassphrase' => $connection->ssh_passphrase !== null,
+                    'hostKey' => $connection->usesSsh() ? $knownHosts->fingerprint((string) $connection->ssh_host, $connection->ssh_port ?? 22) : null,
+                ],
             ],
             ...$this->formOptions($user, $policy),
         ]);
@@ -113,10 +134,10 @@ class ConnectionController extends Controller
             unset($attributes['password']);
         }
 
-        $connection->update($attributes);
+        $connection->update([...$attributes, ...$this->sshSecrets($request, $connection)]);
 
         $this->recordVersion($connection, $tester);
-        $this->audit->record('connection.updated', $user, connection: $connection);
+        $this->audit->record('connection.updated', $user, context: ['ssh' => $connection->usesSsh()], connection: $connection);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Verbindung «:name» gespeichert.', ['name' => $connection->name])]);
 
@@ -161,7 +182,66 @@ class ConnectionController extends Controller
             'options' => $driver->isServer() ? ['sslmode' => $request->string('sslmode')->toString() ?: SslMode::Disable->value] : null,
             'environment' => $environment,
             'read_only' => $request->has('read_only') ? $request->boolean('read_only') : $environment->readOnlyByDefault(),
+            'ssh_host' => $this->usesSsh($request) ? $text('ssh_host') : null,
+            'ssh_port' => $this->usesSsh($request) && $request->filled('ssh_port') ? $request->integer('ssh_port') : null,
+            'ssh_username' => $this->usesSsh($request) ? $text('ssh_username') : null,
         ];
+    }
+
+    /**
+     * Vorschlag aus Herd übernommen und das Passwortfeld leer gelassen: das Passwort aus der `.env` der Site — nur für
+     * Administratoren, nur lokal und nur, wenn Host, Port und Benutzer zur Quelle passen (V-07).
+     *
+     * @return array{password?: string}
+     */
+    private function herdPassword(ConnectionRequest $request, User $user, HerdDiscovery $herd): array
+    {
+        if (! $request->filled('herd_source') || $request->filled('password') || ! $request->boolean('store_password', true) || ! $user->isAdmin() || ! $herd->enabled()) {
+            return [];
+        }
+
+        $password = $herd->passwordFor(
+            $request->string('herd_source')->toString(),
+            $request->string('host')->toString(),
+            $request->filled('port') ? $request->integer('port') : null,
+            $request->string('username')->toString(),
+        );
+
+        return $password !== null ? ['password' => $password] : [];
+    }
+
+    private function usesSsh(ConnectionRequest $request): bool
+    {
+        return DatabaseDriver::from($request->string('driver')->toString())->isServer() && $request->boolean('ssh');
+    }
+
+    /**
+     * Schlüssel, Schlüsseldatei und Passphrase (V-08): ein eingefügter Schlüssel ersetzt Schlüssel und Datei, eine
+     * Datei ersetzt den eingefügten Schlüssel, beides leer behält beim Bearbeiten, was gespeichert ist. Ohne Tunnel
+     * wird alles gelöscht.
+     *
+     * @return array{ssh_key?: string|null, ssh_key_path?: string|null, ssh_passphrase?: string|null}
+     */
+    private function sshSecrets(ConnectionRequest $request, ?DatabaseConnection $existing): array
+    {
+        if (! $this->usesSsh($request)) {
+            return ['ssh_key' => null, 'ssh_key_path' => null, 'ssh_passphrase' => null];
+        }
+
+        $passphrase = $request->filled('ssh_passphrase') ? $request->string('ssh_passphrase')->toString() : null;
+
+        if ($request->filled('ssh_key')) {
+            return ['ssh_key' => $request->string('ssh_key')->toString(), 'ssh_key_path' => null, 'ssh_passphrase' => $passphrase];
+        }
+
+        if ($request->filled('ssh_key_path')) {
+            $path = trim($request->string('ssh_key_path')->toString());
+            $samePath = $existing !== null && $existing->ssh_key_path === $path;
+
+            return ['ssh_key' => null, 'ssh_key_path' => $path, 'ssh_passphrase' => $passphrase ?? ($samePath ? $existing->ssh_passphrase : null)];
+        }
+
+        return $passphrase !== null ? ['ssh_passphrase' => $passphrase] : [];
     }
 
     /**
@@ -169,7 +249,8 @@ class ConnectionController extends Controller
      */
     private function recordVersion(DatabaseConnection $connection, ConnectionTester $tester): void
     {
-        if ($connection->driver->isServer() && ! $connection->store_password) {
+        // Ein Tunnel braucht bis zu PHPDBADMIN_SSH_TIMEOUT Sekunden — dafür gibt es «Verbindung testen».
+        if (($connection->driver->isServer() && ! $connection->store_password) || $connection->usesSsh()) {
             return;
         }
 
@@ -193,7 +274,7 @@ class ConnectionController extends Controller
             'driverLabel' => $connection->driver->label(),
             'serverVersion' => $connection->server_version,
             'location' => $connection->driver->isServer()
-                ? $connection->host.':'.($connection->port ?? $connection->driver->defaultPort())
+                ? $connection->host.':'.($connection->port ?? $connection->driver->defaultPort()).($connection->usesSsh() ? ' · SSH '.$connection->ssh_host : '')
                 : $connection->sqlite_path,
             'database' => $connection->database,
             'username' => $connection->username,
@@ -231,6 +312,7 @@ class ConnectionController extends Controller
             ], ConnectionEnvironment::cases()),
             'allowedHosts' => $policy->allowedHosts(),
             'sqliteFolders' => $policy->sqliteFolders(),
+            'sshKeyFolders' => $policy->sshKeyFolders(),
             'groups' => DatabaseConnection::query()->visibleTo($user)->whereNotNull('group')->distinct()->orderBy('group')->pluck('group')->values(),
         ];
     }

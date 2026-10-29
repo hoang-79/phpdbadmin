@@ -9,9 +9,11 @@ use App\Http\Controllers\Account\SessionController;
 use App\Http\Controllers\Admin\AccountController as AdminAccountController;
 use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\InvitationController as AdminInvitationController;
+use App\Http\Controllers\CompareController;
 use App\Http\Controllers\Connections\ConnectionController;
 use App\Http\Controllers\Connections\FavoriteController;
 use App\Http\Controllers\Connections\SharingController;
+use App\Http\Controllers\Connections\SshHostKeyController;
 use App\Http\Controllers\Connections\TestConnectionController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\PaletteController;
@@ -20,6 +22,7 @@ use App\Http\Controllers\Workspace\DefinitionController;
 use App\Http\Controllers\Workspace\DiagramController;
 use App\Http\Controllers\Workspace\ExplainController;
 use App\Http\Controllers\Workspace\ImportController;
+use App\Http\Controllers\Workspace\MigrationController;
 use App\Http\Controllers\Workspace\ObjectController;
 use App\Http\Controllers\Workspace\RowChangeController;
 use App\Http\Controllers\Workspace\Schema;
@@ -44,6 +47,9 @@ Route::middleware('auth')->group(function () {
     // Teilen (V-09): nur Administratoren — die Policy antwortet 403, eine fremde persönliche Verbindung bleibt 404.
     Route::get('connections/{connection}/sharing', [SharingController::class, 'show'])->name('connections.sharing.show');
     Route::put('connections/{connection}/sharing', [SharingController::class, 'update'])->name('connections.sharing.update');
+
+    // SSH-Tunnel (V-08): gespeicherten Host-Schlüssel vergessen, nur mit «verwalten».
+    Route::delete('connections/{connection}/ssh-host-key', SshHostKeyController::class)->name('connections.ssh-host-key.destroy');
 
     // Favorit je Konto (V-06).
     Route::put('connections/{connection}/favorite', FavoriteController::class)->name('connections.favorite');
@@ -79,6 +85,8 @@ Route::middleware('auth')->group(function () {
         Route::prefix('s/{schema}/o/{object}')->where(['schema' => '[^/]+', 'object' => '[^/]+'])->group(function () {
             Route::get('/', [ObjectController::class, 'data'])->name('workspace.object');
             Route::get('structure', [ObjectController::class, 'structure'])->name('workspace.object.structure');
+            // Laravel-Migration aus der Tabelle (S-09).
+            Route::get('migration', MigrationController::class)->name('workspace.object.migration');
             Route::get('rows', [ObjectController::class, 'rows'])->name('workspace.object.rows');
             Route::get('count', [ObjectController::class, 'count'])->name('workspace.object.count');
             Route::get('row', [ObjectController::class, 'row'])->name('workspace.object.row');
@@ -145,6 +153,9 @@ Route::middleware('auth')->group(function () {
             Route::get('{transfer}/download', [TransferController::class, 'download'])->whereUlid('transfer')->name('download');
         });
     });
+
+    // Schemavergleich (S-08): zwei Verbindungen, die das Konto sieht; ausgeführt wird nichts.
+    Route::get('compare', CompareController::class)->name('compare');
 
     // Befehlspalette ⌘K (O-02): Suchquelle für das Wechseln der Verbindung.
     Route::get('palette', PaletteController::class)->name('palette');

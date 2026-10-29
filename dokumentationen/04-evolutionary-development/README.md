@@ -19,6 +19,7 @@ Timebox-Protokolle (`timebox-nn-titel.md`) und Architekturentscheide (`adr/ADR-n
 | [**08 Sicherheit, Barrierefreiheit, Mobil, Hilfe, Installation**](timebox-08-sicherheit-v1.md) | Sicherheitsprüfung nach OWASP mit [Bericht](sicherheitspruefung-n02.md) (DSN-Injektion behoben, CSP, erneute Prüfung der Aufträge), Durchlauf 375/768/1440 px, Sprunglink, Hilfe in zwei Sprachen, `composer setup` mit Systemprüfung | N-02, O-07, O-08, N-05, B-05 | ✅ 29.10.2026 → **v1.0** — offen: axe-Lauf von Hand |
 | [**09 Server-Verwaltung**](timebox-09-server-verwaltung.md) | Übersicht, Prozesse beenden, Variablen, Konten und Rechte mit Vorschau, Wartung — vier Treiber, Dialekt-Vertrag erweitert, jede Änderung genau ein Eintrag im Protokoll | W-01 bis W-05 | ✅ 29.10.2026, vorgezogen — Übersicht und Prozesse im Browser geprüft |
 | [**10a Objekte, Beziehungsdiagramm, EXPLAIN**](timebox-10a-objekte-diagramm-explain.md) | Sichten, Routinen, Trigger, Ereignisse, Sequenzen und Typen ansehen, anlegen, ändern, löschen mit Vorschau und Protokoll (Objekt-Dialekt neben dem Vertrag); Beziehungsdiagramm je Schema, geschichtet angeordnet, verschiebbar, als SVG; EXPLAIN als Baum mit Hinweisen auf vier Treibern | S-06, S-07, Q-06 | ✅ 29.10.2026 |
+| [**11 Vergleich, Migration, Herd, SSH**](timebox-11-vergleich-migration-herd-ssh.md) | Schemavergleich mit Änderungsskript im Dialekt des Ziels, auch zwischen zwei Treibern; Laravel-Migration aus einer Tabelle, auf einem anderen Treiber geprüft; Vorschläge aus Laravel Herd ohne Passwörter im Browser; Verbindungen über SSH-Tunnel mit dem System-ssh (ADR-012) | S-08, S-09, V-07, V-08 | ✅ 29.10.2026 |
 | [**12 Sitzungen und SQL-Hilfe mit KI**](timebox-12-sitzungen-ki.md) | Aktive Sitzungen sehen und beenden; im SQL-Editor «KI fragen» mit eigenem Schlüssel, nur Frage und Schema-Umriss gehen hinaus | A-08, Q-08 | ✅ 29.10.2026, vorgezogen |
 
 ## Architekturentscheide
@@ -38,5 +39,6 @@ Ausformuliert in der Foundation am 28.10.2026 (Kontext → Optionen → Entschei
 | [ADR-009](adr/ADR-009-app-datenbank-sqlite.md) | App-Datenbank SQLite als Vorgabe | angenommen |
 | [ADR-010](adr/ADR-010-lizenz-mit.md) | Lizenz MIT | angenommen |
 | [ADR-011](adr/ADR-011-php-85-mindestversion.md) | PHP 8.5 als Mindestversion | angenommen (Hoang 28.10.2026) |
+| [ADR-012](adr/ADR-012-ssh-tunnel-system-ssh.md) | SSH-Tunnel über das System-ssh | angenommen (TB 11, 29.10.2026) |
 
 **Übernahme aus der Feasibility (erledigt in TB 00):** Die Proben F-1, F-7 und Teile von F-2 sind Vertragstests der Dialekt-Schicht (`tests/Feature/Dialects`); die Probe-Seiten `routes/probe.php`, `resources/js/pages/probe/*` bleiben lokal hinter der Anmeldung, bis Raster und SQL-Editor sie ersetzen — die Raster-Probe ist seit TB 02 entfernt, die Editor-Probe folgt mit TB 03.

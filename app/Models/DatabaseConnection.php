@@ -21,7 +21,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * Eine gespeicherte Zielverbindung (V-01). Das Passwort ist verschlüsselt und verlässt den Server nie (V-03).
+ * Eine gespeicherte Zielverbindung (V-01). Das Passwort ist verschlüsselt und verlässt den Server nie (V-03) — ebenso
+ * privater Schlüssel und Passphrase eines SSH-Tunnels (V-08).
  *
  * @property string $id
  * @property int $owner_id
@@ -37,6 +38,12 @@ use Illuminate\Support\Facades\Gate;
  * @property bool $store_password
  * @property string|null $sqlite_path
  * @property array{sslmode?: string}|null $options
+ * @property string|null $ssh_host
+ * @property int|null $ssh_port
+ * @property string|null $ssh_username
+ * @property string|null $ssh_key
+ * @property string|null $ssh_key_path
+ * @property string|null $ssh_passphrase
  * @property ConnectionEnvironment $environment
  * @property bool $read_only
  * @property string|null $server_version
@@ -47,7 +54,7 @@ use Illuminate\Support\Facades\Gate;
  * @property-read User $owner
  * @property-read Collection<int, ConnectionMembership> $memberships
  */
-#[Hidden(['password'])]
+#[Hidden(['password', 'ssh_key', 'ssh_passphrase'])]
 class DatabaseConnection extends Model
 {
     /** @use HasFactory<DatabaseConnectionFactory> */
@@ -58,6 +65,7 @@ class DatabaseConnection extends Model
     protected $fillable = [
         'shared', 'name', 'group', 'driver', 'host', 'port', 'database', 'username', 'password', 'store_password',
         'sqlite_path', 'options', 'environment', 'read_only', 'server_version', 'account_warnings', 'last_tested_at',
+        'ssh_host', 'ssh_port', 'ssh_username', 'ssh_key', 'ssh_key_path', 'ssh_passphrase',
     ];
 
     /**
@@ -76,6 +84,9 @@ class DatabaseConnection extends Model
             'read_only' => 'boolean',
             'account_warnings' => 'array',
             'last_tested_at' => 'datetime',
+            'ssh_port' => 'integer',
+            'ssh_key' => 'encrypted',
+            'ssh_passphrase' => 'encrypted',
         ];
     }
 
@@ -202,6 +213,12 @@ class DatabaseConnection extends Model
         );
 
         $this->unsetRelation('memberships');
+    }
+
+    /** Über einen SSH-Tunnel (V-08)? SQLite nie. */
+    public function usesSsh(): bool
+    {
+        return $this->driver->isServer() && $this->ssh_host !== null && $this->ssh_host !== '';
     }
 
     public function sslMode(): SslMode

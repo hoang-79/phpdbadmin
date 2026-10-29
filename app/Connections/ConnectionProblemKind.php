@@ -18,6 +18,12 @@ enum ConnectionProblemKind: string
     case FileNotAllowed = 'file_not_allowed';
     case FileMissing = 'file_missing';
     case FileNotDatabase = 'file_not_database';
+    case SshUnreachable = 'ssh_unreachable';
+    case SshKeyRejected = 'ssh_key_rejected';
+    case SshKeyInvalid = 'ssh_key_invalid';
+    case SshHostKeyChanged = 'ssh_host_key_changed';
+    case SshForwardFailed = 'ssh_forward_failed';
+    case SshUnavailable = 'ssh_unavailable';
     case Unknown = 'unknown';
 
     public function title(): string
@@ -34,6 +40,12 @@ enum ConnectionProblemKind: string
             self::FileNotAllowed => __('Datei nicht erlaubt'),
             self::FileMissing => __('Datei nicht gefunden'),
             self::FileNotDatabase => __('Keine SQLite-Datenbank'),
+            self::SshUnreachable => __('SSH-Server nicht erreichbar'),
+            self::SshKeyRejected => __('SSH: Schlüssel abgelehnt'),
+            self::SshKeyInvalid => __('SSH: Schlüssel unlesbar'),
+            self::SshHostKeyChanged => __('SSH: Host-Schlüssel geändert'),
+            self::SshForwardFailed => __('SSH: Datenbank hinter dem Tunnel nicht erreichbar'),
+            self::SshUnavailable => __('SSH nicht verfügbar'),
             self::Unknown => __('Verbindung gescheitert'),
         };
     }
@@ -52,6 +64,12 @@ enum ConnectionProblemKind: string
             self::FileNotAllowed => __('SQLite-Dateien müssen in einem erlaubten Ordner liegen (PHPDBADMIN_SQLITE_PATHS). Pfade mit «..» oder Verknüpfungen nach draussen gelten nicht.'),
             self::FileMissing => __('Unter diesem Pfad liegt keine lesbare Datei.'),
             self::FileNotDatabase => __('Die Datei lässt sich öffnen, ist aber keine SQLite-Datenbank.'),
+            self::SshUnreachable => __('Unter dieser Adresse und diesem Port antwortet kein SSH-Dienst. Prüfen Sie Host und Port des SSH-Servers.'),
+            self::SshKeyRejected => __('Der SSH-Server nimmt den Schlüssel für diesen Benutzer nicht an. Steht der öffentliche Schlüssel in ~/.ssh/authorized_keys des Benutzers?'),
+            self::SshKeyInvalid => __('Der private Schlüssel lässt sich nicht lesen — falsches Format oder falsche Passphrase.'),
+            self::SshHostKeyChanged => __('Der SSH-Server zeigt einen anderen Host-Schlüssel als beim ersten Mal. Das kann ein Angriff sein oder ein neu aufgesetzter Server — vergessen Sie den alten Schlüssel nur, wenn Sie den neuen Fingerabdruck geprüft haben.'),
+            self::SshForwardFailed => __('Der Tunnel steht, aber der SSH-Server erreicht die Datenbank nicht. Host und Port der Datenbank gelten aus Sicht des SSH-Servers — oft 127.0.0.1.'),
+            self::SshUnavailable => __('Auf diesem Server fehlt das Programm ssh, oder PHP darf keine Prozesse starten (proc_open).'),
             self::Unknown => __('Der Server hat die Verbindung abgelehnt. Die Meldung des Servers hilft weiter.'),
         };
     }

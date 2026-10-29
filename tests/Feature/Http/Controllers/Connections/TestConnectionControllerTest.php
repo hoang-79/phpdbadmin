@@ -6,6 +6,7 @@ use App\Connections\ConnectionFactory;
 use App\Connections\ConnectionNotAllowed;
 use App\Connections\ConnectionProblemKind;
 use App\Connections\ConnectionSettings;
+use App\Connections\KnownHosts;
 use App\Models\DatabaseConnection;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -104,6 +105,22 @@ class TestConnectionControllerTest extends TestCase
         }
     }
 
+    public function test_a_name_that_changes_the_dsn_is_refused_before_any_tunnel_opens(): void
+    {
+        $connection = DatabaseConnection::factory()->for(User::factory()->create(), 'owner')->create([
+            'driver' => 'mysql', 'host' => '127.0.0.1', 'port' => 3307, 'database' => 'shop;host=10.0.0.5', 'username' => 'root', 'password' => '',
+        ]);
+        $connection->forceFill(['ssh_host' => '127.0.0.1', 'ssh_port' => 1, 'ssh_username' => 'deploy', 'ssh_key' => 'kein-echter-schluessel'])->save();
+        $this->assertTrue($connection->usesSsh());
+
+        try {
+            app(ConnectionFactory::class)->make(ConnectionSettings::fromConnection($connection));
+            $this->fail('Tunnel geöffnet trotz eingeschleustem Host');
+        } catch (ConnectionNotAllowed $exception) {
+            $this->assertSame(ConnectionProblemKind::DatabaseNotAllowed, $exception->problem->kind);
+        }
+    }
+
     public function test_saved_connection_records_version_after_successful_test(): void
     {
         $user = User::factory()->create();
@@ -130,5 +147,32 @@ class TestConnectionControllerTest extends TestCase
             ->assertJsonPath('ok', true);
 
         $this->assertNull($foreign->fresh()?->last_tested_at);
+    }
+
+    public function test_ssh_tunnel_problem_is_named_and_key_never_echoed(): void
+    {
+        if (KnownHosts::executable('ssh') === null) {
+            $this->markTestSkipped('OpenSSH fehlt — übersprungen, nicht bestanden');
+        }
+
+        config([
+            'phpdbadmin.ssh.known_hosts' => $this->folder.'/known_hosts',
+            'phpdbadmin.ssh.temporary' => $this->folder.'/tmp',
+            'phpdbadmin.ssh.timeout' => 3,
+        ]);
+        $key = "-----BEGIN OPENSSH PRIVATE KEY-----\nGeheimer-Schluessel-Inhalt\n-----END OPENSSH PRIVATE KEY-----";
+
+        $response = $this->actingAs(User::factory()->create())->postJson(route('connections.test'), [
+            'driver' => 'mariadb', 'host' => '127.0.0.1', 'port' => '3306', 'username' => 'app', 'all_databases' => true,
+            'ssh' => true, 'ssh_host' => '127.0.0.1', 'ssh_port' => '1', 'ssh_username' => 'deploy',
+            'ssh_key' => $key, 'ssh_passphrase' => 'Geheim-Phrase-9',
+        ])->assertOk()
+            ->assertJsonPath('ok', false)
+            ->assertJsonPath('steps.1.key', 'tunnel')
+            ->assertJsonPath('steps.1.state', 'failed');
+
+        $this->assertContains($response->json('problem.kind'), ['ssh_key_invalid', 'ssh_unreachable']);
+        $this->assertStringNotContainsString('Geheimer-Schluessel-Inhalt', (string) $response->getContent());
+        $this->assertStringNotContainsString('Geheim-Phrase-9', (string) $response->getContent());
     }
 }

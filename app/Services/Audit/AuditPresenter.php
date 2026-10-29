@@ -131,6 +131,7 @@ final class AuditPresenter
             'connection.shared' => __('Verbindung geteilt'),
             'connection.unshared' => __('Teilen beendet'),
             'connection.permission' => __('Recht geändert'),
+            'connection.ssh_host_key_forgotten' => __('SSH-Host-Schlüssel vergessen'),
             'audit.exported' => __('Protokoll exportiert'),
             default => $this->categoryLabel($action) ?? $action,
         };

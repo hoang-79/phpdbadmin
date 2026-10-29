@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Http\Controllers\Connections;
 
+use App\Connections\HerdDiscovery;
 use App\Enums\ConnectionEnvironment;
 use App\Enums\ConnectionPermission;
 use App\Enums\DatabaseDriver;
@@ -10,6 +11,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\Concerns\FakeHerd;
 use Tests\TestCase;
 
 /**
@@ -17,6 +19,7 @@ use Tests\TestCase;
  */
 class ConnectionControllerTest extends TestCase
 {
+    use FakeHerd;
     use RefreshDatabase;
 
     private string $folder;
@@ -310,5 +313,186 @@ class ConnectionControllerTest extends TestCase
     public function test_guest_is_sent_to_login(): void
     {
         $this->get(route('connections.create'))->assertRedirect(route('login'));
+    }
+
+    public function test_stores_ssh_tunnel_with_encrypted_key_and_passphrase(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('connections.store'), [
+            ...$this->sshPayload(),
+            'ssh_key' => self::PRIVATE_KEY,
+            'ssh_passphrase' => 'Geheim-Phrase-7',
+        ])->assertRedirect(route('home'));
+
+        $connection = DatabaseConnection::query()->sole();
+        $this->assertTrue($connection->usesSsh());
+        $this->assertSame(['127.0.0.1', 2222, 'deploy'], [$connection->ssh_host, $connection->ssh_port, $connection->ssh_username]);
+        $this->assertSame(self::PRIVATE_KEY, $connection->ssh_key);
+        $this->assertSame('Geheim-Phrase-7', $connection->ssh_passphrase);
+        $raw = DB::table('connections')->first(['ssh_key', 'ssh_passphrase']);
+        $this->assertStringNotContainsString('PRIVATE KEY', (string) $raw?->ssh_key);
+        $this->assertStringNotContainsString('Geheim-Phrase-7', (string) $raw?->ssh_passphrase);
+        $entry = DB::table('audit_log')->where('action', 'connection.created')->sole();
+        $this->assertSame(['driver' => 'mariadb', 'ssh' => true], json_decode((string) $entry->context, true));
+        $this->assertStringNotContainsString('Geheim-Phrase-7', json_encode($entry, JSON_UNESCAPED_UNICODE) ?: '');
+    }
+
+    public function test_edit_page_shows_ssh_settings_but_never_key_or_passphrase(): void
+    {
+        $user = User::factory()->create();
+        $connection = $this->sshConnection($user);
+
+        $response = $this->actingAs($user)->get(route('connections.edit', $connection));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('connection.ssh.enabled', true)
+            ->where('connection.ssh.host', '127.0.0.1')
+            ->where('connection.ssh.hasKey', true)
+            ->where('connection.ssh.hasPassphrase', true)
+            ->missing('connection.ssh.key')
+            ->missing('connection.ssh.passphrase'));
+        $this->assertStringNotContainsString('PRIVATE KEY', (string) $response->getContent());
+        $this->assertStringNotContainsString('Geheim-Phrase-8', (string) $response->getContent());
+    }
+
+    public function test_update_with_empty_key_keeps_stored_key_and_passphrase(): void
+    {
+        $user = User::factory()->create();
+        $connection = $this->sshConnection($user);
+
+        $this->actingAs($user)->put(route('connections.update', $connection), $this->sshPayload(['ssh_username' => 'neu']))
+            ->assertRedirect(route('home'));
+
+        $connection->refresh();
+        $this->assertSame('neu', $connection->ssh_username);
+        $this->assertSame(self::PRIVATE_KEY, $connection->ssh_key);
+        $this->assertSame('Geheim-Phrase-8', $connection->ssh_passphrase);
+    }
+
+    public function test_update_with_neither_key_nor_file_keeps_the_stored_key_file(): void
+    {
+        $user = User::factory()->create();
+        $connection = DatabaseConnection::factory()->for($user, 'owner')->create([
+            'ssh_host' => '127.0.0.1', 'ssh_username' => 'deploy', 'ssh_key_path' => '/srv/keys/id_ed25519', 'ssh_passphrase' => 'Geheim-Phrase-10',
+        ]);
+
+        $this->actingAs($user)->put(route('connections.update', $connection), $this->sshPayload(['ssh_key' => '', 'ssh_key_path' => '']))
+            ->assertRedirect(route('home'));
+
+        $connection->refresh();
+        $this->assertSame('/srv/keys/id_ed25519', $connection->ssh_key_path);
+        $this->assertSame('Geheim-Phrase-10', $connection->ssh_passphrase);
+    }
+
+    public function test_turning_ssh_off_forgets_key_and_passphrase(): void
+    {
+        $user = User::factory()->create();
+        $connection = $this->sshConnection($user);
+
+        $this->actingAs($user)->put(route('connections.update', $connection), $this->sshPayload(['ssh' => false]))
+            ->assertRedirect(route('home'));
+
+        $connection->refresh();
+        $this->assertFalse($connection->usesSsh());
+        $this->assertNull($connection->ssh_key);
+        $this->assertNull($connection->ssh_passphrase);
+    }
+
+    public function test_new_ssh_connection_needs_a_key(): void
+    {
+        $this->actingAs(User::factory()->create())->post(route('connections.store'), $this->sshPayload())
+            ->assertSessionHasErrors(['ssh_key' => __('validation.required', ['attribute' => __('Privater Schlüssel')])]);
+    }
+
+    public function test_rejects_ssh_host_outside_allowed_list_and_unsafe_values(): void
+    {
+        $this->actingAs(User::factory()->create())->post(route('connections.store'), $this->sshPayload([
+            'ssh_host' => '10.9.8.7',
+            'ssh_username' => '-oProxyCommand=boom',
+            'ssh_key' => 'kein Schlüssel',
+        ]))->assertSessionHasErrors([
+            'ssh_host' => __('Dieser Host ist in dieser Installation nicht erlaubt.'),
+            'ssh_username',
+            'ssh_key' => __('Das sieht nicht nach einem privaten Schlüssel aus (-----BEGIN … PRIVATE KEY-----).'),
+        ]);
+
+        $this->assertSame(0, DatabaseConnection::query()->count());
+    }
+
+    private const string PRIVATE_KEY = "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA\n-----END OPENSSH PRIVATE KEY-----";
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function sshPayload(array $overrides = []): array
+    {
+        return [
+            'name' => 'hinter ssh', 'driver' => 'mariadb', 'host' => '127.0.0.1', 'port' => '3306', 'username' => 'app',
+            'password' => '', 'store_password' => true, 'environment' => 'local', 'all_databases' => true,
+            'ssh' => true, 'ssh_host' => '127.0.0.1', 'ssh_port' => '2222', 'ssh_username' => 'deploy',
+            ...$overrides,
+        ];
+    }
+
+    private function sshConnection(User $owner): DatabaseConnection
+    {
+        return DatabaseConnection::factory()->for($owner, 'owner')->create([
+            'ssh_host' => '127.0.0.1', 'ssh_port' => 2222, 'ssh_username' => 'deploy',
+            'ssh_key' => self::PRIVATE_KEY, 'ssh_passphrase' => 'Geheim-Phrase-8',
+        ]);
+    }
+
+    public function test_admin_gets_herd_suggestions_without_passwords(): void
+    {
+        $this->enableFakeHerd();
+
+        $response = $this->actingAs(User::factory()->admin()->create())->get(route('connections.create'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->missing('herd')
+            ->loadDeferredProps(fn (Assert $reload) => $reload
+                ->where('herd', fn ($suggestions): bool => collect($suggestions)->contains(fn (array $suggestion): bool => $suggestion['name'] === 'shop' && $suggestion['hasPassword'] === true)
+                    && ! str_contains((string) json_encode($suggestions), self::HERD_SHOP_PASSWORD))
+                ->etc()));
+        $this->assertStringNotContainsString(self::HERD_SHOP_PASSWORD, (string) $response->getContent());
+    }
+
+    public function test_member_gets_no_herd_suggestions(): void
+    {
+        $this->enableFakeHerd();
+
+        $this->actingAs(User::factory()->create())->get(route('connections.create'))
+            ->assertInertia(fn (Assert $page) => $page->where('herd', null));
+    }
+
+    public function test_herd_suggestion_brings_the_password_from_the_site_only_for_the_same_server(): void
+    {
+        $this->enableFakeHerd();
+        $admin = User::factory()->admin()->create();
+        $shop = collect(app(HerdDiscovery::class)->suggestions())->firstWhere('name', 'shop');
+        $this->assertNotNull($shop);
+        $payload = ['name' => 'shop', 'driver' => 'mysql', 'host' => '127.0.0.1', 'port' => '3307', 'username' => 'shop', 'database' => 'shop',
+            'password' => '', 'store_password' => true, 'environment' => 'local', 'herd_source' => $shop->id];
+
+        $this->actingAs($admin)->post(route('connections.store'), $payload)->assertRedirect(route('home'));
+        $this->assertSame(self::HERD_SHOP_PASSWORD, DatabaseConnection::query()->sole()->password);
+
+        $this->actingAs($admin)->post(route('connections.store'), [...$payload, 'name' => 'anderer Port', 'port' => '3306'])->assertRedirect(route('home'));
+        $this->assertNull(DatabaseConnection::query()->where('name', 'anderer Port')->sole()->password);
+    }
+
+    private function enableFakeHerd(): void
+    {
+        $listener = stream_socket_server('tcp://127.0.0.1:0');
+        $this->assertNotFalse($listener);
+        $name = (string) stream_socket_get_name($listener, false);
+        fclose($listener);
+
+        config([
+            'phpdbadmin.herd.enabled' => true,
+            'phpdbadmin.herd.path' => $this->fakeHerd($this->folder.'/herd', (int) substr($name, (int) strrpos($name, ':') + 1), 1),
+        ]);
     }
 }

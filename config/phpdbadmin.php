@@ -154,4 +154,56 @@ return [
         'max_schema_chars' => (int) env('PHPDBADMIN_AI_MAX_SCHEMA_CHARS', 60000),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Schemavergleich (S-08)
+    |--------------------------------------------------------------------------
+    |
+    | Höchstzahl der Tabellen je Seite: der Vergleich liest je Tabelle Spalten, Indizes, Fremdschlüssel und Checks in
+    | der Anfrage. Darüber meldet die Seite «zu viele Tabellen».
+    |
+    */
+
+    'compare' => [
+        'max_tables' => (int) env('PHPDBADMIN_COMPARE_MAX_TABLES', 500),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | SSH-Tunnel (V-08)
+    |--------------------------------------------------------------------------
+    |
+    | Verbindungen über SSH laufen durch das System-ssh (`ssh -N -L`). Der SSH-Server muss wie jeder Host erlaubt sein
+    | (PHPDBADMIN_ALLOWED_HOSTS). Private Schlüssel werden eingefügt (verschlüsselt gespeichert) oder liegen als Datei
+    | in einem erlaubten Ordner. Host-Schlüssel nimmt phpdbadmin beim ersten Verbinden an und prüft sie danach gegen
+    | die eigene known_hosts.
+    |
+    */
+
+    'ssh' => [
+        'binary' => env('PHPDBADMIN_SSH_BINARY', 'ssh'),
+        'keygen' => env('PHPDBADMIN_SSH_KEYGEN', 'ssh-keygen'),
+        'key_paths' => array_values(array_filter(array_map('trim', explode(',', (string) (env('PHPDBADMIN_SSH_KEY_PATHS') ?: storage_path('app/ssh/keys')))))),
+        'known_hosts' => storage_path('app/ssh/known_hosts'),
+        'temporary' => storage_path('app/ssh/tmp'),
+        // Sekunden bis der Tunnel steht (Anmeldung beim SSH-Server eingeschlossen).
+        'timeout' => (int) env('PHPDBADMIN_SSH_TIMEOUT', 10),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Laravel Herd erkennen (V-07)
+    |--------------------------------------------------------------------------
+    |
+    | Vorschläge im Formular «Verbindung anlegen»: laufende Dienste und die Datenbanken der Herd-Sites aus ihrer .env.
+    | Ohne Angabe nur bei APP_ENV=local und vorhandenem Herd-Ordner; nur für Administratoren. Passwörter aus fremden
+    | .env gehen nie an den Browser.
+    |
+    */
+
+    'herd' => [
+        'enabled' => env('PHPDBADMIN_HERD'),
+        'path' => env('PHPDBADMIN_HERD_PATH'),
+    ],
+
 ];

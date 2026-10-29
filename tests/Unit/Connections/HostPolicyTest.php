@@ -198,4 +198,74 @@ class HostPolicyTest extends TestCase
         $policy->guardDatabase(DatabaseDriver::Postgres, '127.0.0.1', 3306, 'phpdbadmin');
         $this->addToAssertionCount(3);
     }
+
+    /**
+     * Ziel hinter einem SSH-Tunnel (V-08): nach denselben Regeln, ein erlaubter Name geht unverändert weiter.
+     *
+     * @return array<string, array{0: list<string>, 1: string, 2: string}>
+     */
+    public static function allowedTunnelTargets(): array
+    {
+        return [
+            'erlaubter Name bleibt Name' => [['db.intern'], 'db.intern', 'db.intern'],
+            'Name unter erlaubtem Platzhalter' => [['*.intern'], 'Kunden.DB.intern', 'kunden.db.intern'],
+            'Adresse im Netz' => [['10.0.0.0/8'], '10.1.2.3', '10.1.2.3'],
+            'Name, der hier auf erlaubte Adressen auflöst' => [['127.0.0.0/8'], 'localhost', '127.0.0.1'],
+        ];
+    }
+
+    /**
+     * @param  list<string>  $allowed
+     */
+    #[DataProvider('allowedTunnelTargets')]
+    public function test_tunnel_target_follows_the_same_rules(array $allowed, string $host, string $target): void
+    {
+        $this->assertSame($target, (new HostPolicy($allowed, []))->resolveTunnelTarget($host));
+    }
+
+    /**
+     * @return array<string, array{0: list<string>, 1: string, 2: ConnectionProblemKind}>
+     */
+    public static function refusedTunnelTargets(): array
+    {
+        return [
+            'Adresse ausserhalb des Netzes' => [['10.0.0.0/8'], '192.168.1.1', ConnectionProblemKind::HostNotAllowed],
+            'Name, der nicht auf der Liste steht' => [['127.0.0.1'], 'db.example.invalid', ConnectionProblemKind::HostUnknown],
+            'Name mit Zeichen für ssh' => [['*.intern'], 'a:b.intern', ConnectionProblemKind::HostNotAllowed],
+            'leer' => [['*.intern'], '', ConnectionProblemKind::HostUnknown],
+        ];
+    }
+
+    /**
+     * @param  list<string>  $allowed
+     */
+    #[DataProvider('refusedTunnelTargets')]
+    public function test_refuses_tunnel_target_outside_the_list(array $allowed, string $host, ConnectionProblemKind $kind): void
+    {
+        try {
+            (new HostPolicy($allowed, []))->resolveTunnelTarget($host);
+            $this->fail('Ziel wurde erlaubt: '.$host);
+        } catch (ConnectionNotAllowed $exception) {
+            $this->assertSame($kind, $exception->problem->kind);
+        }
+    }
+
+    public function test_ssh_key_file_must_lie_in_allowed_folder(): void
+    {
+        mkdir($this->root.'/schluessel');
+        touch($this->root.'/schluessel/id_ed25519');
+        symlink($this->root.'/draussen/geheim.sqlite', $this->root.'/schluessel/link');
+        $policy = new HostPolicy([], [], null, [$this->root.'/schluessel']);
+
+        $this->assertSame(realpath($this->root.'/schluessel/id_ed25519'), $policy->resolveSshKeyPath($this->root.'/schluessel/id_ed25519'));
+
+        foreach (['/schluessel/link' => ConnectionProblemKind::FileNotAllowed, '/schluessel/../draussen/geheim.sqlite' => ConnectionProblemKind::FileNotAllowed, '/schluessel/fehlt' => ConnectionProblemKind::FileMissing] as $path => $kind) {
+            try {
+                $policy->resolveSshKeyPath($this->root.$path);
+                $this->fail('Schlüsseldatei wurde erlaubt: '.$path);
+            } catch (ConnectionNotAllowed $exception) {
+                $this->assertSame($kind, $exception->problem->kind, $path);
+            }
+        }
+    }
 }

@@ -21,6 +21,7 @@ final readonly class ConnectionTestResult
         public ?string $version = null,
         public ?ConnectionProblem $problem = null,
         public array $warnings = [],
+        public ?string $hostKey = null,
     ) {}
 
     /**
@@ -36,6 +37,8 @@ final readonly class ConnectionTestResult
             'problem' => $this->problem?->toArray(),
             'warnings' => Translations::accountWarnings($this->warnings),
             'testedAt' => now()->toIso8601String(),
+            // Fingerabdruck des SSH-Servers (V-08), sobald er angenommen ist.
+            'hostKey' => $this->hostKey,
         ];
     }
 }

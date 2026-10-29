@@ -5,6 +5,7 @@ import {
     Clock,
     Database,
     Folder,
+    GitCompareArrows,
     Lock,
     MoreHorizontal,
     Pencil,
@@ -38,7 +39,7 @@ import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { formatRecent } from '@/lib/format';
 import { intlLocale, t, tc } from '@/lib/i18n';
-import { workspace } from '@/routes';
+import { compare as compareRoute, workspace } from '@/routes';
 import { create, destroy, edit, favorite } from '@/routes/connections';
 import type {
     ConnectionEnvironment,
@@ -216,11 +217,22 @@ function remove(connection: ConnectionSummary): void {
                     }}</template>
                 </p>
             </div>
-            <Button class="w-full sm:ml-auto sm:w-auto" as-child>
-                <Link :href="create()"
-                    ><Plus />{{ t('Verbindung anlegen') }}</Link
-                >
-            </Button>
+            <div
+                class="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row"
+            >
+                <Button v-if="connections.length" variant="outline" as-child>
+                    <Link :href="compareRoute()"
+                        ><GitCompareArrows />{{
+                            t('Schemas vergleichen')
+                        }}</Link
+                    >
+                </Button>
+                <Button as-child>
+                    <Link :href="create()"
+                        ><Plus />{{ t('Verbindung anlegen') }}</Link
+                    >
+                </Button>
+            </div>
         </div>
 
         <template v-if="connections.length">

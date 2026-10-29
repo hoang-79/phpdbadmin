@@ -48,6 +48,7 @@ Neue Ordner liegen **unter `app/`**, kein neuer Basisordner im Repo (Projektrege
 - **Sitzungswerte aus der Konfiguration:** `timezone` (`+00:00` bzw. `UTC`) — belegt in F-2.
 - **Zeitlimit je Anweisung:** MySQL `max_execution_time` (gilt nur für SELECT), MariaDB `max_statement_time`, PostgreSQL `statement_timeout`; SQLite hat keines → Abfragen aus dem SQL-Editor laufen in einem **Arbeitsprozess** (`RunSqliteQuery`) mit harter Zeitgrenze (Q-09).
 - **Erlaubte Hosts:** `PHPDBADMIN_ALLOWED_HOSTS` (Namen, Adressen, Netze) und `PHPDBADMIN_SQLITE_PATHS`; der Host wird einmal aufgelöst und die geprüfte Adresse verbunden (gegen DNS-Rebinding), SQLite-Pfade mit `realpath()` (gegen `..` und Symlinks) — T-05, T-08.
+- **SSH-Tunnel (V-08, TB 11):** Verbindungen mit `ssh_host` laufen über `ssh -N -L 127.0.0.1:<freier Port>:<Ziel>:<Port>`; der Treiber verbindet zum lokalen Ende, der Tunnel lebt so lange wie die Verbindung ([ADR-012](../04-evolutionary-development/adr/ADR-012-ssh-tunnel-system-ssh.md)).
 - **Kontorechte (V-10):** `AccountInspector` liest beim Testen und beim ersten Öffnen Superuser-Status (PostgreSQL `rolsuper`), `FILE`-Recht und `secure_file_priv` (MySQL/MariaDB) und speichert Warnungen in `account_warnings`.
 - **Verbindungsfehler** je Treiber in Klartext: MySQL/MariaDB nach Code (2002, 1045, 1049), PostgreSQL nach Meldungstext (alle `08006`) — F-2.
 
@@ -135,5 +136,5 @@ Fortify nur noch für die Passkey-Zeremonie; seit TB 00 registriert Fortify **ke
 ## 16. Offene Punkte
 
 - Zerleger für SQL-Anweisungen: eigener Bau oder Paket — Probe zu Beginn von TB 03, Lizenz MIT-verträglich.
-- SSH-Tunnel (V-08, Stufe 4): PHP-Erweiterung `ssh2` oder ein Hilfsprozess `ssh -L` — Entscheid in TB 11.
+- ~~SSH-Tunnel (V-08, Stufe 4): PHP-Erweiterung `ssh2` oder ein Hilfsprozess `ssh -L` — Entscheid in TB 11.~~ Entschieden in TB 11: Hilfsprozess `ssh -N -L` über Symfony Process, SSH-Server und Ziel aus Sicht des Tunnels gegen die erlaubten Hosts geprüft ([ADR-012](../04-evolutionary-development/adr/ADR-012-ssh-tunnel-system-ssh.md)).
 - Gemeinsamer Oberbegriff der Typen: Liste je Dialekt in TB 01 festlegen.
