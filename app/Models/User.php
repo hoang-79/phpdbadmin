@@ -47,6 +47,18 @@ class User extends Authenticatable implements HasLocalePreference, PasskeyUser
     protected $rememberTokenName = '';
 
     /**
+     * Vorgaben wie in der Migration — sonst fehlen sie einem frisch angelegten Modell bis zum Neuladen.
+     *
+     * @var array<string, string>
+     */
+    protected $attributes = [
+        'locale' => 'de',
+        'theme' => 'system',
+        'density' => 'default',
+        'timezone' => 'Europe/Zurich',
+    ];
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

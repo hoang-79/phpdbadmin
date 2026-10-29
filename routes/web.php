@@ -13,9 +13,11 @@ use App\Http\Controllers\Connections\TestConnectionController;
 use App\Http\Controllers\PaletteController;
 use App\Http\Controllers\Workspace\ConnectionPasswordController;
 use App\Http\Controllers\Workspace\ObjectController;
+use App\Http\Controllers\Workspace\RowChangeController;
 use App\Http\Controllers\Workspace\Server;
 use App\Http\Controllers\Workspace\SqlController;
 use App\Http\Controllers\Workspace\WorkspaceController;
+use App\Http\Controllers\Workspace\WriteUnlockController;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/auth.php';
@@ -45,6 +47,10 @@ Route::middleware('auth')->group(function () {
         Route::post('password', [ConnectionPasswordController::class, 'store'])->middleware('throttle:connection-test')->name('workspace.password.store');
         Route::get('s/{schema}', [WorkspaceController::class, 'schema'])->where('schema', '[^/]+')->name('workspace.schema');
 
+        // Schreibschutz auf Zeit aufheben (V-11).
+        Route::post('unlock', [WriteUnlockController::class, 'store'])->name('workspace.unlock');
+        Route::delete('unlock', [WriteUnlockController::class, 'destroy'])->name('workspace.unlock.destroy');
+
         // SQL-Editor (Q-01 bis Q-04, Q-07, Q-09).
         Route::get('sql', [SqlController::class, 'show'])->name('workspace.sql');
         Route::post('sql/run', [SqlController::class, 'run'])->name('workspace.sql.run');
@@ -59,6 +65,10 @@ Route::middleware('auth')->group(function () {
             Route::get('count', [ObjectController::class, 'count'])->name('workspace.object.count');
             Route::get('row', [ObjectController::class, 'row'])->name('workspace.object.row');
             Route::put('view', [ObjectController::class, 'saveView'])->name('workspace.object.view');
+            Route::get('copy', [RowChangeController::class, 'copy'])->name('workspace.object.copy');
+            Route::post('changes/preview', [RowChangeController::class, 'preview'])->name('workspace.object.changes.preview');
+            Route::post('changes', [RowChangeController::class, 'apply'])->name('workspace.object.changes');
+            Route::post('changes/{audit}/undo', [RowChangeController::class, 'undo'])->whereNumber('audit')->name('workspace.object.changes.undo');
         });
 
         // Server-Verwaltung (W-01 bis W-05): ansehen mit Zugang, ändern nur mit «verwalten» und ohne Schreibschutz.

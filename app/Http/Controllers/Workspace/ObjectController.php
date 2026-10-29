@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Workspace;
 
 use App\Connections\ConnectionNotAllowed;
 use App\Connections\PasswordRequired;
+use App\Connections\WriteUnlock;
 use App\Enums\FilterOperator;
 use App\Models\DatabaseConnection;
 use App\Models\TableView;
@@ -13,6 +14,7 @@ use App\Services\Catalog\Structure;
 use App\Services\Data\GridQuery;
 use App\Services\Data\GridQueryFailed;
 use App\Services\Data\RowDetail;
+use App\Services\Data\RowEditor;
 use App\Services\Data\TableData;
 use Closure;
 use Illuminate\Database\QueryException;
@@ -20,6 +22,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Response;
 use PDOException;
 
@@ -35,6 +38,8 @@ class ObjectController extends WorkspaceController
         private readonly Structure $structure,
         private readonly TableData $data,
         private readonly RowDetail $rows,
+        private readonly RowEditor $editor,
+        private readonly WriteUnlock $unlock,
     ) {
         parent::__construct($catalog);
     }
@@ -73,6 +78,8 @@ class ObjectController extends WorkspaceController
                     'needsValue' => $operator->needsValue(),
                 ], FilterOperator::cases()),
                 'view' => $this->view($this->user($request), $connection, $database, $schema, $object),
+                'editing' => $this->editing($request, $connection, $summary['kind'], $this->data->columns($connection, $schema, $object, $database) ?? []),
+                'lastChange' => $this->editor->lastUndoable($connection, $this->user($request), $schema, $object),
             ]);
         });
     }
@@ -165,6 +172,25 @@ class ObjectController extends WorkspaceController
         ]);
 
         return response()->noContent();
+    }
+
+    /**
+     * Ob und warum (nicht) bearbeitet werden kann (D-04, D-07, V-04, V-11).
+     *
+     * @param  list<array{primary: bool}>  $columns
+     * @return array{allowed: bool, reason: 'view'|'right'|'readonly'|'key'|null}
+     */
+    private function editing(Request $request, DatabaseConnection $connection, string $kind, array $columns): array
+    {
+        $reason = match (true) {
+            $kind === 'view' => 'view',
+            ! Gate::forUser($this->user($request))->allows('write', $connection) => 'right',
+            $connection->read_only && ! $this->unlock->isActive($connection) => 'readonly',
+            ! in_array(true, array_column($columns, 'primary'), true) => 'key',
+            default => null,
+        };
+
+        return ['allowed' => $reason === null, 'reason' => $reason];
     }
 
     /**

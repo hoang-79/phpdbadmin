@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Workspace;
 
 use App\Connections\ConnectionNotAllowed;
 use App\Connections\PasswordRequired;
+use App\Connections\WriteUnlock;
 use App\Enums\DatabaseDriver;
 use App\Http\Controllers\Controller;
 use App\Models\DatabaseConnection;
@@ -14,6 +15,7 @@ use Closure;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 use PDOException;
@@ -134,6 +136,9 @@ class WorkspaceController extends Controller
                     'readOnly' => $connection->read_only,
                     'accountWarnings' => Translations::accountWarnings($connection->account_warnings ?? []),
                     'canManage' => $connection->isManageableBy($user),
+                    'canWrite' => Gate::forUser($user)->allows('write', $connection),
+                    // Schreibschutz auf Zeit aufgehoben (V-11): sichtbar im Kopf, bis wann.
+                    'unlockedUntil' => $connection->read_only ? app(WriteUnlock::class)->until($connection)?->toIso8601String() : null,
                 ],
                 // PostgreSQL mit «alle Datenbanken»: Auswahl im Navigator, die gewählte in der Adresse (?db=).
                 'databases' => $databases,
