@@ -9,8 +9,9 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * Export starten (E-01, Wireframe 11). Ob Schema und Tabelle existieren, prüft der Controller gegen den Katalog.
- * CSV gibt es nur für eine Tabelle — eine ganze Datenbank wären mehrere Dateien.
+ * Export starten (E-01, E-04, Wireframe 11). Ob Schema und Tabelle existieren, prüft der Controller gegen den
+ * Katalog. CSV gibt es nur für eine Tabelle — eine ganze Datenbank wären mehrere Dateien; Excel legt je Tabelle ein
+ * Blatt an.
  */
 class ExportRequest extends FormRequest
 {
@@ -20,7 +21,7 @@ class ExportRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'format' => ['required', Rule::enum(TransferFormat::class)],
+            'format' => ['required', Rule::in(TransferFormat::EXPORTS)],
             'scope' => ['required', Rule::in(['table', 'schema']), Rule::when($this->input('format') === TransferFormat::Csv->value, [Rule::in(['table'])])],
             'schema' => ['required', 'string', 'max:255'],
             'table' => ['required_if:scope,table', 'nullable', 'string', 'max:255'],

@@ -135,6 +135,35 @@ class TransferControllerTest extends TestCase
         ])->assertSessionHasErrors(['scope' => 'CSV gibt es nur für eine Tabelle — für eine ganze Datenbank wählen Sie JSON oder SQL.']);
     }
 
+    public function test_excel_export_of_a_whole_database_downloads_as_workbook(): void
+    {
+        Storage::fake(Transfer::DISK);
+        $connection = $this->sqliteSamples();
+
+        $this->actingAs($this->user)->post(route('workspace.transfers.export', $connection), [
+            'format' => 'xlsx', 'scope' => 'schema', 'schema' => 'main', 'binary' => 'skip',
+        ])->assertRedirect();
+
+        $transfer = Transfer::query()->sole();
+        $this->assertSame(TransferStatus::Done, $transfer->status);
+        $this->assertSame('main-'.now()->format('Y-m-d').'.xlsx', $transfer->file_name);
+
+        $download = $this->get(route('workspace.transfers.download', [$connection, $transfer->id]))->assertOk();
+        $this->assertSame('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', $download->headers->get('content-type'));
+        $this->assertStringStartsWith("PK\x03\x04", $download->streamedContent());
+    }
+
+    public function test_backup_formats_are_not_offered_as_export(): void
+    {
+        $connection = $this->sqliteSamples();
+
+        $this->actingAs($this->user)->post(route('workspace.transfers.export', $connection), [
+            'format' => 'pgdump', 'scope' => 'schema', 'schema' => 'main',
+        ])->assertSessionHasErrors('format');
+
+        $this->assertSame(0, Transfer::query()->count());
+    }
+
     public function test_download_is_404_for_another_account_and_after_the_deadline(): void
     {
         Storage::fake(Transfer::DISK);

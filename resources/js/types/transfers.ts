@@ -1,5 +1,5 @@
 export type TransferKind = 'export' | 'import';
-export type TransferFormat = 'csv' | 'json' | 'sql';
+export type TransferFormat = 'csv' | 'json' | 'sql' | 'xlsx';
 export type TransferStatus =
     | 'draft'
     | 'queued'
