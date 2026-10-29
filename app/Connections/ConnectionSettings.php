@@ -40,7 +40,9 @@ final readonly class ConnectionSettings
                 port: $connection->ssh_port,
                 username: (string) $connection->ssh_username,
                 privateKey: $connection->ssh_key,
-                keyPath: $connection->ssh_key_path,
+                // Schlüsseldateien des Servers nur in Verbindungen von Administratoren (N-02) — auch, wenn das Konto
+                // inzwischen kein Administrator mehr ist.
+                keyPath: $connection->owner->isAdmin() ? $connection->ssh_key_path : null,
                 passphrase: $connection->ssh_passphrase,
             ) : null,
         );

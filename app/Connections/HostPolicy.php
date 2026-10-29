@@ -104,7 +104,7 @@ final class HostPolicy
             ? $database === $this->appServer['database']
             : strtolower($database) === strtolower($this->appServer['database']);
 
-        if ($samePort && $sameDatabase && in_array($this->loopbackAware($address), $this->appServerAddresses(), true)) {
+        if ($samePort && $sameDatabase && array_intersect($this->candidates($address), $this->appServerAddresses()) !== []) {
             throw new ConnectionNotAllowed(ConnectionProblem::of(ConnectionProblemKind::DatabaseNotAllowed, ConnectionProblem::APP_DATABASE));
         }
     }
@@ -121,9 +121,23 @@ final class HostPolicy
     private function appServerAddresses(): array
     {
         $host = strtolower(trim((string) $this->appServer['host'], '[]'));
-        $addresses = filter_var($host, FILTER_VALIDATE_IP) !== false ? [$host] : $this->lookup($host);
+        $addresses = filter_var($host, FILTER_VALIDATE_IP) !== false ? [$host] : [$host, ...$this->lookup($host)];
 
         return array_values(array_unique(array_map($this->loopbackAware(...), $addresses)));
+    }
+
+    /**
+     * Wofür eine Zieladresse steht: die Adresse selbst — oder, hinter einem Tunnel, ein Name, der unaufgelöst zum
+     * SSH-Server geht; dann zählen der Name und seine Adressen von hier aus (N-02: die App-Datenbank auch per Name).
+     *
+     * @return list<string>
+     */
+    private function candidates(string $address): array
+    {
+        $name = strtolower(trim($address, '[]'));
+        $resolved = filter_var($name, FILTER_VALIDATE_IP) !== false ? [] : $this->lookup($name);
+
+        return array_values(array_unique(array_map($this->loopbackAware(...), [$name, ...$resolved])));
     }
 
     /** 127.0.0.1, ::1 und localhost sind derselbe Rechner. */

@@ -8,6 +8,7 @@ use App\Connections\HostPolicy;
 use App\Enums\DatabaseDriver;
 use App\Enums\SslMode;
 use App\Models\DatabaseConnection;
+use App\Models\User;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
@@ -113,8 +114,20 @@ trait ValidatesConnectionSettings
         }
     }
 
+    /**
+     * Schlüsseldateien liegen auf dem phpdbadmin-Server und gehören der Installation — benutzen dürfen sie nur
+     * Administratoren (N-02). Sonst könnte jedes Konto mit dem Schlüssel einer Administratorin einen Tunnel öffnen.
+     */
     private function allowedSshKeyPath(string $attribute, mixed $value, Closure $fail): void
     {
+        $user = $this->user();
+
+        if (! $user instanceof User || ! $user->isAdmin()) {
+            $fail(__('Schlüsseldateien auf dem Server dürfen nur Administratoren verwenden. Fügen Sie den Schlüssel ein.'));
+
+            return;
+        }
+
         try {
             app(HostPolicy::class)->resolveSshKeyPath((string) $value);
         } catch (ConnectionNotAllowed $exception) {

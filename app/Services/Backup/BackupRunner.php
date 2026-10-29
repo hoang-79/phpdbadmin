@@ -10,6 +10,7 @@ use App\Enums\TransferFormat;
 use App\Models\DatabaseConnection;
 use App\Models\Transfer;
 use App\Services\Audit\AuditLog;
+use App\Services\Audit\Masking;
 use App\Services\Transfer\SqlImporter;
 use App\Services\Transfer\TransferCancelled;
 use App\Services\Transfer\TransferFailed;
@@ -178,6 +179,9 @@ final class BackupRunner
     {
         $connection = $transfer->databaseConnection;
         $this->refuseTunnel($connection);
+        // Die Werkzeuge öffnen eigene Verbindungen ohne Nur-lesen-Schicht — also hier prüfen, ob jetzt geschrieben
+        // werden darf (T-06).
+        $this->targets->assertWritable($connection);
         $database = (string) $transfer->option('database');
         $file = Storage::disk(Transfer::DISK)->path((string) $transfer->file_path);
         $method = null;
@@ -195,7 +199,7 @@ final class BackupRunner
         } catch (Throwable $exception) {
             $this->auditRestore($transfer, $method, $exception);
 
-            throw new TransferFailed(__('Die Wiederherstellung ist gescheitert.', locale: 'de'), detail: mb_strimwidth($exception->getMessage(), 0, 1000, '…'));
+            throw new TransferFailed(__('Die Wiederherstellung ist gescheitert.', locale: 'de'), detail: mb_strimwidth(Masking::message($this->withoutPaths($exception->getMessage())), 0, 1000, '…'));
         }
 
         $this->auditRestore($transfer, $method, null);
@@ -569,6 +573,10 @@ final class BackupRunner
             'PGSERVICE' => false,
             'PGSERVICEFILE' => false,
             'PGOPTIONS' => false,
+            // Geerbte Angaben des Server-Prozesses dürfen das Ziel nicht verändern (N-02).
+            'PGHOSTADDR' => false,
+            'PGPASSFILE' => false,
+            'PGTARGETSESSIONATTRS' => false,
         ];
     }
 
@@ -586,6 +594,12 @@ final class BackupRunner
             'size' => $transfer->file_size,
             'transfer' => $transfer->id,
             ...($error === null ? [] : ['failed' => true]),
-        ], connection: $transfer->databaseConnection, error: $error instanceof TransferFailed ? $error->detail ?? $error->text : $error);
+        ], connection: $transfer->databaseConnection, error: $error === null ? null : $this->withoutPaths($error instanceof TransferFailed ? $error->detail ?? $error->text : $error->getMessage()));
+    }
+
+    /** Pfade auf dem phpdbadmin-Server (Zwischendateien) gehören nicht ins Protokoll — nur der Dateiname. */
+    private function withoutPaths(string $message): string
+    {
+        return (string) preg_replace('#'.preg_quote(storage_path(), '#').'/(?:[^\s:"\']*/)?([^/\s:"\']+)#', '$1', $message);
     }
 }

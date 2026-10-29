@@ -76,6 +76,8 @@ final class Masking
             '/\b(Failing row contains) \((?:[^()]|\([^()]*\))*\)/' => '$1 ('.self::PLACEHOLDER.')',
             // PostgreSQL: «invalid input syntax for type integer: "abc"», «invalid input value for enum s: "x"».
             '/\b(invalid input (?:syntax|value) for [^:]*:) "(?:[^"]|"")*"/' => '$1 '.self::PLACEHOLDER,
+            // psql beim Einspielen: «CONTEXT:  COPY kunden, line 3: "3	Jürg	…"» bzw. «…, column name: "Jürg"».
+            '/\b(COPY [^,\n]+, line \d+(?:, column [^:\n]+)?): .*$/m' => '$1: '.self::PLACEHOLDER,
             // Zeichenketten in einfachen Anführungszeichen (auch mit '' bzw. \' darin).
             '/\'(?:[^\'\\\\]|\\\\.|\'\')*\'/s' => self::PLACEHOLDER,
         ];

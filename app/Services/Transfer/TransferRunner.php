@@ -272,14 +272,15 @@ final class TransferRunner
      */
     private function authorize(Transfer $transfer, DatabaseConnection $connection): void
     {
-        $isImport = $transfer->kind === TransferKind::Import;
+        // Import und Wiederherstellung schreiben, Export und Sicherung lesen.
+        $writes = in_array($transfer->kind, [TransferKind::Import, TransferKind::Restore], true);
         $user = $transfer->user;
 
-        if ($user->disabled_at !== null || ! Gate::forUser($user)->allows($isImport ? 'write' : 'view', $connection)) {
+        if ($user->disabled_at !== null || ! Gate::forUser($user)->allows($writes ? 'write' : 'view', $connection)) {
             throw new TransferFailed(__('Das Konto darf das auf dieser Verbindung nicht mehr.', locale: 'de'));
         }
 
-        if ($isImport && ! $transfer->dry_run) {
+        if ($writes && ! $transfer->dry_run) {
             $this->targets->assertWritable($connection);
         }
     }

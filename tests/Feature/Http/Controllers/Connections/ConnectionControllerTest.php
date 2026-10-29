@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Http\Controllers\Connections;
 
+use App\Connections\ConnectionSettings;
 use App\Connections\HerdDiscovery;
 use App\Enums\ConnectionEnvironment;
 use App\Enums\ConnectionPermission;
@@ -383,6 +384,31 @@ class ConnectionControllerTest extends TestCase
         $connection->refresh();
         $this->assertSame('/srv/keys/id_ed25519', $connection->ssh_key_path);
         $this->assertSame('Geheim-Phrase-10', $connection->ssh_passphrase);
+    }
+
+    /**
+     * N-02: Schlüsseldateien auf dem Server gehören der Installation — ein Mitglied kann sie weder eintragen noch über
+     * eine eigene Verbindung benutzen.
+     */
+    public function test_a_member_cannot_use_a_key_file_from_the_server(): void
+    {
+        $folder = storage_path('framework/testing/schluessel-'.getmypid());
+        @mkdir($folder, 0777, true);
+        file_put_contents($folder.'/id_admin', self::PRIVATE_KEY);
+        config(['phpdbadmin.ssh.key_paths' => [$folder]]);
+        $member = User::factory()->create();
+
+        $this->actingAs($member)->post(route('connections.store'), $this->sshPayload(['ssh_key_path' => $folder.'/id_admin']))
+            ->assertSessionHasErrors(['ssh_key_path' => 'Schlüsseldateien auf dem Server dürfen nur Administratoren verwenden. Fügen Sie den Schlüssel ein.']);
+        $this->assertSame(0, DatabaseConnection::query()->count());
+
+        // Auch eine Verbindung, die den Pfad schon trägt, benutzt ihn nur, wenn sie einer Administratorin gehört.
+        $foreign = DatabaseConnection::factory()->for($member, 'owner')->create(['ssh_host' => '127.0.0.1', 'ssh_username' => 'deploy', 'ssh_key_path' => $folder.'/id_admin']);
+        $this->assertNull(ConnectionSettings::fromConnection($foreign)->ssh?->keyPath);
+        $own = DatabaseConnection::factory()->for(User::factory()->admin()->create(), 'owner')->create(['ssh_host' => '127.0.0.1', 'ssh_username' => 'deploy', 'ssh_key_path' => $folder.'/id_admin']);
+        $this->assertSame($folder.'/id_admin', ConnectionSettings::fromConnection($own)->ssh?->keyPath);
+
+        exec('rm -rf '.escapeshellarg($folder));
     }
 
     public function test_turning_ssh_off_forgets_key_and_passphrase(): void

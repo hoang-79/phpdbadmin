@@ -22,15 +22,16 @@ final class LaravelTypes
      * @param  string  $typeName  Name des Typs ohne Länge («varchar», «int8»)
      * @param  string  $type  vollständiger Typ («varchar(100)», «bigint unsigned», «timestamp(0) without time zone»)
      * @param  list<string>|null  $allowed  Werte einer Aufzählung (aus dem Typ oder einem Check)
+     * @param  string  $column  Name der Spalte — PostgreSQL und SQLite setzen ihn bei Aufzählungen roh in den Check
      */
-    public static function for(DatabaseDriver $driver, string $typeName, string $type, ColumnKind $kind, bool $autoIncrement, ?array $allowed = null): LaravelColumn
+    public static function for(DatabaseDriver $driver, string $typeName, string $type, ColumnKind $kind, bool $autoIncrement, ?array $allowed = null, string $column = ''): LaravelColumn
     {
         $name = strtolower(trim($typeName));
         $full = strtolower(trim($type));
         $arguments = self::arguments($full);
 
         if ($allowed !== null && $allowed !== []) {
-            return new LaravelColumn(str_starts_with($full, 'set(') ? 'set' : 'enum', ['allowed' => $allowed]);
+            return self::enumOrText(str_starts_with($full, 'set(') ? 'set' : 'enum', $allowed, $column);
         }
 
         if ($kind === ColumnKind::Json) {
@@ -62,7 +63,7 @@ final class LaravelTypes
             $base === 'mediumtext' => new LaravelColumn('mediumText'),
             $base === 'longtext' => new LaravelColumn('longText'),
             in_array($base, ['text', 'clob', 'citext', 'name'], true) => new LaravelColumn('text'),
-            in_array($base, ['enum', 'set'], true) => new LaravelColumn($base, ['allowed' => self::enumValues($full)]),
+            in_array($base, ['enum', 'set'], true) => self::enumOrText($base, self::enumValues($full), $column),
             $base === 'date' => new LaravelColumn('date'),
             $base === 'year' => new LaravelColumn('year'),
             $base === 'timetz' || ($base === 'time' && str_contains($full, 'with time zone')) => new LaravelColumn('timeTz', ['precision' => self::precision($arguments)]),
@@ -81,6 +82,24 @@ final class LaravelTypes
             $kind === ColumnKind::Geometry => new LaravelColumn('geometry', ['subtype' => in_array($base, ['geometry', 'geography'], true) ? null : $base]),
             default => self::fallback($kind, $type),
         };
+    }
+
+    /**
+     * Aufzählung — oder Text, wenn Laravel sie nicht sicher schreiben kann (N-02): `enum()` setzt die Werte ohne
+     * Verdoppeln von «'» ein, PostgreSQL und SQLite den Spaltennamen roh in den Check. Ein Wert mit «'» oder «\»
+     * (oder ein Name mit «"») bräche aus dem Literal aus — im Änderungsskript wie in einer erzeugten Migration.
+     *
+     * @param  'enum'|'set'  $type
+     * @param  list<string>  $allowed
+     */
+    private static function enumOrText(string $type, array $allowed, string $column): LaravelColumn
+    {
+        $unsafe = str_contains($column, '"')
+            || array_any($allowed, fn (string $value): bool => str_contains($value, "'") || str_contains($value, '\\') || preg_match('/[\x00-\x1F]/', $value) === 1);
+
+        return $unsafe
+            ? new LaravelColumn('string', ['length' => self::DEFAULT_STRING_LENGTH], __('Aufzählung mit Anführungszeichen, Backslash oder Steuerzeichen — als Text übernommen, die erlaubten Werte bitte von Hand prüfen.'))
+            : new LaravelColumn($type, ['allowed' => $allowed]);
     }
 
     /**

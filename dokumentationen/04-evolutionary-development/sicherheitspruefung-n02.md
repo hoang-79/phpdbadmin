@@ -1,6 +1,6 @@
 # Sicherheitsprüfung N-02 — White-Box nach OWASP
 
-**Stand:** 29.10.2026 · Abnahme v1.0: «Prüfbericht ohne hohen Befund» — **erreicht nach Behebung** (`cab3ec5`).
+**Stand:** 29.10.2026 · Abnahme v1.0: «Prüfbericht ohne hohen Befund» — **erreicht nach Behebung** (`cab3ec5`); zweiter Durchgang über TB 05–12 ohne hohen Befund, mittlere und niedrige behoben.
 
 Die Prüfung lief als eigener, nur lesender Durchgang über Quellcode, Tests und Proben gegen die lokalen Server (MariaDB, MySQL, PostgreSQL); Grundlage war das Bedrohungsmodell T-01 bis T-19 ([Feasibility](../02-feasibility/sicherheit-und-bedrohungen.md)). Sie fand **einen hohen**, drei mittlere und sieben niedrige Befunde. Der Bericht steht unten unverändert; hier, was daraus wurde.
 
@@ -25,6 +25,21 @@ Die Prüfung lief als eigener, nur lesender Durchgang über Quellcode, Tests und
 | I-02, I-03, I-04, I-06 | Hinweis | offen, bewusst: Entwicklungswerkzeuge nur in `local`; CSV-Export ohne Formelschutz (Daten bleiben unverändert, in der Hilfe zu dokumentieren); erlaubte Hosts ohne Ports und Verbindungsaufbau nur mit Zeitlimit des Treibers; Hilfeseite mit `v-html` nur für mitgelieferten Text | — |
 
 **Nicht geprüft** im ersten Durchgang war die KI-Hilfe (Q-08) und die Sitzungsliste (A-08), die während der Prüfung entstanden: Schlüssel verschlüsselt und `$hidden`, nur Struktur im Umriss (Test mit Attrappe: keine Datenzeile im Auftrag), `Gate::authorize('view')`, Schema gegen die Liste geprüft, Protokolleintrag je Anfrage; Sitzungskennung nur als HMAC im Browser. Ebenso die nach der Prüfung zusammengeführten Timeboxen 05 und 10–11 — sie folgen denselben Mustern (Policy, `withWritable`, Bezeichner-Quoting, Protokoll) und werden vor der Freigabe von v1.1/v1.2 in einem zweiten Durchgang geprüft.
+
+## Zweiter Durchgang (TB 05, 10a, 10b, 11, 12)
+
+Ein zweiter, ebenfalls nur lesender Durchgang über alles, was nach dem ersten dazukam (Struktur ändern, Objekte und Diagramm, EXPLAIN, Ergebnisse bearbeiten, Suchen und Ersetzen, Sicherung, Excel, Schemavergleich, Laravel-Migration, Herd, SSH-Tunnel, Sitzungen, KI-Hilfe). **Kein hoher Befund**; mit Proben belegt, dass die erzeugte Migration keinen PHP-Code einschleust, `ssh` keine Optionen aus Feldern annimmt und Befehle aus hochgeladenen Sicherungen nicht auf dem App-Server laufen.
+
+| Befund | Schwere | Behebung | Nachweis |
+|---|---|---|---|
+| M-1 Werte einer Aufzählung mit «'» (oder ein Spaltenname mit «"») brechen im Änderungsskript des Vergleichs und in der erzeugten Migration aus dem SQL-Literal aus (Laravels `enum()` verdoppelt «'» nicht) | mittel | solche Spalten werden Text mit Hinweis statt Aufzählung (`LaravelTypes::enumOrText`) | `LaravelTypesTest` (4) |
+| M-2 Wiederherstellung prüft Recht und Schreibschutz beim Ausführen nicht erneut (Rückfall von M-02) | mittel | `TransferRunner::authorize()` behandelt Wiederherstellung wie Import; `BackupRunner::restore()` ruft `assertWritable()` | `BackupControllerTest::test_restore_queued_before_write_access_ended_writes_nothing` (ohne Fix rot) |
+| M-3 Schlüsseldateien im erlaubten SSH-Ordner kann jedes Konto benutzen | mittel | nur Administratoren tragen Schlüsseldateien ein; eine gespeicherte Verbindung benutzt sie nur, wenn sie einer Administratorin gehört | `ConnectionControllerTest::test_a_member_cannot_use_a_key_file_from_the_server` |
+| N-1 App-Datenbank hinter einem Tunnel per Name erreichbar | niedrig | `guardDatabase` vergleicht auch Namen und deren Auflösung | `HostPolicyTest::test_the_app_database_is_refused_behind_a_tunnel_by_name` |
+| N-2 «Host-Schlüssel vergessen» gilt für alle Verbindungen zum selben SSH-Server | niedrig | nutzen andere Konten denselben Server, nur noch für Administratoren | `SshHostKeyControllerTest` (2) |
+| N-3 über den Schlüsselpfad lässt sich prüfen, welche Dateien es gibt | niedrig | entfällt mit M-3 — nur Administratoren | — |
+| N-4 Werte aus der Sicherungsdatei (psql `CONTEXT: COPY …, line …`) und Pfade der Zwischendatei im Protokoll | niedrig | Muster in `Masking::message`, Pfade auf den Dateinamen gekürzt | `MaskingTest::test_copy_context_of_psql_keeps_no_value` |
+| Hinweise | — | geerbte `PGHOSTADDR`/`PGPASSFILE`/`PGTARGETSESSIONATTRS` werden für die Werkzeuge gelöscht; offen bleiben: Steuerzeichen in PostgreSQL-Namen machen das SVG ungültig (kein XSS), Suchtext der Schema-Suche in der Adresse, `sqlite3` ohne `-safe` (`.restore` braucht Dateizugriff), MySQL-Sicherung ohne Prüfung der App-Datenbank (Restrisiko wie M-01) | — |
 
 ## Anhang: Bericht der Prüfung (Stand `58f2f72`, vor der Behebung)
 

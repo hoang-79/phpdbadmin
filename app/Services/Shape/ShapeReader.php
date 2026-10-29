@@ -96,7 +96,7 @@ final class ShapeReader
                 nullable: (bool) $column['nullable'],
                 default: $generation === null ? DefaultValue::fromIntrospection($column['default'] !== null ? (string) $column['default'] : null, $driver, $autoIncrement) : null,
                 autoIncrement: $autoIncrement,
-                laravel: LaravelTypes::for($driver, $typeName, $type, $kind, $autoIncrement, $allowed),
+                laravel: LaravelTypes::for($driver, $typeName, $type, $kind, $autoIncrement, $allowed, $name),
                 comment: ($column['comment'] ?? '') !== '' ? (string) $column['comment'] : null,
                 generated: $generation,
             );

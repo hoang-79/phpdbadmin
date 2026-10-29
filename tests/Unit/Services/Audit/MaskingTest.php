@@ -113,4 +113,13 @@ class MaskingTest extends TestCase
     {
         $this->assertSame($expected, Masking::secrets($sql));
     }
+
+    public function test_copy_context_of_psql_keeps_no_value(): void
+    {
+        $this->assertSame(
+            "ERROR:  invalid input syntax for type integer: ?\nCONTEXT:  COPY kunden, line 3, column id: ?",
+            Masking::message("ERROR:  invalid input syntax for type integer: \"abc\"\nCONTEXT:  COPY kunden, line 3, column id: \"abc\""),
+        );
+        $this->assertSame('CONTEXT:  COPY kunden, line 3: ?', Masking::message("CONTEXT:  COPY kunden, line 3: \"3\tJürg Müller\tgeheim@example.com\""));
+    }
 }

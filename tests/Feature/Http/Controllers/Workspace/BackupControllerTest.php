@@ -5,13 +5,17 @@ namespace Tests\Feature\Http\Controllers\Workspace;
 use App\Enums\ConnectionEnvironment;
 use App\Enums\TransferKind;
 use App\Enums\TransferStatus;
+use App\Jobs\RunRestore;
 use App\Models\AuditEntry;
 use App\Models\DatabaseConnection;
 use App\Models\Transfer;
 use App\Models\User;
 use App\Services\Backup\Tools;
+use App\Services\Transfer\TransferRunner;
+use App\Support\QueueHeartbeat;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use PDO;
@@ -119,6 +123,32 @@ class BackupControllerTest extends TestCase
 
         $this->assertSame(0, Transfer::query()->count());
         $this->assertSame(['eins', 'zwei'], $this->bodies($shared));
+    }
+
+    /**
+     * T-06: Eine Wiederherstellung, eingereiht, bevor die Verbindung schreibgeschützt wurde oder das Recht wegfiel,
+     * schreibt nichts — die Werkzeuge hätten eigene Verbindungen ohne Nur-lesen-Schicht.
+     */
+    public function test_restore_queued_before_write_access_ended_writes_nothing(): void
+    {
+        $this->requireSqlite3();
+        Storage::fake(Transfer::DISK);
+        config(['queue.default' => 'database']);
+        Queue::fake([RunRestore::class]);
+        app(QueueHeartbeat::class)->beat();
+        $connection = $this->connection();
+
+        $this->actingAs($this->user)->post(route('workspace.transfers.restore', $connection), [
+            'file' => $this->upload($this->sqliteFile('sicherung.sqlite', ['aus der Sicherung'])), 'database' => basename((string) $connection->sqlite_path), 'confirm' => true,
+        ])->assertRedirect();
+        $transfer = Transfer::query()->where('kind', TransferKind::Restore)->sole();
+        $this->assertSame(TransferStatus::Queued, $transfer->status);
+
+        $connection->update(['read_only' => true]);
+        app(TransferRunner::class)->execute($transfer);
+
+        $this->assertSame(TransferStatus::Failed, $transfer->refresh()->status);
+        $this->assertSame(['eins', 'zwei'], $this->bodies($connection));
     }
 
     public function test_production_needs_the_name_and_the_file_must_fit_the_driver(): void

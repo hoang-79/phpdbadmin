@@ -199,6 +199,19 @@ class HostPolicyTest extends TestCase
         $this->addToAssertionCount(3);
     }
 
+    public function test_the_app_database_is_refused_behind_a_tunnel_by_name(): void
+    {
+        $policy = new HostPolicy(['db.intern'], [], appServer: ['driver' => DatabaseDriver::MySql, 'host' => 'db.intern', 'port' => 3306, 'database' => 'phpdbadmin']);
+
+        try {
+            // Hinter dem Tunnel geht der erlaubte Name unaufgelöst an den SSH-Server.
+            $policy->guardDatabase(DatabaseDriver::MariaDb, $policy->resolveTunnelTarget('DB.intern'), 3306, 'phpdbadmin');
+            $this->fail('App-Datenbank wurde über den Tunnel erlaubt');
+        } catch (ConnectionNotAllowed $exception) {
+            $this->assertTrue($exception->problem->isAppDatabase());
+        }
+    }
+
     /**
      * Ziel hinter einem SSH-Tunnel (V-08): nach denselben Regeln, ein erlaubter Name geht unverändert weiter.
      *
