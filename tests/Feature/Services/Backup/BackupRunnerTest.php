@@ -166,7 +166,8 @@ class BackupRunnerTest extends TestCase
         $backup = $this->runBackup($connection, $name, TransferFormat::PgDump);
 
         $this->assertSame(TransferStatus::Failed, $backup->status);
-        $this->assertSame(['tool' => 'pg_dump', 'key' => 'PHPDBADMIN_TOOL_PG_DUMP'], $backup->error['replace'] ?? null);
+        // PostgreSQL ordnet die Schlüssel in jsonb neu — verglichen wird ohne Reihenfolge.
+        $this->assertEquals(['tool' => 'pg_dump', 'key' => 'PHPDBADMIN_TOOL_PG_DUMP'], $backup->error['replace'] ?? null);
         $this->assertStringStartsWith(':tool fehlt auf dem phpdbadmin-Server', (string) ($backup->error['text'] ?? ''));
     }
 

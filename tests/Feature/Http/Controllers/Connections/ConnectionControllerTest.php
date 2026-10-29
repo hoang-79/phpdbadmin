@@ -335,7 +335,8 @@ class ConnectionControllerTest extends TestCase
         $this->assertStringNotContainsString('PRIVATE KEY', (string) $raw?->ssh_key);
         $this->assertStringNotContainsString('Geheim-Phrase-7', (string) $raw?->ssh_passphrase);
         $entry = DB::table('audit_log')->where('action', 'connection.created')->sole();
-        $this->assertSame(['driver' => 'mariadb', 'ssh' => true], json_decode((string) $entry->context, true));
+        // PostgreSQL ordnet die Schlüssel in jsonb neu — verglichen wird ohne Reihenfolge.
+        $this->assertEquals(['driver' => 'mariadb', 'ssh' => true], json_decode((string) $entry->context, true));
         $this->assertStringNotContainsString('Geheim-Phrase-7', json_encode($entry, JSON_UNESCAPED_UNICODE) ?: '');
     }
 
