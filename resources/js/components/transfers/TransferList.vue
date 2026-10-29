@@ -15,8 +15,8 @@ import { formatNumber, t, tc } from '@/lib/i18n';
 import type { TransferSummary } from '@/types';
 
 /**
- * Aufträge im Hintergrund (Wireframe 11): Fortschritt mit Zeilen, Abbrechen, Herunterladen bis zur Frist, Fehler in
- * Klartext. Die Liste kommt aus der Seite und wird abgefragt, solange etwas läuft (useTransferPolling).
+ * Aufträge im Hintergrund (Wireframe 11, E-03): Fortschritt mit Zeilen, Abbrechen, Herunterladen bis zur Frist, Fehler
+ * in Klartext; Sicherungen mit ihrer Grösse. Die Liste kommt aus der Seite und wird abgefragt, solange etwas läuft (useTransferPolling).
  */
 defineProps<{
     transfers: TransferSummary[];
@@ -176,7 +176,11 @@ function cancel(transfer: TransferSummary): void {
                                 })
                             }}</template>
                             <template
-                                v-else-if="transfer.status === 'queued'"
+                                v-else-if="
+                                    transfer.status === 'queued' ||
+                                    transfer.kind === 'backup' ||
+                                    transfer.kind === 'restore'
+                                "
                                 >{{ transfer.statusLabel }}</template
                             >
                             <template v-else>{{
@@ -214,10 +218,17 @@ function cancel(transfer: TransferSummary): void {
                                 time: formatTime(transfer.finishedAt),
                             }),
                             transfer.fileSize !== null &&
-                            transfer.kind === 'export'
+                            (transfer.kind === 'export' ||
+                                transfer.kind === 'backup')
                                 ? formatBytes(transfer.fileSize)
                                 : null,
-                            tc(':count Zeile|:count Zeilen', transfer.rows),
+                            transfer.kind === 'export' ||
+                            transfer.kind === 'import'
+                                ? tc(
+                                      ':count Zeile|:count Zeilen',
+                                      transfer.rows,
+                                  )
+                                : null,
                             transfer.downloadUrl
                                 ? t('bereit bis :time', {
                                       time: until(transfer.expiresAt),

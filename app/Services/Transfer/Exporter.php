@@ -11,12 +11,13 @@ use App\Services\Transfer\Writers\CsvWriter;
 use App\Services\Transfer\Writers\ExportWriter;
 use App\Services\Transfer\Writers\JsonWriter;
 use App\Services\Transfer\Writers\SqlWriter;
+use App\Services\Transfer\Writers\XlsxWriter;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
 /**
- * Export einer Tabelle (Sicht) oder eines ganzen Schemas als CSV, JSON oder SQL (E-01, ADR-007): gelesen in Paketen
+ * Export einer Tabelle (Sicht) oder eines ganzen Schemas als CSV, JSON, SQL oder Excel (E-01, E-04, ADR-007): gelesen in Paketen
  * im Schreibschutz-Wächter, geschrieben als Strom in `storage/app/private/transfers/<Auftrag>/`. Der Wächter hält
  * alles in einer Nur-lesen-Transaktion — auf MySQL, MariaDB und SQLite sieht der Export einen Stand.
  *
@@ -58,7 +59,7 @@ final class Exporter
     }
 
     /**
-     * @return array{tables: int, views: int}
+     * @return array{tables: int, views: int, truncated_cells?: int}
      *
      * @throws TransferCancelled
      * @throws TransferFailed
@@ -91,10 +92,10 @@ final class Exporter
         $rows = 0;
         $tables = 0;
         $views = 0;
+        $writer = $this->writer($transfer, $stream, $target, $connection->driver, count($objects) > 1);
 
         try {
-            $dialect->runReadOnly($target, function () use ($transfer, $target, $connection, $schema, $objects, $stream, $progress, $total, &$rows, &$tables, &$views): void {
-                $writer = $this->writer($transfer, $stream, $target, $connection->driver, count($objects) > 1);
+            $dialect->runReadOnly($target, function () use ($writer, $target, $connection, $schema, $objects, $progress, $total, &$rows, &$tables, &$views): void {
                 $writer->begin();
 
                 foreach ($this->ordered($target, $schema, $objects) as $object) {
@@ -128,7 +129,9 @@ final class Exporter
 
         $transfer->forceFill(['file_path' => $path, 'file_size' => $disk->size($path), 'rows' => $rows])->save();
 
-        return ['tables' => $tables, 'views' => $views];
+        return $writer instanceof XlsxWriter && $writer->truncatedCells > 0
+            ? ['tables' => $tables, 'views' => $views, 'truncated_cells' => $writer->truncatedCells]
+            : ['tables' => $tables, 'views' => $views];
     }
 
     /**
@@ -165,6 +168,13 @@ final class Exporter
                 skipBinary: $transfer->option('binary') === 'skip',
             ),
             TransferFormat::Json => new JsonWriter($stream, keyedByTable: $multiple),
+            // Die Blätter entstehen im Ordner des Auftrags; bricht der Export ab, verschwindet er mit dem Ordner.
+            TransferFormat::Xlsx => new XlsxWriter(
+                $stream,
+                Storage::disk(Transfer::DISK)->path($transfer->directory().'/excel-'.bin2hex(random_bytes(4))),
+                skipBinary: $transfer->option('binary') === 'skip',
+            ),
+            TransferFormat::PgDump, TransferFormat::SqliteFile => throw new RuntimeException('Not an export format'),
             TransferFormat::Sql => new SqlWriter(
                 $stream,
                 $target,

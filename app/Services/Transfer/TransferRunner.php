@@ -10,12 +10,15 @@ use App\Enums\DatabaseDriver;
 use App\Enums\TransferFormat;
 use App\Enums\TransferKind;
 use App\Enums\TransferStatus;
+use App\Jobs\RunBackup;
 use App\Jobs\RunExport;
 use App\Jobs\RunImport;
+use App\Jobs\RunRestore;
 use App\Models\DatabaseConnection;
 use App\Models\Transfer;
 use App\Services\Audit\AuditLog;
 use App\Services\Audit\Masking;
+use App\Services\Backup\BackupRunner;
 use App\Support\QueueHeartbeat;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Gate;
@@ -23,10 +26,11 @@ use PDOException;
 use Throwable;
 
 /**
- * Startet und führt Aufträge aus (B-07). Im Hintergrund über die Warteschlange, wenn ein Worker da ist und die
- * Verbindung ihr Passwort speichert — der Auftrag trägt nur seine Kennung, nie ein Passwort. Sonst gleich in der
- * Anfrage (dort liegt das Passwort «nur für diese Sitzung»), aber nur bis zu den Grenzen aus
- * `phpdbadmin.transfers` — darüber eine klare Meldung statt einer Anfrage, die nach Minuten abbricht.
+ * Startet und führt Aufträge aus (B-07): Export, Import, Sicherung und Wiederherstellung (E-01 bis E-03). Im
+ * Hintergrund über die Warteschlange, wenn ein Worker da ist und die Verbindung ihr Passwort speichert — der Auftrag
+ * trägt nur seine Kennung, nie ein Passwort. Sonst gleich in der Anfrage (dort liegt das Passwort «nur für diese
+ * Sitzung»), aber nur bis zu den Grenzen aus `phpdbadmin.transfers` — darüber eine klare Meldung statt einer Anfrage,
+ * die nach Minuten abbricht.
  *
  * @phpstan-import-type TransferMessage from Transfer
  */
@@ -40,6 +44,7 @@ final class TransferRunner
         private readonly Statistics $statistics,
         private readonly AuditLog $audit,
         private readonly QueueHeartbeat $heartbeat,
+        private readonly BackupRunner $backups,
     ) {}
 
     public function hasWorker(): bool
@@ -109,14 +114,13 @@ final class TransferRunner
             'finished_at' => null,
         ])->save();
 
-        if ($background && $transfer->kind === TransferKind::Export) {
-            RunExport::dispatch($transfer->id);
-
-            return;
-        }
-
         if ($background) {
-            RunImport::dispatch($transfer->id);
+            match ($transfer->kind) {
+                TransferKind::Export => RunExport::dispatch($transfer->id),
+                TransferKind::Import => RunImport::dispatch($transfer->id),
+                TransferKind::Backup => RunBackup::dispatch($transfer->id),
+                TransferKind::Restore => RunRestore::dispatch($transfer->id),
+            };
 
             return;
         }
@@ -157,6 +161,8 @@ final class TransferRunner
 
             $result = match (true) {
                 $transfer->kind === TransferKind::Export => $this->exporter->run($transfer, $progress),
+                $transfer->kind === TransferKind::Backup => $this->backups->backup($transfer, $progress),
+                $transfer->kind === TransferKind::Restore => $this->backups->restore($transfer, $progress),
                 $transfer->format === TransferFormat::Csv => $this->csv->run($transfer, $progress),
                 default => $this->sql->run($transfer, $progress),
             };
@@ -251,7 +257,7 @@ final class TransferRunner
 
     private function discardExport(Transfer $transfer): void
     {
-        if ($transfer->kind === TransferKind::Export) {
+        if ($transfer->kind->producesFile()) {
             $transfer->deleteFiles();
             $transfer->forceFill(['file_path' => null, 'file_size' => null]);
         }

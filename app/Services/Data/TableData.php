@@ -184,6 +184,28 @@ final class TableData
     }
 
     /**
+     * Treffer der Suche über die Textspalten (D-02) — höchstens `$limit + 1` gezählt, damit eine grosse Tabelle nicht
+     * ganz durchgezählt wird; für die Suche über ein ganzes Schema (D-08). Dieselbe Bedingung wie im Raster, damit
+     * der Link dorthin genau diese Zeilen zeigt. null für ein unbekanntes Objekt.
+     *
+     * @throws GridQueryFailed
+     */
+    public function searchHits(DatabaseConnection $connection, string $schema, string $object, string $term, int $limit, ?string $database = null): ?int
+    {
+        $columns = $this->columns($connection, $schema, $object, $database);
+
+        if ($columns === null) {
+            return null;
+        }
+
+        $target = $this->targets->open($connection, $database);
+
+        return $this->run($connection, $target, fn (): int => $target->query()
+            ->fromSub($this->filtered($target, $schema, $object, new GridQuery(search: $term), $columns)->selectRaw('1 as treffer')->limit($limit + 1), 'treffer')
+            ->count());
+    }
+
+    /**
      * Abfrage mit Filtern, freiem WHERE und Suche — ohne Sortierung und Blättern.
      *
      * @param  list<GridColumn>  $columns

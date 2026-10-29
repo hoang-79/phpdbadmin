@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import {
     ArrowDownToLine,
+    ArrowRight,
     ArrowUpFromLine,
     BarChart3,
     Check,
     Database,
+    HardDriveDownload,
 } from '@lucide/vue';
 import { computed, watch } from 'vue';
 import InputError from '@/components/InputError.vue';
@@ -20,6 +22,7 @@ import { formatNumber, t, tc } from '@/lib/i18n';
 import { databaseQuery, transfersHref } from '@/lib/transfers';
 import {
     analyze,
+    backup,
     exportMethod,
     importMethod,
     status,
@@ -33,7 +36,7 @@ import type {
 } from '@/types';
 
 /**
- * Export und Import je Verbindung (Wireframe 11): Export als CSV, JSON oder SQL (E-01), Datei für einen Import
+ * Export und Import je Verbindung (Wireframe 11): Export als CSV, JSON, SQL oder Excel (E-01, E-04), Datei für einen Import
  * hochladen (E-02), Statistik auf Knopfdruck (E-06), Aufträge mit Stand und Download (B-07).
  */
 const props = defineProps<{
@@ -75,6 +78,7 @@ const formats: { value: TransferFormat; label: string; hint: string }[] = [
     { value: 'csv', label: 'CSV', hint: t('für Tabellenkalkulation') },
     { value: 'json', label: 'JSON', hint: t('eine Zeile je Objekt') },
     { value: 'sql', label: 'SQL', hint: t('INSERT, Struktur oder beides') },
+    { value: 'xlsx', label: 'Excel', hint: t('XLSX, ein Blatt je Tabelle') },
 ];
 
 const delimiters: { value: DelimiterName; label: string }[] = [
@@ -231,6 +235,19 @@ const selectClass =
                 <p class="text-sm text-text-secondary">
                     {{ tc(':count Tabelle|:count Tabellen', tables.length) }}
                     · {{ tc(':count Sicht|:count Sichten', views.length) }}
+                    ·
+                    <Link
+                        :href="
+                            backup.url(
+                                workspace.connection.id,
+                                databaseQuery(workspace),
+                            )
+                        "
+                        class="inline-flex items-center gap-1 text-primary hover:underline"
+                        ><HardDriveDownload class="size-3.5" />{{
+                            t('Sicherung und Wiederherstellung')
+                        }}<ArrowRight class="size-3.5"
+                    /></Link>
                 </p>
             </div>
             <div
@@ -349,7 +366,7 @@ const selectClass =
                             {{ t('Format') }}
                         </legend>
                         <div
-                            class="grid gap-2 sm:grid-cols-3"
+                            class="grid grid-cols-2 gap-2 sm:grid-cols-4"
                             role="radiogroup"
                             :aria-label="t('Format')"
                         >
@@ -524,6 +541,38 @@ const selectClass =
                             {{
                                 t(
                                     'Nicht enthalten: Trigger, Routinen und Ereignisse.',
+                                )
+                            }}
+                        </p>
+                    </div>
+
+                    <div
+                        v-else-if="exportForm.format === 'xlsx'"
+                        class="flex flex-col gap-1.5"
+                    >
+                        <Label for="export-xlsx-binary" class="text-[13px]">{{
+                            t('Binärspalten')
+                        }}</Label>
+                        <select
+                            id="export-xlsx-binary"
+                            v-model="exportForm.binary"
+                            :class="[selectClass, 'sm:w-1/2']"
+                            aria-describedby="export-xlsx-hint"
+                        >
+                            <option value="base64">
+                                {{ t('als Base64') }}
+                            </option>
+                            <option value="skip">
+                                {{ t('weglassen') }}
+                            </option>
+                        </select>
+                        <p
+                            id="export-xlsx-hint"
+                            class="text-xs text-muted-foreground"
+                        >
+                            {{
+                                t(
+                                    'Kopfzeile fett, Zahlen und Datum als solche, NULL als leere Zelle; Text steht nie als Formel in der Zelle. Über 1’048’576 Zeilen geht es auf einem weiteren Blatt weiter.',
                                 )
                             }}
                         </p>

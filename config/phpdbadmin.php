@@ -72,11 +72,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Datenraster (D-01, D-06)
+    | Datenraster (D-01, D-06, D-08, D-09)
     |--------------------------------------------------------------------------
     |
     | Bis zu dieser geschätzten Zeilenzahl zählt das Raster genau; darüber zeigt es die Schätzung des Servers und
-    | zählt genau nur auf Wunsch.
+    | zählt genau nur auf Wunsch. Dazu Grenzen für Rückgängig, Suchen und Ersetzen.
     |
     */
 
@@ -87,6 +87,11 @@ return [
         'undo_days' => (int) env('PHPDBADMIN_UNDO_DAYS', 7),
         // Schreibschutz auf Zeit aufheben (V-11).
         'unlock_minutes' => (int) env('PHPDBADMIN_UNLOCK_MINUTES', 15),
+        // Suchen und Ersetzen (D-08): höchstens so viele Zeilen je Ersetzen (darüber der SQL-Editor); die Suche über
+        // ein ganzes Schema hört nach so vielen Sekunden bzw. Treffern auf.
+        'replace_rows' => (int) env('PHPDBADMIN_REPLACE_ROWS', 10000),
+        'search_seconds' => (int) env('PHPDBADMIN_SEARCH_SECONDS', 10),
+        'search_hits' => (int) env('PHPDBADMIN_SEARCH_HITS', 1000),
     ],
 
     /*
@@ -204,6 +209,42 @@ return [
     'herd' => [
         'enabled' => env('PHPDBADMIN_HERD'),
         'path' => env('PHPDBADMIN_HERD_PATH'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sicherung und Wiederherstellung über die Server-Werkzeuge (E-03)
+    |--------------------------------------------------------------------------
+    |
+    | Pfade der Werkzeuge: ein Name wird im PATH gesucht, danach in den Ordnern unten (PHP-FPM hat oft einen schmalen
+    | PATH; «~» ist das Heimverzeichnis, «*» nimmt die neueste Version). Ein absoluter Pfad gilt genau so. Ohne
+    | Werkzeug sagt die Seite «Sicherung», was fehlt. SQLite sichert ohne Werkzeug (VACUUM INTO) und stellt mit
+    | sqlite3 wieder her. Sicherungen laufen als Aufträge wie Exporte (Frist, Download, Warteschlange).
+    |
+    */
+
+    'backup' => [
+        'tools' => [
+            'mysqldump' => env('PHPDBADMIN_TOOL_MYSQLDUMP', 'mysqldump'),
+            'mysql' => env('PHPDBADMIN_TOOL_MYSQL', 'mysql'),
+            'mariadb-dump' => env('PHPDBADMIN_TOOL_MARIADB_DUMP', 'mariadb-dump'),
+            'mariadb' => env('PHPDBADMIN_TOOL_MARIADB', 'mariadb'),
+            'pg_dump' => env('PHPDBADMIN_TOOL_PG_DUMP', 'pg_dump'),
+            'pg_restore' => env('PHPDBADMIN_TOOL_PG_RESTORE', 'pg_restore'),
+            'psql' => env('PHPDBADMIN_TOOL_PSQL', 'psql'),
+            'sqlite3' => env('PHPDBADMIN_TOOL_SQLITE3', 'sqlite3'),
+        ],
+        'directories' => array_values(array_filter(explode(PATH_SEPARATOR, (string) (env('PHPDBADMIN_TOOL_DIRECTORIES') ?: implode(PATH_SEPARATOR, [
+            '~/Library/Application Support/Herd/bin',
+            '/Users/Shared/Herd/services/postgresql/*/bin',
+            '/opt/homebrew/bin',
+            '/opt/homebrew/opt/libpq/bin',
+            '/usr/local/bin',
+            '/Applications/Postgres.app/Contents/Versions/latest/bin',
+            '/usr/bin',
+        ]))))),
+        // Höchstdauer eines Werkzeugs im Hintergrund; in der Anfrage (ohne Worker) höchstens 280 Sekunden.
+        'timeout_seconds' => (int) env('PHPDBADMIN_BACKUP_TIMEOUT', 3600),
     ],
 
 ];

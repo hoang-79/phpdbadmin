@@ -9,7 +9,6 @@ use App\Models\ChangeSnapshot;
 use App\Models\DatabaseConnection;
 use App\Models\User;
 use App\Services\Audit\AuditLog;
-use Carbon\CarbonImmutable;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
 use Throwable;
@@ -32,6 +31,7 @@ final class RowEditor
         private readonly TargetConnections $targets,
         private readonly TableData $data,
         private readonly AuditLog $audit,
+        private readonly ChangeSnapshots $snapshots,
     ) {}
 
     /**
@@ -104,8 +104,8 @@ final class RowEditor
                     'position' => $position,
                     'operation' => $change['op'],
                     'key' => $key,
-                    'before' => $before === null ? null : $this->portable($before),
-                    'after' => $change['op'] === 'delete' ? null : $this->portable($this->row($writer, $schema, $table, $primaryKey, $key) ?? []),
+                    'before' => $before === null ? null : ChangeSnapshots::portable($before),
+                    'after' => $change['op'] === 'delete' ? null : ChangeSnapshots::portable($this->row($writer, $schema, $table, $primaryKey, $key) ?? []),
                 ];
             }
 
@@ -119,24 +119,7 @@ final class RowEditor
             'deleted' => $counts['delete'] ?? 0,
         ], connection: $connection, sql: implode(";\n", $statements), affectedRows: count($snapshots));
 
-        $undoable = count($snapshots) <= (int) config('phpdbadmin.data.undo_rows', 1000);
-
-        if ($undoable) {
-            $expires = CarbonImmutable::now()->addDays((int) config('phpdbadmin.data.undo_days', 7));
-
-            foreach ($snapshots as $snapshot) {
-                ChangeSnapshot::query()->create([
-                    ...$snapshot,
-                    'audit_log_id' => $entry->id,
-                    'user_id' => $user->id,
-                    'connection_id' => $connection->id,
-                    'database' => $database,
-                    'schema' => $schema,
-                    'target' => $table,
-                    'expires_at' => $expires,
-                ]);
-            }
-        }
+        $undoable = $this->snapshots->store($entry->id, $user, $connection, $database, $schema, $table, $snapshots);
 
         return [
             'auditId' => $entry->id,
@@ -180,7 +163,7 @@ final class RowEditor
                 foreach ($snapshots as $snapshot) {
                     $current = $this->row($writer, $first->schema, $first->target, $primaryKey, $snapshot->key);
 
-                    if ($snapshot->operation !== 'delete' && ($current === null || $this->portable($current) != $snapshot->after)) {
+                    if ($snapshot->operation !== 'delete' && ($current === null || ChangeSnapshots::portable($current) != $snapshot->after)) {
                         throw new ChangeConflict(__('Eine Zeile wurde seither geändert — Rückgängig würde diese Änderung überschreiben. Nichts wurde geändert.'));
                     }
 
@@ -192,8 +175,8 @@ final class RowEditor
 
                     match ($snapshot->operation) {
                         'insert' => $query->delete(),
-                        'update' => $query->update($this->restorable($snapshot->before ?? [])),
-                        'delete' => $writer->table($first->schema.'.'.$first->target)->insert($this->restorable($snapshot->before ?? [])),
+                        'update' => $query->update(ChangeSnapshots::restorable($snapshot->before ?? [])),
+                        'delete' => $writer->table($first->schema.'.'.$first->target)->insert(ChangeSnapshots::restorable($snapshot->before ?? [])),
                     };
                 }
             });
@@ -377,37 +360,6 @@ final class RowEditor
         $row = $this->keyed($connection->table($schema.'.'.$table), $primaryKey, $key)->first();
 
         return $row === null ? null : (array) $row;
-    }
-
-    /**
-     * Zeile so, dass sie als JSON gespeichert und genau so wieder geschrieben werden kann: Binärdaten als Base64,
-     * Ströme gelesen.
-     *
-     * @param  array<string, mixed>  $row
-     * @return array<string, mixed>
-     */
-    private function portable(array $row): array
-    {
-        return array_map(function (mixed $value): mixed {
-            if (is_resource($value)) {
-                $value = (string) stream_get_contents($value);
-            }
-
-            if (is_string($value) && ! mb_check_encoding($value, 'UTF-8')) {
-                return ['$base64' => base64_encode($value)];
-            }
-
-            return $value;
-        }, $row);
-    }
-
-    /**
-     * @param  array<string, mixed>  $row
-     * @return array<string, mixed>
-     */
-    private function restorable(array $row): array
-    {
-        return array_map(fn (mixed $value): mixed => is_array($value) && isset($value['$base64']) ? base64_decode((string) $value['$base64']) : $value, $row);
     }
 
     /**

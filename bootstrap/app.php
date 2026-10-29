@@ -24,6 +24,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance']);
 
+        // Werte für die Zieldatenbank kommen wörtlich an (D-04, D-08, Q-05): Leerzeichen am Rand gehören zum Wert, und
+        // leerer Text ist nicht NULL. Gilt für das Bearbeiten von Zeilen und für Suchen und Ersetzen.
+        $literalValues = fn (Request $request): bool => $request->is('c/*/s/*/o/*/changes', 'c/*/s/*/o/*/changes/*', 'c/*/s/*/o/*/replace', 'c/*/s/*/o/*/replace/*');
+        $middleware->trimStrings(except: [$literalValues]);
+        $middleware->convertEmptyStringsToNull(except: [$literalValues]);
+
         $middleware->web(append: [
             SecurityHeaders::class,
             EnsureAccountIsActive::class,

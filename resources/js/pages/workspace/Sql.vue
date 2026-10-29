@@ -326,7 +326,7 @@ async function cancelRun(): Promise<void> {
     }
 }
 
-async function loadMore(index: number): Promise<void> {
+async function loadMore(index: number, rows?: number): Promise<void> {
     const result = results.value[index];
 
     if (!result) {
@@ -344,7 +344,7 @@ async function loadMore(index: number): Promise<void> {
                 schema: props.workspace.schema,
                 limit: Math.min(
                     props.editor.maxRowLimit,
-                    result.rows.length + props.editor.rowLimit * 4,
+                    rows ?? result.rows.length + props.editor.rowLimit * 4,
                 ),
                 confirmed: true,
             },
@@ -363,6 +363,14 @@ const assistOpen = ref(false);
 function insertSuggestion(sql: string): void {
     text.value = text.value.trim() ? `${text.value.trimEnd()}\n\n${sql}` : sql;
     editorRef.value?.focus();
+}
+
+/** Nach dem Bearbeiten eines Ergebnisses (Q-05) dieselbe Abfrage noch einmal — mit ebenso vielen Zeilen. */
+function refresh(index: number): void {
+    void loadMore(
+        index,
+        Math.max(props.editor.rowLimit, results.value[index]?.rows.length ?? 0),
+    );
 }
 
 function format(): void {
@@ -608,6 +616,7 @@ const statusIcons: Record<string, unknown> = {
                 :max-row-limit="editor.maxRowLimit"
                 :loading-more="loadingMore"
                 @more="loadMore"
+                @refresh="refresh"
             />
         </div>
 

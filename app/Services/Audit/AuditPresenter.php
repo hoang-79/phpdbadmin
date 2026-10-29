@@ -133,6 +133,9 @@ final class AuditPresenter
             'connection.permission' => __('Recht geändert'),
             'connection.ssh_host_key_forgotten' => __('SSH-Host-Schlüssel vergessen'),
             'audit.exported' => __('Protokoll exportiert'),
+            'data.replace' => __('Suchen und Ersetzen'),
+            'data.restore' => __('Sicherung wiederhergestellt'),
+            'transfer.backup' => __('Sicherung erstellt'),
             default => $this->categoryLabel($action) ?? $action,
         };
     }

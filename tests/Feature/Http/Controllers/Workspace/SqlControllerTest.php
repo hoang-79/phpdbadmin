@@ -137,6 +137,54 @@ class SqlControllerTest extends TestCase
         $this->assertSame(['eins', 'zwei'], $this->bodies($connection));
     }
 
+    public function test_result_of_one_table_is_editable_through_the_endpoints_of_the_grid(): void
+    {
+        $connection = $this->sqliteConnection();
+
+        $this->actingAs($this->user)
+            ->postJson(route('workspace.sql.run', $connection), ['sql' => 'select body, id from notes where id = 2', 'mode' => 'all', 'run' => 'lauf-0006'])
+            ->assertOk()
+            ->assertJsonPath('results.0.columns', [['name' => 'body', 'type' => 'string'], ['name' => 'id', 'type' => 'integer']])
+            ->assertJsonPath('results.0.source.editable', true)
+            ->assertJsonPath('results.0.source.table', 'notes')
+            ->assertJsonPath('results.0.source.keyColumns', [1])
+            ->assertJsonPath('results.0.source.columns.0.name', 'body')
+            ->assertJsonPath('results.0.source.columns.1', null);
+
+        // Angewendet wird über den RowEditor (Vorschau, eine Transaktion, Rückgängig) wie im Raster.
+        $this->postJson(route('workspace.object.changes', [$connection, 'main', 'notes']), ['changes' => [['op' => 'update', 'key' => ['2'], 'values' => ['body' => 'zwei, geändert']]]])
+            ->assertOk()
+            ->assertJsonPath('updated', 1);
+
+        $this->assertSame(['eins', 'zwei, geändert'], $this->bodies($connection));
+    }
+
+    public function test_reader_sees_why_a_result_is_read_only_and_cannot_apply(): void
+    {
+        $connection = $this->sqliteConnection(['shared' => true]);
+        $reader = User::factory()->create();
+        $connection->members()->attach($reader, ['permission' => 'read']);
+
+        $this->actingAs($reader)
+            ->postJson(route('workspace.sql.run', $connection), ['sql' => 'select * from notes', 'mode' => 'all', 'run' => 'lauf-0007'])
+            ->assertOk()
+            ->assertJsonPath('results.0.source.editable', false)
+            ->assertJsonPath('results.0.source.reason', 'Ihr Konto darf über diese Verbindung nur lesen.');
+
+        $this->postJson(route('workspace.object.changes', [$connection, 'main', 'notes']), ['changes' => [['op' => 'update', 'key' => ['1'], 'values' => ['body' => 'heimlich']]]])
+            ->assertForbidden();
+
+        $this->assertSame(['eins', 'zwei'], $this->bodies($connection));
+    }
+
+    public function test_statements_without_rows_have_no_source(): void
+    {
+        $this->actingAs($this->user)
+            ->postJson(route('workspace.sql.run', $this->sqliteConnection()), ['sql' => "update notes set body = 'x' where id = 1", 'mode' => 'all', 'run' => 'lauf-0008'])
+            ->assertOk()
+            ->assertJsonPath('results.0.source', null);
+    }
+
     public function test_only_comments_is_nothing_to_run(): void
     {
         $this->actingAs($this->user)

@@ -77,6 +77,20 @@ class RowChangeControllerTest extends TestCase
         $this->assertSame(['eins', 'zwei'], $this->bodies($connection));
     }
 
+    public function test_values_keep_surrounding_spaces_and_empty_text_is_not_null(): void
+    {
+        $connection = $this->connection();
+
+        $this->actingAs($this->user)
+            ->postJson(route('workspace.object.changes', [$connection, 'main', 'notes']), ['changes' => [
+                ['op' => 'update', 'key' => ['1'], 'values' => ['body' => '  eingerückt ']],
+                ['op' => 'update', 'key' => ['2'], 'values' => ['body' => '']],
+            ]])
+            ->assertOk();
+
+        $this->assertSame(['  eingerückt ', ''], $this->bodies($connection));
+    }
+
     public function test_reader_may_neither_change_nor_unlock(): void
     {
         $connection = $this->connection(['shared' => true]);

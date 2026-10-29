@@ -16,9 +16,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Ein Export oder Import (E-01, E-02, B-07). Dateien liegen auf der Disk «local» unter `transfers/<Kennung>/` und
- * verschwinden mit dem Datensatz nach der Frist (Vorgabe 24 Stunden, täglicher `model:prune`). Herunterladen und
- * Ansehen nur für das eigene Konto.
+ * Ein Export, Import, eine Sicherung oder Wiederherstellung (E-01 bis E-03, B-07). Dateien liegen auf der Disk
+ * «local» unter `transfers/<Kennung>/` und verschwinden mit dem Datensatz nach der Frist (Vorgabe 24 Stunden,
+ * täglicher `model:prune`). Herunterladen und Ansehen nur für das eigene Konto.
  *
  * Texte im Ergebnis und im Fehler sind deutsche Schlüssel mit Platzhaltern (TransferMessage) — übersetzt wird erst
  * bei der Ausgabe, damit ein Auftrag im Hintergrund nicht in der Sprache des Workers spricht.
@@ -143,7 +143,7 @@ class Transfer extends Model
     /** Liegt die Datei zum Herunterladen bereit? */
     public function isDownloadable(): bool
     {
-        return $this->kind === TransferKind::Export
+        return $this->kind->producesFile()
             && $this->status === TransferStatus::Done
             && $this->file_path !== null
             && $this->expires_at->isFuture()

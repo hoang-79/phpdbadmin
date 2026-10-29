@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Services\Audit\AuditLog;
 use App\Services\Audit\Masking;
 use App\Services\Catalog\Catalog;
+use App\Services\Sql\EditableResult;
 use App\Services\Sql\QueryRunner;
 use App\Services\Sql\StatementClassifier;
 use App\Services\Sql\StatementKind;
@@ -30,9 +31,9 @@ use Inertia\Response;
 use PDOException;
 
 /**
- * SQL-Editor (Q-01 bis Q-04, Q-07, Q-09, Wireframe 10): Seite mit Vervollständigung aus dem Schema, Ausführen mit
+ * SQL-Editor (Q-01 bis Q-05, Q-07, Q-09, Wireframe 10): Seite mit Vervollständigung aus dem Schema, Ausführen mit
  * Grenzen, Abbrechen, Verlauf und gespeicherten Abfragen. Gefährliche Anweisungen verlangen eine Bestätigung, in
- * Produktion zusätzlich den Namen der Verbindung.
+ * Produktion zusätzlich den Namen der Verbindung. Ergebnisse einer Tabelle mit Primärschlüssel sind bearbeitbar.
  */
 class SqlController extends WorkspaceController
 {
@@ -42,6 +43,7 @@ class SqlController extends WorkspaceController
         private readonly StatementClassifier $classifier,
         private readonly QueryRunner $runner,
         private readonly AuditLog $audit,
+        private readonly EditableResult $editable,
     ) {
         parent::__construct($catalog);
     }
@@ -154,6 +156,14 @@ class SqlController extends WorkspaceController
                 $this->audit->record('sql.execute', $user, connection: $connection, sql: $result['sql'], affectedRows: $result['affected']);
             }
         }
+
+        // Ergebnisse einer Tabelle mit Primärschlüssel lassen sich bearbeiten (Q-05) — erkannt hier, angewendet über
+        // die Endpunkte des Rasters. Die Herkunft der Spalten braucht der Browser nicht.
+        $results = array_map(fn (array $result): array => [
+            ...$result,
+            'columns' => array_map(fn (array $column): array => ['name' => $column['name'], 'type' => $column['type']], $result['columns']),
+            'source' => $this->editable->describe($connection, $user, $database, $schema, $result),
+        ], $results);
 
         return response()->json(['results' => $results, 'history' => $this->history($user, $connection)]);
     }

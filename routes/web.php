@@ -17,6 +17,7 @@ use App\Http\Controllers\Connections\SshHostKeyController;
 use App\Http\Controllers\Connections\TestConnectionController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\PaletteController;
+use App\Http\Controllers\Workspace\BackupController;
 use App\Http\Controllers\Workspace\ConnectionPasswordController;
 use App\Http\Controllers\Workspace\DefinitionController;
 use App\Http\Controllers\Workspace\DiagramController;
@@ -26,6 +27,8 @@ use App\Http\Controllers\Workspace\MigrationController;
 use App\Http\Controllers\Workspace\ObjectController;
 use App\Http\Controllers\Workspace\RowChangeController;
 use App\Http\Controllers\Workspace\Schema;
+use App\Http\Controllers\Workspace\SearchController;
+use App\Http\Controllers\Workspace\SearchReplaceController;
 use App\Http\Controllers\Workspace\Server;
 use App\Http\Controllers\Workspace\SqlAssistController;
 use App\Http\Controllers\Workspace\SqlController;
@@ -102,6 +105,10 @@ Route::middleware('auth')->group(function () {
             Route::post('alter', [Schema\TableAlterController::class, 'update'])->name('workspace.object.alter.apply');
             Route::post('actions/preview', [Schema\TableActionController::class, 'preview'])->name('workspace.object.actions.preview');
             Route::post('actions', [Schema\TableActionController::class, 'apply'])->name('workspace.object.actions.apply');
+
+            // Suchen und Ersetzen (D-08): Vorschau, dann in einer Transaktion; Rückgängig wie beim Bearbeiten.
+            Route::post('replace/preview', [SearchReplaceController::class, 'preview'])->name('workspace.object.replace.preview');
+            Route::post('replace', [SearchReplaceController::class, 'apply'])->name('workspace.object.replace');
         });
 
         // Tabelle anlegen (S-02); Datenbank bzw. Schema anlegen und löschen (S-05). Nur mit «schreiben», ohne Schreibschutz.
@@ -127,6 +134,9 @@ Route::middleware('auth')->group(function () {
         Route::get('s/{schema}/diagram', [DiagramController::class, 'diagram'])->where('schema', '[^/]+')->name('workspace.diagram');
         Route::post('s/{schema}/diagram/svg', [DiagramController::class, 'svg'])->where('schema', '[^/]+')->name('workspace.diagram.svg');
 
+        // Suche über ein ganzes Schema (D-08), nur lesen.
+        Route::get('search', [SearchController::class, 'index'])->name('workspace.search');
+
         // Server-Verwaltung (W-01 bis W-05): ansehen mit Zugang, ändern nur mit «verwalten» und ohne Schreibschutz.
         Route::get('server', Server\OverviewController::class)->name('workspace.server');
         Route::get('server/processes', [Server\ProcessController::class, 'index'])->name('workspace.server.processes');
@@ -145,6 +155,10 @@ Route::middleware('auth')->group(function () {
             Route::get('status', [TransferController::class, 'status'])->name('status');
             Route::post('export', [TransferController::class, 'export'])->name('export');
             Route::post('analyze', [TransferController::class, 'analyze'])->name('analyze');
+            // Sicherung und Wiederherstellung über die Werkzeuge des Servers (E-03).
+            Route::get('backup', [BackupController::class, 'index'])->name('backup');
+            Route::post('backup', [BackupController::class, 'store'])->name('backup.store');
+            Route::post('restore', [BackupController::class, 'restore'])->name('restore');
             Route::post('import', [ImportController::class, 'store'])->name('import');
             Route::get('{transfer}', [ImportController::class, 'edit'])->whereUlid('transfer')->name('edit');
             Route::patch('{transfer}', [ImportController::class, 'update'])->whereUlid('transfer')->name('update');
