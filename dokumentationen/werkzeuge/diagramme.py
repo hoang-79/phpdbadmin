@@ -770,7 +770,7 @@ def er_app_datenbank() -> Zeichnung:
         for i, sp in enumerate(spalten):
             z.text(x + 10, y + 44 + i * 17, sp, "mono")
         return (x, y, b, h)
-    u = tabelle(30, 80, "users", ["id", "name", "email ∪", "role", "locale, theme, density", "timezone", "last_login_at"])
+    u = tabelle(30, 80, "users", ["id", "name", "email ∪", "role", "locale, theme, density", "timezone", "last_login_at, disabled_at"])
     pk = tabelle(30, 290, "passkeys", ["id", "user_id →", "name", "credential_id ∪", "credential (json)", "last_used_at"])
     lc = tabelle(30, 480, "login_codes", ["id", "email_hash", "code_hash", "attempts", "expires_at, consumed_at", "ip_hash"])
     inv = tabelle(290, 80, "invitations", ["id", "email", "role", "token_hash", "invited_by →", "expires_at, accepted_at"])
@@ -779,7 +779,7 @@ def er_app_datenbank() -> Zeichnung:
     qh = tabelle(850, 80, "query_history", ["id", "user_id →", "connection_id →", "sql (longText)", "status, duration_ms", "row_count"], "kernhell", 300)
     sq = tabelle(850, 250, "saved_queries", ["id", "user_id →", "connection_id →", "name, sql", "parameters (json), shared"], "kernhell", 300)
     tv = tabelle(850, 400, "table_views", ["id", "user_id →, connection_id →", "schema, table", "columns, filters, sort (json)"], "kernhell", 300)
-    al = tabelle(560, 360, "audit_log", ["id", "user_id →", "connection_id →", "action, target", "sql (maskiert)", "affected_rows, ip_hash"], "kernhell", 250)
+    al = tabelle(560, 360, "audit_log", ["id", "user_id →, user_name", "connection_id, …_name", "action, target", "sql (maskiert)", "affected_rows, ip_hash"], "kernhell", 250)
     cs = tabelle(560, 560, "change_snapshots", ["id, audit_log_id →", "target, key (json)", "before, after (json)", "expires_at"], "kernhell", 250)
     tr = tabelle(290, 480, "transfers", ["id", "user_id →, connection_id →", "kind, format, status", "progress, rows", "file_path, expires_at"], "kernhell", 240)
     # Pfeile immer von der verweisenden zur referenzierten Tabelle

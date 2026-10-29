@@ -10,6 +10,7 @@ Timebox-Protokolle (`timebox-nn-titel.md`) und Architekturentscheide (`adr/ADR-n
 |---|---|---|---|
 | [**00 Fundament**](timebox-00-fundament.md) | Starter-Kit bereinigt (kein Passwort, kein Dashboard, kein Profil); Anmeldung mit Code per Mail und Passkey; Einladung; Ersteinrichtung per Konsole mit Link und Passkey-Onboarding; App-Datenbank; Verbindungen mit Test, Verschlüsselung und erlaubten Hosts; Dialekt-Schicht mit Vertragstest auf vier Datenbanken; lokales Prüfskript, Workflow sparsam | A-01 bis A-06, A-09, V-01 bis V-03, V-05, B-01 bis B-03, B-06, B-08 | ✅ 28.10.2026 — offen: Touch ID von Hand (A-03), erster Lauf des Workflows auf GitHub |
 | 01 Katalog und Navigator | siehe [Timebox-Plan](../03-foundation/timebox-plan.md#1-die-dreizehn-timeboxes) | O-01, O-04, S-01, V-04, N-06, V-06, V-10, O-06, N-04 | als Nächstes |
+| [**07 Konten, Rechte, Protokoll**](timebox-07-konten-rechte-protokoll.md) | Policy je Verbindung (`view`, `write`, `manage`, `share`); Teilen; Verwaltung der Konten und Einladungen; Protokoll mit Filtern, Maskierung und Frist; dazu Favoriten und «zuletzt geöffnet» (V-06) | B-04, A-07, V-09, A-05, A-06, V-06 | ✅ 29.10.2026 auf eigenem Zweig — offen: Browser-Durchlauf nach dem Zusammenführen |
 
 ## Architekturentscheide
 

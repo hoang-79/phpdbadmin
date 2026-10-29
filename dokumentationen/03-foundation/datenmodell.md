@@ -22,7 +22,7 @@
 
 | Tabelle | Spalten (Auswahl) | Zweck |
 |---|---|---|
-| `users` | `id`, `name`, `email` (eindeutig, klein geschrieben), `role` (`admin` · `member`), `locale`, `theme` (`system` · `light` · `dark`), `density` (`default` · `compact`), `timezone`, `last_login_at`, Zeitstempel | Konto ohne Passwort; Name und E-Mail ändert ein Administrator (A-05) |
+| `users` | `id`, `name`, `email` (eindeutig, klein geschrieben), `role` (`admin` · `member`), `locale`, `theme` (`system` · `light` · `dark`), `density` (`default` · `compact`), `timezone`, `last_login_at`, `disabled_at` (TB 07), Zeitstempel | Konto ohne Passwort; Name und E-Mail ändert ein Administrator (A-05); gesperrt = keine Anmeldung, Sitzungen enden |
 | `passkeys` | `id`, `user_id`, `name`, `credential_id` (eindeutig), `credential` (json), `last_used_at`, Zeitstempel | aus `laravel/passkeys`, unverändert (A-03) |
 | `login_codes` | `id`, `email_hash`, `code_hash`, `attempts`, `expires_at`, `consumed_at`, `ip_hash`, `created_at` | Anmeldung per Code: sechs Ziffern, 10 Minuten, einmalig (A-02); unbekannte Adressen bekommen keinen Datensatz, aber dieselbe Antwort |
 | `invitations` | `id`, `email`, `role`, `token_hash`, `invited_by`, `expires_at`, `accepted_at`, Zeitstempel | Einladung statt Registrierung (A-06) |
@@ -35,7 +35,7 @@
 | `connections` | `id` (ULID), `owner_id`, `shared` (bool), `name`, `group`, `driver` (`mysql` · `mariadb` · `pgsql` · `sqlite`), `host`, `port`, `database`, `username`, `password` (verschlüsselt, leer bei «nicht speichern»), `store_password` (bool), `sqlite_path`, `options` (json: SSL-Modus, Zeichensatz, Suchpfad), `environment` (`local` · `test` · `production`), `read_only` (bool), `server_version`, `account_warnings` (json, V-10), `last_tested_at`, Zeitstempel | Zielverbindung (V-01 bis V-05, V-09, V-10) |
 | `connection_user` | `connection_id`, `user_id`, `permission` (`read` · `write` · `manage`), `favorite` (bool), `last_opened_at` | Recht je Verbindung und Konto, Favoriten (A-07, V-06) |
 
-Regeln: Produktion ist beim Anlegen `read_only = true` (V-04). Eine persönliche Verbindung (`shared = false`) sieht nur ihr Besitzer; geteilte Verbindungen nur, wer in `connection_user` steht (V-09). `host` und `sqlite_path` werden beim Speichern **und** beim Verbinden gegen die erlaubten Hosts und Ordner geprüft (V-05).
+Regeln: Produktion ist beim Anlegen `read_only = true` (V-04). Eine persönliche Verbindung (`shared = false`) sieht nur ihr Besitzer — auch kein Administrator; geteilte Verbindungen sehen Administratoren und wer in `connection_user` steht (V-09). Ein Eintrag dort zählt nur, solange die Verbindung geteilt ist. Besitzer und Administratoren haben eine Zeile nur für ihre Merker (Favorit, zuletzt geöffnet); sie trägt ihr wirksames Recht `manage`, damit eine Merker-Zeile nie mehr Recht gibt als die Rolle — verliert ein Administrator die Rolle, werden seine Zeilen an fremden Verbindungen gelöscht (TB 07). `host` und `sqlite_path` werden beim Speichern **und** beim Verbinden gegen die erlaubten Hosts und Ordner geprüft (V-05).
 
 ### 2.3 Arbeit: Verlauf, gespeicherte Abfragen, Ansichten
 
@@ -49,7 +49,7 @@ Regeln: Produktion ist beim Anlegen `read_only = true` (V-04). Eine persönliche
 
 | Tabelle | Spalten (Auswahl) | Zweck |
 |---|---|---|
-| `audit_log` | `id`, `user_id`, `connection_id`, `action` (z. B. `data.update`, `schema.alter`, `sql.execute`, `auth.login`), `target` (Schema.Tabelle), `sql` (longText, Werte maskiert), `affected_rows`, `ip_hash`, `created_at` | Protokoll aller schreibenden Aktionen und Anmeldungen (B-04, A-09); Frist einstellbar, Vorgabe 365 Tage |
+| `audit_log` | `id`, `user_id`, `user_name`, `connection_id` (ohne Fremdschlüssel), `connection_name`, `action` (z. B. `data.update`, `schema.alter`, `sql.execute`, `auth.login`), `target` (Schema.Tabelle), `sql` (longText, Werte maskiert), `affected_rows`, `context` (json, Fehler maskiert), `ip_hash`, `created_at` | Protokoll aller schreibenden Aktionen und Anmeldungen (B-04, A-09); Namen bleiben nach dem Entfernen lesbar; Frist `PHPDBADMIN_AUDIT_RETENTION_DAYS`, Vorgabe 365 Tage |
 | `change_snapshots` | `id`, `audit_log_id`, `user_id`, `connection_id`, `target`, `key` (json: Primärschlüssel), `before` (json), `after` (json), `expires_at` | Rückgängig für Datenänderungen (D-09): Vorher-Werte bis zur Grenze (Vorgabe 1'000 Zeilen je Änderung, 7 Tage) |
 | `transfers` | `id`, `user_id`, `connection_id`, `kind` (`export` · `import`), `format`, `status` (`queued` · `running` · `done` · `failed`), `progress`, `rows`, `file_path`, `error`, `expires_at`, Zeitstempel | Export und Import im Hintergrund (E-01, E-02); Dateien unter `storage/app/private/transfers`, Frist 24 Stunden |
 | `jobs`, `failed_jobs`, `cache` | wie Laravel | Warteschlange, Abbruch-Merker laufender Abfragen (Q-02) |
@@ -69,10 +69,10 @@ Regeln: Produktion ist beim Anlegen `read_only = true` (V-04). Eine persönliche
 | Verlauf | 90 Tage | `model:prune` |
 | Rückgängig-Sicherungen | 7 Tage | `model:prune` |
 | Exportdateien | 24 Stunden | Aufräumlauf löscht Datei und setzt `file_path` leer |
-| Protokoll | Einstellung, Vorgabe 365 Tage | `model:prune` |
-| Konto gelöscht | Passkeys, Sitzungen, persönliche Verbindungen, Verlauf, gespeicherte Abfragen mit; Protokolleinträge bleiben mit `user_id = null` und Name im Eintrag | Fremdschlüssel `cascadeOnDelete` bzw. `nullOnDelete` |
+| Protokoll | `PHPDBADMIN_AUDIT_RETENTION_DAYS`, Vorgabe 365 Tage, 0 = ohne Frist | `model:prune` (täglich im Scheduler, TB 07) |
+| Konto gelöscht | Passkeys, Sitzungen, persönliche Verbindungen, Verlauf, gespeicherte Abfragen mit; geteilte Verbindungen übernimmt der entfernende Administrator; Protokolleinträge bleiben mit `user_id = null` und `user_name` | Fremdschlüssel `cascadeOnDelete` bzw. `nullOnDelete`; Übernahme in der Verwaltung |
 
 ## 5. Offene Punkte
 
-- Einstellbare Fristen: global in der Konfiguration oder im Verwaltungsbereich? Vorschlag: Konfiguration (`.env`), angezeigt in der Verwaltung (TB 07).
+- ~~Einstellbare Fristen: global in der Konfiguration oder im Verwaltungsbereich?~~ Entschieden in TB 07: Konfiguration (`.env`), angezeigt im Protokoll der Verwaltung.
 - KI-Schlüssel (Q-08, Stufe 4) — Tabelle oder Spalte am Konto, erst in TB 12.
