@@ -109,7 +109,7 @@ class AccountControllerTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('statements.0', $driver === DatabaseDriver::Postgres
                 ? 'CREATE ROLE "'.$this->accountName().'" LOGIN PASSWORD '.PlannedStatement::MASK
-                : "CREATE USER '".$this->accountName()."'@'localhost' IDENTIFIED BY ".PlannedStatement::MASK);
+                : "CREATE USER '".$this->accountName()."'@'".$this->clientHost($this->root($driver))."' IDENTIFIED BY ".PlannedStatement::MASK);
         $this->assertStringNotContainsString('W04-Geheim', (string) $response->getContent());
         $this->assertFalse($this->accountExists($this->root($driver), $driver));
         $this->assertSame(0, AuditEntry::query()->count());
@@ -125,7 +125,7 @@ class AccountControllerTest extends TestCase
         $root = $this->root($driver);
         $root->statement('create table w04_orders (id int primary key)');
         $connection = $this->savedConnection($settings, $this->user);
-        $account = ['name' => $this->accountName(), ...($driver === DatabaseDriver::Postgres ? [] : ['host' => 'localhost'])];
+        $account = ['name' => $this->accountName(), ...($driver === DatabaseDriver::Postgres ? [] : ['host' => $this->clientHost($root)])];
         $grant = [
             ...$account,
             'level' => 'table',
@@ -169,7 +169,7 @@ class AccountControllerTest extends TestCase
     {
         $connection = $this->savedConnection($this->scratchSettings(DatabaseDriver::MariaDb, $this->folder), $this->user);
         $root = $this->root(DatabaseDriver::MariaDb);
-        $root->statement("create user '".$this->accountName()."'@'localhost' identified by 'Vorher-1234'");
+        $root->statement("create user '".$this->accountName()."'@'".$this->clientHost($root)."' identified by 'Vorher-1234'");
 
         try {
             $this->actingAs($this->user)->from(route('workspace.server.accounts', $connection))
@@ -189,8 +189,10 @@ class AccountControllerTest extends TestCase
     public function test_dropping_the_own_account_is_refused(): void
     {
         $connection = $this->savedConnection($this->scratchSettings(DatabaseDriver::MariaDb, $this->folder), $this->user);
+        // Das eigene Konto, wie es der Server führt: root@localhost in Herd, root@% im Container.
+        $own = $this->currentAccount($this->root(DatabaseDriver::MariaDb));
 
-        $this->actingAs($this->user)->postJson(route('workspace.server.accounts.preview', $connection), ['action' => 'drop', 'name' => 'root', 'host' => 'localhost'])
+        $this->actingAs($this->user)->postJson(route('workspace.server.accounts.preview', $connection), ['action' => 'drop', 'name' => $own['name'], 'host' => $own['host']])
             ->assertJsonValidationErrors(['name' => 'Mit diesem Konto ist phpdbadmin verbunden — es lässt sich hier nicht löschen.']);
     }
 
@@ -245,7 +247,7 @@ class AccountControllerTest extends TestCase
         return [
             'action' => 'create',
             'name' => $this->accountName(),
-            ...($driver === DatabaseDriver::Postgres ? [] : ['host' => 'localhost']),
+            ...($driver === DatabaseDriver::Postgres ? [] : ['host' => $this->clientHost($this->root($driver))]),
             'password' => self::PASSWORD,
         ];
     }
@@ -288,7 +290,7 @@ class AccountControllerTest extends TestCase
     private function dropAccount(Connection $root, DatabaseDriver $driver): void
     {
         if ($driver !== DatabaseDriver::Postgres) {
-            $root->statement("drop user if exists '".$this->accountName()."'@'localhost'");
+            $root->statement("drop user if exists '".$this->accountName()."'@'".$this->clientHost($root)."'");
 
             return;
         }

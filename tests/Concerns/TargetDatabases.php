@@ -188,6 +188,28 @@ trait TargetDatabases
     }
 
     /**
+     * Host, unter dem der Server diese Verbindung sieht (MySQL, MariaDB): in Herd «localhost», im Container die Adresse
+     * des Docker-Netzes (z. B. 172.17.0.1). Testkonten, mit denen sich ein Test anmeldet, brauchen genau diesen Host —
+     * '%' verliert in Herd gegen die anonymen Konten ''@'localhost', «localhost» passt im Container nicht.
+     */
+    protected function clientHost(Connection $connection): string
+    {
+        return (string) $connection->selectOne("select substring_index(user(), '@', -1) as host")?->host;
+    }
+
+    /**
+     * Konto, als das der Server diese Verbindung führt (CURRENT_USER): root@localhost in Herd, root@% im Container.
+     *
+     * @return array{name: string, host: string}
+     */
+    protected function currentAccount(Connection $connection): array
+    {
+        [$name, $host] = explode('@', (string) $connection->selectOne('select current_user() as account')?->account, 2) + [1 => ''];
+
+        return ['name' => $name, 'host' => $host];
+    }
+
+    /**
      * Lesekonto «phpdbadmin_lesen» mit Leserecht auf die Test-Datenbank — legt es bei Bedarf an (V-10).
      */
     protected function readAccount(DatabaseDriver $driver, Connection $root): ConnectionSettings

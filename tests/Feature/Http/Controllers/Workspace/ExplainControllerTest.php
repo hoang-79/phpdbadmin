@@ -62,14 +62,14 @@ class ExplainControllerTest extends TestCase
     #[DataProvider('drivers')]
     public function test_plan_has_a_root_and_flags_a_full_scan_without_a_matching_index(DatabaseDriver $driver): void
     {
-        [$connection, $schema] = $this->prepared($driver);
+        [$connection, $schema, $target] = $this->prepared($driver);
         $sql = "-- Bericht\nselect 1;\nselect * from e_ohne where wert = 5;\nselect * from e_mit where wert = 5";
 
         $plain = $this->explain($connection, $schema, $sql, strpos($sql, 'e_ohne') + 2)->assertOk()->json();
 
         $this->assertSame('select * from e_ohne where wert = 5', $plain['sql']);
         $this->assertFalse($plain['analyzed']);
-        $this->assertSame($driver !== DatabaseDriver::Sqlite, $plain['analyzable']);
+        $this->assertSame($this->analyzable($driver, $target), $plain['analyzable']);
         $this->assertNotSame('', $plain['plan']['operation']);
         $this->assertIsInt($plain['plan']['id']);
         $this->assertNotSame('', $plain['raw']);
@@ -105,7 +105,16 @@ class ExplainControllerTest extends TestCase
     #[DataProvider('analyzingDrivers')]
     public function test_analyze_measures_reading_statements(DatabaseDriver $driver): void
     {
-        [$connection, $schema] = $this->prepared($driver);
+        [$connection, $schema, $target] = $this->prepared($driver);
+
+        if (! $this->analyzable($driver, $target)) {
+            // MySQL unter 8.3 (Untergrenze 8.0): phpdbadmin bietet ANALYZE dort nicht an und sagt warum.
+            $this->explain($connection, $schema, 'select count(*) from e_ohne where wert > 10', analyze: true)
+                ->assertUnprocessable()
+                ->assertJsonFragment(['message' => __('ANALYZE als JSON gibt es bei MySQL erst ab 8.3 (hier :version).', ['version' => $this->serverVersion($target)])]);
+
+            return;
+        }
 
         $analyzed = $this->explain($connection, $schema, 'select count(*) from e_ohne where wert > 10', analyze: true)->assertOk()->json();
 
@@ -230,6 +239,19 @@ class ExplainControllerTest extends TestCase
      *
      * @return array{0: DatabaseConnection, 1: string, 2: Connection, 3: ConnectionSettings}
      */
+    /**
+     * ANALYZE als JSON: alle Server ausser SQLite — MySQL erst ab 8.3 (Explainer).
+     */
+    private function analyzable(DatabaseDriver $driver, Connection $target): bool
+    {
+        return $driver !== DatabaseDriver::Sqlite && ($driver !== DatabaseDriver::MySql || version_compare($this->serverVersion($target), '8.3', '>='));
+    }
+
+    private function serverVersion(Connection $target): string
+    {
+        return (string) $target->selectOne('select version() as version')?->version;
+    }
+
     private function prepared(DatabaseDriver $driver, ?User $owner = null): array
     {
         $settings = $this->scratchSettings($driver, $this->folder);

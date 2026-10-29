@@ -154,6 +154,17 @@ jobs:
           key: composer-${{ hashFiles('composer.lock') }}
           restore-keys: composer-
 
+      # Sicherung und Wiederherstellung (E-03) brauchen die PostgreSQL-Werkzeuge in der Version des Servers: Der Runner
+      # bringt nur pg_dump 16 mit (älter als PostgreSQL 18 — phpdbadmin lehnt das richtigerweise ab), und ein neueres
+      # pg_restore schickt einem älteren Server Einstellungen, die er nicht kennt (transaction_timeout ab 17).
+      - name: PostgreSQL-Werkzeuge in der Version des Servers
+        run: |
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -qq postgresql-client-${{ matrix.postgres }}
+          for tool in pg_dump pg_restore psql; do
+            echo "PHPDBADMIN_TOOL_$(echo "$tool" | tr '[:lower:]' '[:upper:]')=/usr/lib/postgresql/${{ matrix.postgres }}/bin/$tool" >> "$GITHUB_ENV"
+          done
+
       - name: Setup Application
         run: |
           composer install --no-interaction --no-progress

@@ -203,7 +203,7 @@ class DialectServerContractTest extends TestCase
         $connection = $this->writable($driver);
         $connection->statement('create table w04_orders (id int primary key)');
         $dialect = $driver->dialect();
-        $account = $this->w04Account($driver);
+        $account = $this->w04Account($driver, $connection);
         $target = new PrivilegeTarget(PrivilegeLevel::Table, $this->targetTestDatabase(), $driver === DatabaseDriver::Postgres ? 'public' : null, 'w04_orders');
 
         try {
@@ -236,7 +236,7 @@ class DialectServerContractTest extends TestCase
     {
         $connection = $this->writable($driver);
         $dialect = $driver->dialect();
-        $account = $this->w04Account($driver);
+        $account = $this->w04Account($driver, $connection);
         $targets = match ($driver) {
             DatabaseDriver::Postgres => [
                 [new PrivilegeTarget(PrivilegeLevel::Server), ['pg_monitor'], 'GRANT "pg_monitor"'],
@@ -387,10 +387,10 @@ class DialectServerContractTest extends TestCase
         }
     }
 
-    private function w04Account(DatabaseDriver $driver): AccountName
+    private function w04Account(DatabaseDriver $driver, Connection $connection): AccountName
     {
-        // MariaDB in Herd hat anonyme Konten ''@'localhost' — sie gehen '%' vor; deshalb localhost.
-        return new AccountName('phpdbadmin_w04_'.getmypid(), $driver === DatabaseDriver::Postgres ? null : 'localhost');
+        // Genau der Host, unter dem der Server den Test sieht (Herd: localhost, Container: Docker-Netz) — siehe clientHost.
+        return new AccountName('phpdbadmin_w04_'.getmypid(), $driver === DatabaseDriver::Postgres ? null : $this->clientHost($connection));
     }
 
     private function accountSettings(DatabaseDriver $driver, AccountName $account): ConnectionSettings
