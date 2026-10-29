@@ -5,6 +5,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import AccountMenu from '@/components/AccountMenu.vue';
 import HelpLink from '@/components/HelpLink.vue';
 import InputError from '@/components/InputError.vue';
+import SkipLink from '@/components/SkipLink.vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -116,6 +117,7 @@ watch(
 
 <template>
     <div class="flex h-svh flex-col bg-background">
+        <SkipLink />
         <div
             v-if="workspace?.connection.environment === 'production'"
             class="h-0.5 shrink-0 bg-env-production"
@@ -148,7 +150,10 @@ watch(
                     @unlock="unlockOpen = true"
                 />
             </div>
-            <div v-if="workspace" class="hidden min-w-0 sm:block">
+            <div
+                v-if="workspace"
+                class="hidden max-w-[45%] min-w-0 shrink-0 sm:block"
+            >
                 <ConnectionChip
                     :connection="workspace.connection"
                     @unlock="unlockOpen = true"
@@ -173,7 +178,7 @@ watch(
                     {{ t('wieder sperren') }}
                 </button>
             </span>
-            <div class="flex flex-1 justify-center">
+            <div class="flex min-w-0 flex-1 justify-center">
                 <button
                     type="button"
                     class="hidden h-9 w-full max-w-md items-center gap-2 rounded-md border bg-muted/50 px-3 text-sm text-muted-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring md:flex"
@@ -216,7 +221,11 @@ watch(
             >
                 <Navigator :workspace="workspace" :selected="selected" />
             </aside>
-            <main class="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <main
+                id="inhalt"
+                tabindex="-1"
+                class="flex min-w-0 flex-1 flex-col overflow-hidden outline-none"
+            >
                 <TabBar v-if="workspace" :workspace="workspace" />
                 <div class="min-h-0 flex-1 overflow-auto">
                     <slot />
