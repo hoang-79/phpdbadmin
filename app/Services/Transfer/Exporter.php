@@ -39,21 +39,18 @@ final class Exporter
     }
 
     /**
-     * Geschätzte Zeilen der Auswahl — Statistik des Servers, sonst gezählt (SQLite kennt keine Schätzung; Sichten
-     * auch nicht), auf Wunsch nur bis knapp über eine Grenze.
+     * Geschätzte Zeilen der Auswahl — Statistik des Servers, sonst gezählt (SQLite kennt keine Schätzung, Sichten
+     * auch nicht; gezählt wird unter dem Zeitlimit der Verbindung).
      *
      * @param  list<TableSummary>  $objects
      */
-    public function estimateRows(Connection $target, Dialect $dialect, string $schema, array $objects, ?int $countUpTo = null): int
+    public function estimateRows(Connection $target, Dialect $dialect, string $schema, array $objects): int
     {
-        return $dialect->runReadOnly($target, function () use ($target, $schema, $objects, $countUpTo): int {
+        return $dialect->runReadOnly($target, function () use ($target, $schema, $objects): int {
             $total = 0;
 
             foreach ($objects as $object) {
-                $query = $target->table($schema.'.'.$object['name']);
-                $total += $object['rows'] ?? ($countUpTo === null
-                    ? $query->count()
-                    : $target->query()->fromSub($query->select($target->raw('1 as one'))->limit($countUpTo + 1), 'counted')->count());
+                $total += $object['rows'] ?? $target->table($schema.'.'.$object['name'])->count();
             }
 
             return $total;

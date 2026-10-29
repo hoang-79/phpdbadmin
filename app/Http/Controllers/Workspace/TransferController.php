@@ -121,8 +121,7 @@ class TransferController extends TransferWorkspaceController
             ]);
 
             if (! $this->runner->runsInBackground($connection)) {
-                $limit = (int) config('phpdbadmin.transfers.sync_max_rows', 100000);
-                $rows = $this->exporter->estimateRows($target, $dialect, $schema, $this->exporter->withRows($transfer, $objects), $limit);
+                $rows = $this->exporter->estimateRows($target, $dialect, $schema, $this->exporter->withRows($transfer, $objects));
                 $this->rejectOverLimit($this->runner->limitProblem($connection, rows: $rows), 'scope');
             }
 
