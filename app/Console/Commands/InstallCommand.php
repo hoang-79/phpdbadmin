@@ -39,6 +39,12 @@ class InstallCommand extends Command
             return $this->reissueLink();
         }
 
+        if (! $this->input->isInteractive() && (blank($this->option('name')) || blank($this->option('email')))) {
+            $this->components->error('Name und Mail-Adresse des ersten Kontos fehlen: php artisan phpdbadmin:install --name="…" --email="…"');
+
+            return self::FAILURE;
+        }
+
         $name = $this->option('name') ?: text('Name', required: true);
         $email = $this->option('email') ?: text('E-Mail-Adresse', required: true);
 

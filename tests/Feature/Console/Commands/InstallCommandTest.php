@@ -80,4 +80,13 @@ class InstallCommandTest extends TestCase
 
         $this->assertSame(0, User::query()->count());
     }
+
+    public function test_without_a_terminal_it_names_the_missing_options(): void
+    {
+        $this->artisan('phpdbadmin:install', ['--no-interaction' => true])
+            ->expectsOutputToContain('--name="…" --email="…"')
+            ->assertFailed();
+
+        $this->assertSame(0, User::query()->count());
+    }
 }
