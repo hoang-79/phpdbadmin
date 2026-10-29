@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Enums\UserRole;
 use App\Support\Fingerprint;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
@@ -26,6 +28,8 @@ use Illuminate\Support\Str;
  */
 class Invitation extends Model
 {
+    use MassPrunable;
+
     protected $fillable = ['email', 'role', 'token_hash', 'invited_by', 'expires_at', 'accepted_at'];
 
     /**
@@ -79,5 +83,15 @@ class Invitation extends Model
     public function inviter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'invited_by');
+    }
+
+    /**
+     * Aufbewahrung (Datenmodell § 4): angenommen oder abgelaufen, Datensatz nach 30 Tagen weg.
+     *
+     * @return Builder<static>
+     */
+    public function prunable(): Builder
+    {
+        return static::query()->where('expires_at', '<', now()->subDays(30));
     }
 }

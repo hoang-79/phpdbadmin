@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -21,6 +23,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class LoginCode extends Model
 {
+    use MassPrunable;
+
     /** Anmelden. */
     public const string PURPOSE_LOGIN = 'login';
 
@@ -48,5 +52,15 @@ class LoginCode extends Model
         return $this->consumed_at === null
             && $this->expires_at->isFuture()
             && $this->attempts < (int) config('phpdbadmin.login.code_attempts');
+    }
+
+    /**
+     * Aufbewahrung (Datenmodell § 4): verbraucht oder abgelaufen, Datensatz nach einem Tag weg.
+     *
+     * @return Builder<static>
+     */
+    public function prunable(): Builder
+    {
+        return static::query()->where('expires_at', '<', now()->subDay());
     }
 }
