@@ -56,6 +56,7 @@ export type DiagramColumn = {
 export type DiagramTable = {
     name: string;
     columns: DiagramColumn[];
+    more: number;
     x: number;
     y: number;
     width: number;
@@ -80,6 +81,7 @@ export type Diagram = {
 export type DiagramCatalogEntry = {
     name: string;
     relations: number;
+    neighbours: string[];
 };
 
 export type ExplainNode = {

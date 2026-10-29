@@ -13,12 +13,18 @@ import {
     Search,
     Shapes,
     Table2,
+    Waypoints,
     Zap,
 } from '@lucide/vue';
 import { onBeforeUnmount, onMounted, ref, computed } from 'vue';
 import { formatRows } from '@/lib/environment';
 import { t } from '@/lib/i18n';
-import { definitionCreateHref, objectHref, schemaHref } from '@/lib/workspace';
+import {
+    definitionCreateHref,
+    diagramHref,
+    objectHref,
+    schemaHref,
+} from '@/lib/workspace';
 import { workspace as workspaceRoute } from '@/routes';
 import type {
     NavigatorGroup,
@@ -236,6 +242,28 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                     </Link>
 
                     <ul v-if="name === workspace.schema" class="pl-4">
+                        <li>
+                            <Link
+                                :href="diagramHref(workspace)"
+                                :class="[
+                                    'flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-background',
+                                    page.component === 'workspace/Diagram' &&
+                                        'bg-accent font-medium shadow-[inset_3px_0_0_var(--primary)]',
+                                ]"
+                                :aria-current="
+                                    page.component === 'workspace/Diagram'
+                                        ? 'page'
+                                        : undefined
+                                "
+                            >
+                                <Waypoints
+                                    class="size-4 shrink-0 text-text-secondary"
+                                />
+                                <span class="truncate">{{
+                                    t('Beziehungsdiagramm')
+                                }}</span>
+                            </Link>
+                        </li>
                         <li v-for="group in groups" :key="group.key">
                             <div class="flex items-center">
                                 <button

@@ -9,6 +9,7 @@ import {
 } from '@/routes/workspace/object';
 import {
     definition as definitionRoute,
+    diagram as diagramRoute,
     object as objectRoute,
 } from '@/routes/workspace';
 import { create as definitionCreateRoute } from '@/routes/workspace/definition';
@@ -225,4 +226,21 @@ export function objectHref(
 /** Adresse mit der gewählten Datenbank (PostgreSQL mit «alle Datenbanken») — für JSON-Anfragen. */
 export function withDb(workspace: Workspace): { query: QueryParams } {
     return { query: dbQuery(workspace) };
+}
+
+/** Beziehungsdiagramm eines Schemas (S-07), auf Wunsch nur mit diesen Tabellen. */
+export function diagramHref(
+    workspace: Workspace,
+    tables: string[] = [],
+    schema: string | null = workspace.schema,
+): string {
+    return diagramRoute.url(
+        [workspace.connection.id, encodeURIComponent(schema ?? '')],
+        {
+            query: {
+                ...dbQuery(workspace),
+                ...(tables.length ? { t: tables } : {}),
+            },
+        },
+    );
 }

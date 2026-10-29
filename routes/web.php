@@ -14,6 +14,7 @@ use App\Http\Controllers\Connections\TestConnectionController;
 use App\Http\Controllers\PaletteController;
 use App\Http\Controllers\Workspace\ConnectionPasswordController;
 use App\Http\Controllers\Workspace\DefinitionController;
+use App\Http\Controllers\Workspace\DiagramController;
 use App\Http\Controllers\Workspace\ImportController;
 use App\Http\Controllers\Workspace\ObjectController;
 use App\Http\Controllers\Workspace\RowChangeController;
@@ -83,6 +84,10 @@ Route::middleware('auth')->group(function () {
             Route::post('/', [DefinitionController::class, 'apply'])->name('workspace.definition.apply');
             Route::get('{name}', [DefinitionController::class, 'detail'])->where('name', '[^/]+')->name('workspace.definition');
         });
+
+        // Beziehungsdiagramm eines Schemas (S-07): ansehen und als SVG herunterladen.
+        Route::get('s/{schema}/diagram', [DiagramController::class, 'diagram'])->where('schema', '[^/]+')->name('workspace.diagram');
+        Route::post('s/{schema}/diagram/svg', [DiagramController::class, 'svg'])->where('schema', '[^/]+')->name('workspace.diagram.svg');
 
         // Server-Verwaltung (W-01 bis W-05): ansehen mit Zugang, ändern nur mit «verwalten» und ohne Schreibschutz.
         Route::get('server', Server\OverviewController::class)->name('workspace.server');

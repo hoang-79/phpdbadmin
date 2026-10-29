@@ -94,7 +94,7 @@ class SqliteObjects extends BaseObjects
         $primary = [];
 
         foreach ($this->rows($connection->select(
-            'select m.name as tbl, p.name as name, p.type as type, p."notnull" as notnull, p.pk as pk
+            'select m.name as tbl, p.name as name, p.type as type, p."notnull" as not_null, p.pk as pk
              from '.$this->quote($schema).".sqlite_schema m
              join pragma_table_info(m.name, ?) p
              where m.type = 'table' and m.name not like 'sqlite_%'
@@ -106,7 +106,7 @@ class SqliteObjects extends BaseObjects
                 'name' => (string) $row['name'],
                 'type' => (string) $row['type'],
                 'primary' => (int) $row['pk'] > 0,
-                'nullable' => $row['notnull'] === '0' && (int) $row['pk'] === 0,
+                'nullable' => $row['not_null'] === '0' && (int) $row['pk'] === 0,
             ];
 
             if ((int) $row['pk'] > 0) {
