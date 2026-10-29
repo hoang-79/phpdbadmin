@@ -100,6 +100,18 @@ class SshTunnelTest extends TestCase
         $this->assertSame(0, app(SshTunnels::class)->openCount());
     }
 
+    public function test_database_unreachable_behind_the_tunnel_is_named(): void
+    {
+        $settings = $this->tunnelSettings();
+        $closed = new ConnectionSettings($settings->driver, '127.0.0.1', $this->closedPort(), $settings->database, $settings->username, $settings->password, ssh: $settings->ssh);
+
+        $result = app(ConnectionTester::class)->test($closed);
+
+        $this->assertSame(ConnectionProblemKind::SshForwardFailed, $result->problem?->kind, (string) $result->problem?->serverMessage);
+        $this->assertSame(['tunnel' => 'ok', 'login' => 'failed'], array_slice(array_column($result->steps, 'state', 'key'), 1, 2));
+        $this->assertSame(0, app(SshTunnels::class)->openCount());
+    }
+
     public function test_rejected_key_is_named(): void
     {
         $settings = $this->tunnelSettings();

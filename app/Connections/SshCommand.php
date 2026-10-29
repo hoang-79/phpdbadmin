@@ -66,7 +66,8 @@ final readonly class SshCommand
             '-o', 'ConnectTimeout='.$this->connectTimeout,
             '-o', 'ServerAliveInterval=15',
             '-o', 'ServerAliveCountMax=2',
-            '-o', 'LogLevel=ERROR',
+            // INFO statt ERROR: Nur so meldet ssh «channel N: open failed», wenn das Ziel hinter dem Tunnel fehlt.
+            '-o', 'LogLevel=INFO',
             '--',
             $this->sshAddress,
         ];

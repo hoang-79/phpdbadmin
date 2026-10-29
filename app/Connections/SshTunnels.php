@@ -171,11 +171,12 @@ final class SshTunnels
         $kind = match (true) {
             str_contains($text, 'host key verification failed'), str_contains($text, 'host identification has changed') => ConnectionProblemKind::SshHostKeyChanged,
             str_contains($text, 'permission denied') => ConnectionProblemKind::SshKeyRejected,
+            // «channel 2: open failed: connect failed: Connection refused» — der SSH-Server erreicht das Ziel nicht.
+            str_contains($text, 'open failed'), str_contains($text, 'connect failed') => ConnectionProblemKind::SshForwardFailed,
             str_contains($text, 'could not resolve hostname') => ConnectionProblemKind::HostUnknown,
             str_contains($text, 'timed out') => ConnectionProblemKind::Timeout,
             str_contains($text, 'connection refused'), str_contains($text, 'no route to host'), str_contains($text, 'network is unreachable'), str_contains($text, 'connection closed by'), str_contains($text, 'connection reset') => ConnectionProblemKind::SshUnreachable,
             str_contains($text, 'load key'), str_contains($text, 'invalid format'), str_contains($text, 'passphrase'), str_contains($text, 'libcrypto') => ConnectionProblemKind::SshKeyInvalid,
-            str_contains($text, 'open failed'), str_contains($text, 'connect failed') => ConnectionProblemKind::SshForwardFailed,
             default => ConnectionProblemKind::Unknown,
         };
 
