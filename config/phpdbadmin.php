@@ -66,6 +66,8 @@ return [
         'statement_timeout_ms' => (int) env('PHPDBADMIN_STATEMENT_TIMEOUT_MS', 15000),
         // Wartung (W-05): OPTIMIZE und VACUUM grosser Tabellen brauchen länger als eine Abfrage.
         'maintenance_timeout_ms' => (int) env('PHPDBADMIN_MAINTENANCE_TIMEOUT_MS', 600000),
+        // Strukturänderungen (S-02 bis S-05): ALTER TABLE grosser Tabellen und der Umbau bei SQLite brauchen länger.
+        'schema_timeout_ms' => (int) env('PHPDBADMIN_SCHEMA_TIMEOUT_MS', 600000),
     ],
 
     /*

@@ -8,6 +8,7 @@ import {
     view as viewRoute,
 } from '@/routes/workspace/object';
 import { object as objectRoute } from '@/routes/workspace';
+import { t } from '@/lib/i18n';
 import type { GridQueryState, Workspace } from '@/types';
 
 /**
@@ -143,4 +144,22 @@ export function objectHref(
     return item.kind === 'table' || item.kind === 'view'
         ? dataHref(workspace, item.name)
         : null;
+}
+
+/**
+ * Warum Strukturänderungen gerade nicht gehen (S-02 bis S-05) — oder null: Recht «schreiben» und kein Schreibschutz,
+ * ausser er ist auf Zeit aufgehoben (V-11).
+ */
+export function structureBlock(
+    connection: Workspace['connection'],
+): string | null {
+    if (!connection.canWrite) {
+        return t('Dafür braucht es das Recht «schreiben».');
+    }
+
+    if (connection.readOnly && !connection.unlockedUntil) {
+        return t('Schreibgeschützt — Strukturänderungen sind gesperrt.');
+    }
+
+    return null;
 }

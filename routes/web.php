@@ -18,6 +18,7 @@ use App\Http\Controllers\Workspace\ConnectionPasswordController;
 use App\Http\Controllers\Workspace\ImportController;
 use App\Http\Controllers\Workspace\ObjectController;
 use App\Http\Controllers\Workspace\RowChangeController;
+use App\Http\Controllers\Workspace\Schema;
 use App\Http\Controllers\Workspace\Server;
 use App\Http\Controllers\Workspace\SqlAssistController;
 use App\Http\Controllers\Workspace\SqlController;
@@ -80,7 +81,24 @@ Route::middleware('auth')->group(function () {
             Route::post('changes/preview', [RowChangeController::class, 'preview'])->name('workspace.object.changes.preview');
             Route::post('changes', [RowChangeController::class, 'apply'])->name('workspace.object.changes');
             Route::post('changes/{audit}/undo', [RowChangeController::class, 'undo'])->whereNumber('audit')->name('workspace.object.changes.undo');
+
+            // Tabelle ändern (S-03), umbenennen, kopieren, leeren, löschen (S-04).
+            Route::get('alter', [Schema\TableAlterController::class, 'edit'])->name('workspace.object.alter');
+            Route::post('alter/preview', [Schema\TableAlterController::class, 'preview'])->name('workspace.object.alter.preview');
+            Route::post('alter', [Schema\TableAlterController::class, 'update'])->name('workspace.object.alter.apply');
+            Route::post('actions/preview', [Schema\TableActionController::class, 'preview'])->name('workspace.object.actions.preview');
+            Route::post('actions', [Schema\TableActionController::class, 'apply'])->name('workspace.object.actions.apply');
         });
+
+        // Tabelle anlegen (S-02); Datenbank bzw. Schema anlegen und löschen (S-05). Nur mit «schreiben», ohne Schreibschutz.
+        Route::prefix('s/{schema}')->where(['schema' => '[^/]+'])->group(function () {
+            Route::get('new-table', [Schema\TableCreateController::class, 'create'])->name('workspace.table.create');
+            Route::post('new-table/preview', [Schema\TableCreateController::class, 'preview'])->name('workspace.table.preview');
+            Route::post('new-table', [Schema\TableCreateController::class, 'store'])->name('workspace.table.store');
+        });
+        Route::get('schemas/sqlite-folders', [Schema\SchemaController::class, 'folders'])->name('workspace.schemas.folders');
+        Route::post('schemas/preview', [Schema\SchemaController::class, 'preview'])->name('workspace.schemas.preview');
+        Route::post('schemas', [Schema\SchemaController::class, 'apply'])->name('workspace.schemas.apply');
 
         // Server-Verwaltung (W-01 bis W-05): ansehen mit Zugang, ändern nur mit «verwalten» und ohne Schreibschutz.
         Route::get('server', Server\OverviewController::class)->name('workspace.server');

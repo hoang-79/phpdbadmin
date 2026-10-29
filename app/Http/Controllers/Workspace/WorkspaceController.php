@@ -136,6 +136,8 @@ class WorkspaceController extends Controller
                     'readOnly' => $connection->read_only,
                     'accountWarnings' => Translations::accountWarnings($connection->account_warnings ?? []),
                     'canManage' => $connection->isManageableBy($user),
+                    // Recht «schreiben» (V-11, S-02 bis S-05); ob gerade geschrieben werden darf, sagt zusätzlich
+                    // readOnly und unlockedUntil.
                     'canWrite' => Gate::forUser($user)->allows('write', $connection),
                     // Schreibschutz auf Zeit aufgehoben (V-11): sichtbar im Kopf, bis wann.
                     'unlockedUntil' => $connection->read_only ? app(WriteUnlock::class)->until($connection)?->toIso8601String() : null,
