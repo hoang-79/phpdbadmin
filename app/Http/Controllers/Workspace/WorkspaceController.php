@@ -14,6 +14,7 @@ use Closure;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 use PDOException;
@@ -131,6 +132,8 @@ class WorkspaceController extends Controller
                     'readOnly' => $connection->read_only,
                     'accountWarnings' => Translations::accountWarnings($connection->account_warnings ?? []),
                     'canManage' => $connection->isManageableBy($user),
+                    // Struktur ändern (S-02 bis S-05): Recht «schreiben» und kein Schreibschutz.
+                    'canWrite' => ! $connection->read_only && Gate::forUser($user)->allows('write', $connection),
                 ],
                 // PostgreSQL mit «alle Datenbanken»: Auswahl im Navigator, die gewählte in der Adresse (?db=).
                 'databases' => $databases,

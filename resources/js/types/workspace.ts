@@ -29,6 +29,7 @@ export type Workspace = {
         readOnly: boolean;
         accountWarnings: AccountWarning[];
         canManage: boolean;
+        canWrite: boolean;
     };
     databases: string[] | null;
     database: string | null;

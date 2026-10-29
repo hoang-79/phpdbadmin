@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import { Database, Eye, Table2 } from '@lucide/vue';
 import { computed } from 'vue';
 import Notice from '@/components/Notice.vue';
+import SchemaActions from '@/components/workspace/schema/SchemaActions.vue';
 import { formatRows, titlePrefix } from '@/lib/environment';
 import { t, tc } from '@/lib/i18n';
 import { dataHref } from '@/lib/workspace';
@@ -62,6 +63,8 @@ const title = computed(
         <p v-else class="text-text-secondary">
             {{ t('Dieses Konto sieht keine Datenbank auf dem Server.') }}
         </p>
+
+        <SchemaActions :workspace="workspace" />
 
         <ul
             v-if="tables.length || views.length"

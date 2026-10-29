@@ -14,6 +14,7 @@ import {
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 import ObjectHeader from '@/components/workspace/ObjectHeader.vue';
+import TableActions from '@/components/workspace/schema/TableActions.vue';
 import { titlePrefix } from '@/lib/environment';
 import { t } from '@/lib/i18n';
 import { structureHref } from '@/lib/workspace';
@@ -128,6 +129,12 @@ async function copyDdl(): Promise<void> {
         />
 
         <div class="flex flex-col gap-4 px-4 py-4 sm:px-6">
+            <TableActions
+                v-if="!isView"
+                :workspace="workspace"
+                :table="structure.object.name"
+            />
+
             <div class="flex flex-wrap items-center gap-2">
                 <a
                     v-for="section in sections"
