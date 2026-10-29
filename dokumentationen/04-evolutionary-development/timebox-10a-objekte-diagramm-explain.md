@@ -1,6 +1,6 @@
 # Timebox 10a — Objekte, Beziehungsdiagramm, EXPLAIN
 
-**Stand:** 29.10.2026 · ✅ gebaut und getestet in drei Scheiben auf einem eigenen Zweig (Arbeitskopie), parallel zu TB 05, TB 10b und TB 11 — Browser-Durchlauf (auch mit der Basalto-Datenbank) und Zusammenführen im Hauptstrang offen.
+**Stand:** 29.10.2026 · ✅ abgeschlossen — gebaut auf einem eigenen Zweig, zusammengeführt und im Browser geprüft.
 
 ## Ziel
 
@@ -115,6 +115,10 @@ Rechte mit zweitem Konto (Mitglied mit Leserecht) in jedem der 20 Lebenszyklus-F
 - Diagramm: Fremdschlüssel in andere Schemas fehlen; verschobene Kästen merkt sich die Seite nicht über das Neuladen hinaus.
 - Befehlspalette und Tastenkürzel-Übersicht kennen Objekte, Diagramm und ⌘E noch nicht.
 - Beim Zusammenführen: `routes/web.php`, `lang/en.json`, `resources/js/types/index.ts`, `tests/Concerns/TargetDatabases.php`, `Navigator.vue`, `ObjectHeader.vue` und der eine Link in `Schema.vue` berühren Dateien anderer Timeboxes.
+
+## Nach dem Zusammenführen
+
+Zusammengeführt mit `35c3654`. Durchlauf im Browser: Beziehungsdiagramm mit der Basalto-Testdatenbank (MariaDB `basalto_test`, 118 Tabellen, 215 Fremdschlüssel; gezeigt werden die 40 mit den meisten Beziehungen, 117 Linien, zoombar, Linien hinter den Kästen) — **Abnahme S-07 erfüllt**. Sicht `open_orders` auf PostgreSQL mit Definition, «Im Editor öffnen», Ändern, Löschen. EXPLAIN mit ⌘E im SQL-Editor auf PostgreSQL: Baum mit Kosten und Zeilen, «Mit ANALYZE messen» getrennt. Keine Verletzung der Content-Security-Policy durch die neuen Seiten.
 
 ## Gelernt
 

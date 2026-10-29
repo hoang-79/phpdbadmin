@@ -1,6 +1,6 @@
 # Timebox 11 — Schemavergleich, Laravel-Migration, Herd-Erkennung, SSH-Tunnel
 
-**Stand:** 29.10.2026 · ✅ gebaut und getestet in vier Scheiben auf einem eigenen Zweig (Arbeitskopie) — Browser-Durchlauf (auch auf Hoangs Mac mit Herd) und Zusammenführen im Hauptstrang offen.
+**Stand:** 29.10.2026 · ✅ abgeschlossen — gebaut auf einem eigenen Zweig, zusammengeführt und im Browser geprüft.
 
 ## Ziel
 
@@ -117,6 +117,10 @@ Prüfkette vor jedem Commit: `vp check`, `vue-tsc`, Pint, Larastan, PHPUnit — 
 - **SQLite-Umbau** im Skript braucht beim Ausführen `PRAGMA foreign_keys = OFF` nur, wenn die Zielverbindung Fremdschlüssel prüft — Laravel schreibt die Pragmas dann selbst ins Skript.
 - Ein Tunnel prüft die Bereitschaft, indem er einmal zum lokalen Ende verbindet — die Datenbank sieht dabei eine leere Verbindung.
 - SSH-Agent, Passwort-Anmeldung bei SSH und Sprungserver (`ProxyJump`) sind bewusst nicht im Umfang.
+
+## Nach dem Zusammenführen
+
+Zusammengeführt mit `b5e68fa`. Die Prüfung des Datenbanknamens aus TB 08 (DSN-Injektion, App-Datenbank) gilt jetzt auch hinter einem Tunnel und läuft, **bevor** ein Tunnel aufgeht (`ConnectionFactory::make()` prüft zuerst; Test `test_a_name_that_changes_the_dsn_is_refused_before_any_tunnel_opens`). Durchlauf im Browser auf Hoangs Mac: **V-07** zeigt die drei Herd-Dienste und 30 Sites, «Übernehmen» füllt das Formular (MariaDB, Gruppe Herd, 127.0.0.1:3306, root) und springt jetzt zum Formular — die Liste ist lang. Schemavergleich MariaDB → SQLite (`phpdbadmin_demo` → `main`): «Keine Unterschiede, 4 Tabellen sind gleich». **Befund:** Wer Quelle und Ziel schnell hintereinander wählt, verlor die erste Wahl (die zweite Anfrage baute auf dem alten Stand der Seite) — die Seite merkt sich jetzt die unterwegs befindliche Auswahl. Laravel-Migration für `orders` mit Kopieren und Herunterladen.
 
 ## Gelernt
 

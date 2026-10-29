@@ -65,17 +65,25 @@ const outcome = computed(() =>
     props.result && props.result.error === null ? props.result : null,
 );
 
+/**
+ * Auswahl, die schon unterwegs ist: Wählt man Quelle und Ziel schnell hintereinander, trägt die Seite die erste
+ * Auswahl noch nicht — ohne diesen Stand ginge sie mit der zweiten verloren.
+ */
+let pending: Record<string, string | null> | null = null;
+
 /** Adresse aus dem aktuellen Stand, mit einer Änderung — alles steht in der Adresse (neu laden, teilen). */
 function params(
     changes: Partial<Record<string, string | null>> = {},
 ): Record<string, string> {
     const current: Record<string, string | null> = {
-        source: props.source.connection?.id ?? null,
-        source_db: props.source.database,
-        source_schema: props.source.schema,
-        target: props.target.connection?.id ?? null,
-        target_db: props.target.database,
-        target_schema: props.target.schema,
+        ...(pending ?? {
+            source: props.source.connection?.id ?? null,
+            source_db: props.source.database,
+            source_schema: props.source.schema,
+            target: props.target.connection?.id ?? null,
+            target_db: props.target.database,
+            target_schema: props.target.schema,
+        }),
         drops: drops.value ? '1' : null,
         ...changes,
     };
@@ -89,13 +97,20 @@ function params(
 }
 
 function visit(query: Record<string, string>): void {
+    // Der Auftrag «vergleichen» gilt nur für diese eine Anfrage.
+    pending = Object.fromEntries(
+        Object.entries(query).filter(([key]) => key !== 'run'),
+    );
     router.get(
         compare.url({ query }),
         {},
         {
             preserveScroll: true,
             onStart: () => (loading.value = true),
-            onFinish: () => (loading.value = false),
+            onFinish: () => {
+                loading.value = false;
+                pending = null;
+            },
         },
     );
 }

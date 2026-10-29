@@ -17,7 +17,7 @@ import {
     Sparkles,
     Zap,
 } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import EnvironmentMark from '@/components/connections/EnvironmentMark.vue';
 import TestPanel from '@/components/connections/TestPanel.vue';
 import InputError from '@/components/InputError.vue';
@@ -216,6 +216,13 @@ function applySuggestion(suggestion: HerdSuggestion): void {
             : '';
     herdChoice.value = suggestion;
     result.value = null;
+
+    // Die Liste der Vorschläge ist lang — gleich zum ausgefüllten Formular springen.
+    void nextTick(() =>
+        document
+            .getElementById('name')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+    );
 }
 
 /** Nur die gewählte Quelle des Schlüssels geht mit; ohne Tunnel keine SSH-Angaben. */
