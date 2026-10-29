@@ -419,6 +419,8 @@ const activeId = computed(() =>
     <div
         ref="scroller"
         class="relative min-h-0 flex-1 overflow-auto outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        data-scroll-hint-top="[role='row'][aria-rowindex='1']"
+        data-scroll-hint-left="[role='row'] > [role='columnheader']:first-child"
         role="grid"
         :aria-rowcount="rows.length + 1"
         :aria-colcount="columns.length + 1"

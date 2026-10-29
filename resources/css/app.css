@@ -131,9 +131,146 @@
         0 12px 32px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
+/*
+ * Scroll-Hinweise statt Scrollbalken (resources/js/lib/scrollHints.ts): Ein Bereich blendet an dem Rand aus, an dem
+ * es weitergeht. Die Werte 0 (ausblenden) und 1 (nicht) setzt das Skript; als registrierte Zahlen lassen sie sich
+ * weich überblenden. Sticky Kopfzeile und erste Spalte bleiben über die Versätze unberührt.
+ */
+@property --scroll-hint-up {
+    syntax: '<number>';
+    inherits: false;
+    initial-value: 1;
+}
+
+@property --scroll-hint-down {
+    syntax: '<number>';
+    inherits: false;
+    initial-value: 1;
+}
+
+@property --scroll-hint-left {
+    syntax: '<number>';
+    inherits: false;
+    initial-value: 1;
+}
+
+@property --scroll-hint-right {
+    syntax: '<number>';
+    inherits: false;
+    initial-value: 1;
+}
+
 @layer base {
     * {
         @apply border-border outline-ring/50;
+        /* Keine Scrollbalken — stattdessen blendet der Rand aus, an dem es weitergeht. */
+        scrollbar-width: none;
+    }
+
+    *::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
+    }
+
+    [data-scroll-hint] {
+        --scroll-hint-size: 40px;
+        --scroll-hint-offset-top: 0px;
+        --scroll-hint-offset-left: 0px;
+        mask-image:
+            linear-gradient(
+                to bottom,
+                #000 var(--scroll-hint-offset-top),
+                rgb(0 0 0 / var(--scroll-hint-up)) var(--scroll-hint-offset-top),
+                #000
+                    calc(
+                        var(--scroll-hint-offset-top) + var(--scroll-hint-size)
+                    ),
+                #000 calc(100% - var(--scroll-hint-size)),
+                rgb(0 0 0 / var(--scroll-hint-down)) 100%
+            ),
+            linear-gradient(
+                to right,
+                #000 var(--scroll-hint-offset-left),
+                rgb(0 0 0 / var(--scroll-hint-left))
+                    var(--scroll-hint-offset-left),
+                #000
+                    calc(
+                        var(--scroll-hint-offset-left) + var(--scroll-hint-size)
+                    ),
+                #000 calc(100% - var(--scroll-hint-size)),
+                rgb(0 0 0 / var(--scroll-hint-right)) 100%
+            );
+        mask-composite: intersect;
+        transition:
+            --scroll-hint-up 0.15s,
+            --scroll-hint-down 0.15s,
+            --scroll-hint-left 0.15s,
+            --scroll-hint-right 0.15s;
+    }
+
+    /* Im Editor kürzer; dazu hält CodeMirror die Schreibmarke 24px vom Rand fern (SqlEditor.vue). */
+    .cm-scroller[data-scroll-hint] {
+        --scroll-hint-size: 24px;
+    }
+
+    /* Chevron am Rand, wo es weitergeht — Ebene über allem, lässt Klicks durch (scrollHints.ts). */
+    .scroll-hint-layer {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483000;
+        pointer-events: none;
+    }
+
+    .scroll-hint-chevron {
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border: 1px solid
+            color-mix(in oklab, var(--foreground) 22%, transparent);
+        border-radius: 9999px;
+        background: var(--accent);
+        color: var(--foreground);
+        box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
+        opacity: 0;
+        transition: opacity 0.15s;
+    }
+
+    .scroll-hint-chevron[data-visible] {
+        opacity: 1;
+    }
+
+    .scroll-hint-chevron svg {
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2.25;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .scroll-hint-chevron[data-direction='up'] svg {
+        rotate: 180deg;
+    }
+
+    .scroll-hint-chevron[data-direction='left'] svg {
+        rotate: 90deg;
+    }
+
+    .scroll-hint-chevron[data-direction='right'] svg {
+        rotate: -90deg;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        [data-scroll-hint],
+        .scroll-hint-chevron {
+            transition: none;
+        }
     }
 
     body {

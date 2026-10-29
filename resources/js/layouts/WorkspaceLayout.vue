@@ -27,6 +27,7 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Toaster } from '@/components/ui/sonner';
+import { useResizableWidth } from '@/composables/useResizableWidth';
 import { formatTime } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import { home } from '@/routes';
@@ -42,6 +43,13 @@ const page = usePage<{ workspace?: Workspace; selected?: string | null }>();
 const workspace = computed(() => page.props.workspace ?? null);
 const selected = computed(() => page.props.selected ?? null);
 const navigatorOpen = ref(false);
+/** Breite des Navigators am Desktop — am rechten Rand ziehen, Pfeiltasten, Doppelklick setzt zurück. */
+const navigatorWidth = useResizableWidth({
+    storageKey: 'phpdbadmin.navigator.width',
+    initial: 256,
+    min: 180,
+    max: 640,
+});
 const shortcutsOpen = ref(false);
 const paletteOpen = ref(false);
 const unlockOpen = ref(false);
@@ -217,9 +225,32 @@ watch(
         <div class="flex min-h-0 flex-1">
             <aside
                 v-if="workspace"
-                class="hidden w-64 shrink-0 flex-col border-r bg-muted lg:flex"
+                class="relative hidden shrink-0 flex-col border-r bg-muted lg:flex"
+                :style="{ width: `${navigatorWidth.width.value}px` }"
             >
                 <Navigator :workspace="workspace" :selected="selected" />
+                <div
+                    role="separator"
+                    aria-orientation="vertical"
+                    tabindex="0"
+                    :aria-label="t('Breite des Navigators')"
+                    :aria-valuenow="navigatorWidth.width.value"
+                    :aria-valuemin="navigatorWidth.min"
+                    :aria-valuemax="navigatorWidth.max"
+                    :title="
+                        t('Ziehen ändert die Breite · Doppelklick: Standard')
+                    "
+                    class="group absolute inset-y-0 -right-1.5 z-30 w-3 cursor-col-resize touch-none outline-none"
+                    v-on="navigatorWidth.handlers"
+                >
+                    <span
+                        :class="[
+                            'absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 transition-colors group-hover:bg-primary group-focus-visible:bg-primary',
+                            navigatorWidth.resizing.value && 'bg-primary',
+                        ]"
+                        aria-hidden="true"
+                    />
+                </div>
             </aside>
             <main
                 id="inhalt"
@@ -227,7 +258,7 @@ watch(
                 class="flex min-w-0 flex-1 flex-col overflow-hidden outline-none"
             >
                 <TabBar v-if="workspace" :workspace="workspace" />
-                <div class="min-h-0 flex-1 overflow-auto">
+                <div class="min-h-0 flex-1 overflow-auto" scroll-region>
                     <slot />
                 </div>
             </main>

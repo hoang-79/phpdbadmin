@@ -104,7 +104,7 @@ Beide Schriften werden wie heute Instrument Sans über `laravel-vite-plugin/font
 | Baustein | Verhalten |
 |---|---|
 | **Kopfleiste** | Verbindungs-Chip (Umgebung, Name, Treiber-Schild, Schloss bei Schreibschutz) · Befehlspalette-Feld mit ⌘K · Kontomenü |
-| **Navigator** | Baum Verbindung → Datenbank → Schema → Gruppe → Objekt; Suche oben; Gespeichertes und Verlauf unten; auf schmalen Fenstern als Schublade |
+| **Navigator** | Baum Verbindung → Datenbank → Schema → Gruppe → Objekt; Suche oben; Gespeichertes und Verlauf unten; Breite am rechten Rand ziehbar (180–640 px, höchstens 60 % des Fensters; Pfeiltasten ±16 px, mit Umschalt ±64 px; Doppelklick: 256 px), im Browser gemerkt; auf schmalen Fenstern als Schublade |
 | **Reiter** | Daten · Struktur · Beziehungen · SQL je Objekt; offene Objekte als Reiterleiste, die umbricht statt zu scrollen |
 | **Filterleiste** | Bedingungen als Chips («status = offen»), «+ Filter», Umschalter «WHERE frei»; Zeilenzahl rechts (genau oder «≈») |
 | **Datenraster** | virtualisiert; erste Spalte fixiert; Spaltenbreite ziehbar und gemerkt; waagrechtes Scrollen nur hier, mit Verlaufskante und Chevron (P-10) |
@@ -127,7 +127,7 @@ Beide Schriften werden wie heute Instrument Sans über `laravel-vite-plugin/font
 ## 8. Schmale Fenster
 
 - Unter 768 px: Navigator als Schublade, Reiter brechen um, Raster wird zur **Kartenliste** (eine Karte je Zeile, die ersten vier Spalten, Rest in der Detail-Schublade). Bearbeiten bleibt möglich, ist aber auf den Desktop ausgelegt.
-- **Keine Scrollbalken** (Regel Hoang, 15.10.2026): Seiten haben eine Verlaufskante mit Chevron, solange unten mehr folgt; waagrecht nur im Raster auf breiten Fenstern.
+- **Keine Scrollbalken** (Regel Hoang, 15.10.2026; umgesetzt 29.10.2026): Jeder Bereich, der scrollt — Seite, Navigator, Raster, Editor, Schubladen, Befehlspalette, Reiterleiste —, blendet an dem Rand aus, an dem es weitergeht (oben, unten, links, rechts; 40 px, im Editor 24 px), und zeigt dort einen runden Chevron. Sticky Kopfzeile und `#`-Spalte des Rasters bleiben scharf; der Chevron erscheint nur, wo der Bereich zuoberst liegt (nicht unter einem Dialog). Umsetzung zentral in `resources/js/lib/scrollHints.ts` und `app.css`: Bauteile mit `overflow-auto`/`-y-auto`/`-x-auto` brauchen nichts weiter; fixierte Kopfzeilen nennt `data-scroll-hint-top`, fixierte Spalten `data-scroll-hint-left`.
 
 ## 9. Bewegung
 

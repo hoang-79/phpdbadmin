@@ -151,6 +151,8 @@ onMounted(() => {
                 EditorView.contentAttributes.of({
                     'aria-label': t('SQL-Editor'),
                 }),
+                // Die Ränder blenden aus, wo es weiterscrollt (scrollHints) — die Schreibmarke bleibt davor.
+                EditorView.scrollMargins.of(() => ({ top: 24, bottom: 24 })),
                 Prec.highest(
                     keymap.of([
                         {

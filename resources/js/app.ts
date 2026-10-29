@@ -4,6 +4,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import WorkspaceLayout from '@/layouts/WorkspaceLayout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
+import { startScrollHints } from '@/lib/scrollHints';
 
 const appName = import.meta.env.VITE_APP_NAME || 'phpdbadmin';
 
@@ -37,6 +38,9 @@ void createInertiaApp({
 
 // This will set light / dark mode on page load...
 initializeTheme();
+
+// Keine Scrollbalken: Bereiche blenden aus, wo es weitergeht.
+startScrollHints();
 
 // This will listen for flash toast data from the server...
 initializeFlashToast();

@@ -9,10 +9,10 @@ import { home } from '@/routes';
 </script>
 
 <template>
-    <div class="flex min-h-svh flex-col bg-background">
+    <div class="flex h-svh flex-col bg-background">
         <SkipLink />
         <header
-            class="sticky top-0 z-20 flex h-[52px] shrink-0 items-center gap-3 border-b bg-background px-4"
+            class="z-20 flex h-[52px] shrink-0 items-center gap-3 border-b bg-background px-4"
         >
             <Link
                 :href="home()"
@@ -24,7 +24,12 @@ import { home } from '@/routes';
             <div class="flex-1" />
             <AccountMenu />
         </header>
-        <main id="inhalt" tabindex="-1" class="flex-1 outline-none">
+        <main
+            id="inhalt"
+            tabindex="-1"
+            class="min-h-0 flex-1 overflow-y-auto outline-none"
+            scroll-region
+        >
             <slot />
         </main>
         <Toaster position="bottom-right" />
