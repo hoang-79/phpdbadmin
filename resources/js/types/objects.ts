@@ -112,3 +112,12 @@ export type ExplainResult = {
     raw: string;
     durationMs: number;
 };
+
+/** Was der SQL-Editor erklären lässt; `at` unterscheidet zwei Aufträge mit gleichem Text. */
+export type ExplainRequest = {
+    sql: string;
+    cursor: number | null;
+    selection: boolean;
+    schema: string | null;
+    at: number;
+};

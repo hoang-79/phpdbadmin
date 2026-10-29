@@ -15,6 +15,7 @@ use App\Http\Controllers\PaletteController;
 use App\Http\Controllers\Workspace\ConnectionPasswordController;
 use App\Http\Controllers\Workspace\DefinitionController;
 use App\Http\Controllers\Workspace\DiagramController;
+use App\Http\Controllers\Workspace\ExplainController;
 use App\Http\Controllers\Workspace\ImportController;
 use App\Http\Controllers\Workspace\ObjectController;
 use App\Http\Controllers\Workspace\RowChangeController;
@@ -60,6 +61,8 @@ Route::middleware('auth')->group(function () {
         Route::get('sql', [SqlController::class, 'show'])->name('workspace.sql');
         Route::post('sql/run', [SqlController::class, 'run'])->name('workspace.sql.run');
         Route::post('sql/cancel', [SqlController::class, 'cancel'])->name('workspace.sql.cancel');
+        // EXPLAIN als Baum mit Hinweisen (Q-06).
+        Route::post('sql/explain', [ExplainController::class, 'explain'])->name('workspace.sql.explain');
         Route::get('sql/history', [SqlController::class, 'searchHistory'])->name('workspace.sql.history');
         Route::post('sql/saved', [SqlController::class, 'save'])->name('workspace.sql.saved.store');
         Route::delete('sql/saved/{query}', [SqlController::class, 'forget'])->name('workspace.sql.saved.destroy');
