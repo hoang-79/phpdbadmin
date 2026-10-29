@@ -105,7 +105,7 @@ Neu: `XlsxExportTest` (8), `SingleTableSelectTest` (27, Unit), `EditableResultTe
 
 ## Commits
 
-`a7bdbe5` Scheibe 1: Excel · `7e1faaf` Scheibe 2: Ergebnisse bearbeiten · `3b8208f` Scheibe 3: Suchen und Ersetzen, Suche über ein Schema · `5ae2fb0` Scheibe 4: Sicherung und Wiederherstellung · Doku (dieser Stand).
+`a7bdbe5` Scheibe 1: Excel · `7e1faaf` Scheibe 2: Ergebnisse bearbeiten · `3b8208f` Scheibe 3: Suchen und Ersetzen, Suche über ein Schema · `5ae2fb0` Scheibe 4: Sicherung und Wiederherstellung · `b1e0707` Doku · `86b1209` Wahrheitswerte im bearbeitbaren Ergebnis · Commits im Protokoll (dieser Stand).
 
 ## Offen
 
