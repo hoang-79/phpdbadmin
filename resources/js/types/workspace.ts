@@ -9,6 +9,20 @@ export type NavigatorItem = {
     kind: string;
     rows: number | null;
     detail: string | null;
+    /** Belegter Platz in Bytes (Tabellen), sonst null. */
+    size: number | null;
+    comment: string | null;
+};
+
+/** Einstellungen der Schema-Übersicht, je Konto gespeichert (SchemaOverview.php); der Filter gilt je Schema. */
+export type SchemaOverviewSettings = {
+    view: 'cards' | 'list' | 'compact';
+    sort: 'name' | 'rows' | 'size' | 'kind';
+    direction: 'asc' | 'desc';
+    /** 0 = alle auf einer Seite */
+    perPage: number;
+    kind: 'all' | 'tables' | 'views';
+    filter: string;
 };
 
 export type NavigatorGroup = {

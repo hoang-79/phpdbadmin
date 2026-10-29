@@ -1,18 +1,33 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { Database, Eye, Table2, Waypoints } from '@lucide/vue';
+import { Database, Waypoints } from '@lucide/vue';
 import { computed } from 'vue';
 import Notice from '@/components/Notice.vue';
+import ObjectOverview from '@/components/workspace/schema/ObjectOverview.vue';
 import SchemaActions from '@/components/workspace/schema/SchemaActions.vue';
-import { formatRows, titlePrefix } from '@/lib/environment';
+import { titlePrefix } from '@/lib/environment';
 import { t, tc } from '@/lib/i18n';
-import { dataHref, diagramHref } from '@/lib/workspace';
-import type { Workspace } from '@/types';
+import { diagramHref } from '@/lib/workspace';
+import type { SchemaOverviewSettings, Workspace } from '@/types';
 
-/** Schema bzw. Datenbank im Überblick (Wireframe 05 ohne gewähltes Objekt). */
+/**
+ * Schema bzw. Datenbank im Überblick (Wireframe 05 ohne gewähltes Objekt): Tabellen und Sichten in drei Ansichten,
+ * mit Filter, Sortierung und Seiten (ObjectOverview).
+ */
 const props = defineProps<{
     workspace: Workspace;
+    /** Ansicht, Sortierung, Seiten, Filter — fehlt, wenn kein Schema gewählt ist. */
+    overview?: SchemaOverviewSettings;
 }>();
+
+const defaultOverview: SchemaOverviewSettings = {
+    view: 'cards',
+    sort: 'name',
+    direction: 'asc',
+    perPage: 100,
+    kind: 'all',
+    filter: '',
+};
 
 const tables = computed(
     () =>
@@ -72,34 +87,13 @@ const title = computed(
 
         <SchemaActions :workspace="workspace" />
 
-        <ul
+        <ObjectOverview
             v-if="tables.length || views.length"
-            class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3"
-        >
-            <li
-                v-for="item in [...tables, ...views]"
-                :key="`${item.kind}:${item.name}`"
-            >
-                <Link
-                    :href="dataHref(workspace, item.name)"
-                    class="flex items-center gap-2 rounded-md border px-3 py-2 text-sm outline-none hover:border-text-secondary focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                    <component
-                        :is="item.kind === 'view' ? Eye : Table2"
-                        class="size-4 shrink-0 text-text-secondary"
-                    />
-                    <span class="truncate font-mono">{{ item.name }}</span>
-                    <span
-                        class="ml-auto shrink-0 text-xs text-muted-foreground tabular-nums"
-                        >{{
-                            item.kind === 'view'
-                                ? t('Sicht')
-                                : formatRows(item.rows)
-                        }}</span
-                    >
-                </Link>
-            </li>
-        </ul>
+            :key="`${workspace.connection.id}:${workspace.database ?? ''}:${workspace.schema}`"
+            :workspace="workspace"
+            :items="[...tables, ...views]"
+            :overview="overview ?? defaultOverview"
+        />
         <p
             v-else-if="workspace.schema"
             class="rounded-lg border border-dashed px-4 py-8 text-center text-sm text-text-secondary"

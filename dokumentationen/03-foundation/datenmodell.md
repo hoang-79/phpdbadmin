@@ -22,7 +22,7 @@
 
 | Tabelle | Spalten (Auswahl) | Zweck |
 |---|---|---|
-| `users` | `id`, `name`, `email` (eindeutig, klein geschrieben), `role` (`admin` · `member`), `locale`, `theme` (`system` · `light` · `dark`), `density` (`default` · `compact`), `timezone`, `last_login_at`, `disabled_at` (TB 07), Zeitstempel | Konto ohne Passwort; Name und E-Mail ändert ein Administrator (A-05); gesperrt = keine Anmeldung, Sitzungen enden |
+| `users` | `id`, `name`, `email` (eindeutig, klein geschrieben), `role` (`admin` · `member`), `locale`, `theme` (`system` · `light` · `dark`), `density` (`default` · `compact`), `timezone`, `ai_api_key` (verschlüsselt, nie an den Browser, TB 12), `preferences` (JSON, Einstellungen der Oberfläche — z. B. `schemaOverview`: Ansicht, Sortierung, Seitengrösse, Art und die letzten 50 Filter je Verbindung/Datenbank/Schema), `last_login_at`, `disabled_at` (TB 07), Zeitstempel | Konto ohne Passwort; Name und E-Mail ändert ein Administrator (A-05); gesperrt = keine Anmeldung, Sitzungen enden |
 | `passkeys` | `id`, `user_id`, `name`, `credential_id` (eindeutig), `credential` (json), `last_used_at`, Zeitstempel | aus `laravel/passkeys`, unverändert (A-03) |
 | `login_codes` | `id`, `email_hash`, `code_hash`, `attempts`, `expires_at`, `consumed_at`, `ip_hash`, `created_at` | Anmeldung per Code: sechs Ziffern, 10 Minuten, einmalig (A-02); unbekannte Adressen bekommen keinen Datensatz, aber dieselbe Antwort |
 | `invitations` | `id`, `email`, `role`, `token_hash`, `invited_by`, `expires_at`, `accepted_at`, Zeitstempel | Einladung statt Registrierung (A-06) |

@@ -5,6 +5,7 @@ use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Account\AiKeyController;
 use App\Http\Controllers\Account\LocaleController;
 use App\Http\Controllers\Account\OnboardingController;
+use App\Http\Controllers\Account\SchemaOverviewPreferenceController;
 use App\Http\Controllers\Account\SessionController;
 use App\Http\Controllers\Admin\AccountController as AdminAccountController;
 use App\Http\Controllers\Admin\AuditController;
@@ -196,6 +197,8 @@ Route::middleware('auth')->group(function () {
     // Kein Profil (A-05): das Konto zeigt Sicherheit und Darstellung.
     Route::get('account', [AccountController::class, 'show'])->name('account');
     Route::put('account/locale', LocaleController::class)->name('account.locale');
+    // Einstellungen der Schema-Übersicht (Ansicht, Sortierung, Seiten, Filter) — automatisch gespeichert.
+    Route::put('account/preferences/schema-overview', SchemaOverviewPreferenceController::class)->name('account.preferences.schema-overview');
     // Eigener Schlüssel für die KI-Hilfe (Q-08).
     Route::put('account/ai-key', [AiKeyController::class, 'update'])->name('account.ai-key.update');
     Route::delete('account/ai-key', [AiKeyController::class, 'destroy'])->name('account.ai-key.destroy');

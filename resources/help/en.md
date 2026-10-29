@@ -15,7 +15,7 @@ A connection leads to a database server (MariaDB, MySQL, PostgreSQL) or to an SQ
 
 ## Workspace {#arbeitsbildschirm}
 
-On the left, the **navigator** with databases or schemas, tables and views — `/` puts the focus in its filter. Hover over a database or schema and a bin appears on the right: it drops it with everything inside — after a preview and only once you type its name. At the top, the **tabs** of open objects and queries. **⌘K** (Windows/Linux: Ctrl+K) opens the command palette: search objects, connections and actions.
+On the left, the **navigator** with databases or schemas, tables and views — `/` puts the focus in its filter. Hover over a database or schema and a bin appears on the right: it drops it with everything inside — after a preview and only once you type its name. At the top, the **tabs** of open objects and queries. **⌘K** (Windows/Linux: Ctrl+K) opens the command palette: search objects, connections and actions. A schema's **overview** shows tables and views as tiles, as a list with rows and size, or compact; filter, sort and page through them there — phpdbadmin remembers your choice for your account, and the filter per schema.
 
 ## Viewing data {#daten}
 

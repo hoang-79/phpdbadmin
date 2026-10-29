@@ -28,6 +28,7 @@ use Laravel\Fortify\PasskeyAuthenticatable;
  * @property string $density
  * @property string $timezone
  * @property string|null $ai_api_key
+ * @property array<string, mixed>|null $preferences
  * @property CarbonImmutable|null $last_login_at
  * @property CarbonImmutable|null $disabled_at
  * @property CarbonImmutable|null $created_at
@@ -76,6 +77,7 @@ class User extends Authenticatable implements HasLocalePreference, PasskeyUser
             'last_login_at' => 'datetime',
             'disabled_at' => 'datetime',
             'ai_api_key' => 'encrypted',
+            'preferences' => 'array',
         ];
     }
 

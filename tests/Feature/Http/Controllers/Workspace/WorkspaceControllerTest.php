@@ -7,6 +7,7 @@ use App\Enums\ConnectionPermission;
 use App\Enums\DatabaseDriver;
 use App\Models\DatabaseConnection;
 use App\Models\User;
+use App\Support\SchemaOverview;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use PDO;
@@ -72,6 +73,28 @@ class WorkspaceControllerTest extends TestCase
                 ->where('workspace.groups.2.key', 'routines')
                 ->whereType('workspace.groups.2.note', 'string')
                 ->missing('workspace.connection.password'));
+    }
+
+    public function test_schema_page_brings_the_saved_overview_settings_and_the_filter_of_this_schema(): void
+    {
+        $connection = $this->sqliteConnection();
+        SchemaOverview::save($this->user, ['view' => 'compact', 'sort' => 'rows', 'direction' => 'desc', 'perPage' => 25, 'kind' => 'views'], $connection->id, null, 'main', 'note');
+
+        $this->actingAs($this->user)->get(route('workspace.schema', [$connection, 'main']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('overview', ['view' => 'compact', 'sort' => 'rows', 'direction' => 'desc', 'perPage' => 25, 'kind' => 'views', 'filter' => 'note'])
+                ->has('workspace.groups.0.items.0', fn (Assert $item) => $item
+                    ->where('name', 'notes')
+                    ->has('size')
+                    ->has('comment')
+                    ->etc()));
+    }
+
+    public function test_schema_page_starts_with_the_default_overview(): void
+    {
+        $this->actingAs($this->user)->get(route('workspace.schema', [$this->sqliteConnection(), 'main']))
+            ->assertInertia(fn (Assert $page) => $page->where('overview', [...SchemaOverview::DEFAULTS, 'filter' => '']));
     }
 
     public function test_unknown_schema_is_404(): void

@@ -16,7 +16,7 @@ use App\Models\DatabaseConnection;
  * PostgreSQL listet die Datenbanken des Servers und öffnet die gewählte. Mit Datenbankname zeigt der Navigator nur
  * diese eine.
  *
- * @phpstan-type NavigatorItem array{name: string, kind: string, rows: int|null, detail: string|null}
+ * @phpstan-type NavigatorItem array{name: string, kind: string, rows: int|null, detail: string|null, size: int|null, comment: string|null}
  * @phpstan-type NavigatorGroup array{key: string, label: string, items: list<NavigatorItem>, note: string|null}
  */
 final class Catalog
@@ -81,17 +81,18 @@ final class Catalog
         $dialect = $connection->driver->dialect();
         $objects = $dialect->tables($target, $schema);
 
-        $item = fn (string $name, string $kind, ?int $rows = null, ?string $detail = null): array => [
-            'name' => $name, 'kind' => $kind, 'rows' => $rows, 'detail' => $detail,
+        $item = fn (string $name, string $kind, ?int $rows = null, ?string $detail = null, ?int $size = null, ?string $comment = null): array => [
+            'name' => $name, 'kind' => $kind, 'rows' => $rows, 'detail' => $detail, 'size' => $size, 'comment' => $comment,
         ];
 
         $tables = [];
         $views = [];
         foreach ($objects as $object) {
+            // Grösse und Kommentar braucht die Schema-Übersicht (Liste, Sortierung).
             if ($object['type'] === 'view') {
-                $views[] = $item($object['name'], 'view');
+                $views[] = $item($object['name'], 'view', comment: $object['comment']);
             } else {
-                $tables[] = $item($object['name'], 'table', $object['rows']);
+                $tables[] = $item($object['name'], 'table', $object['rows'], size: $object['size'], comment: $object['comment']);
             }
         }
 

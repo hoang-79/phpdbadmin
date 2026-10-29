@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DatabaseConnection;
 use App\Models\User;
 use App\Services\Catalog\Catalog;
+use App\Support\SchemaOverview;
 use App\Support\Translations;
 use Closure;
 use Illuminate\Database\QueryException;
@@ -53,7 +54,10 @@ class WorkspaceController extends Controller
             $schemas = $this->catalog->schemas($connection, $database);
             abort_unless(in_array($schema, $schemas, true), 404);
 
-            return $this->render($request, $connection, 'workspace/Schema', $schemas, $schema, $this->catalog->groups($connection, $schema, $database), $database);
+            return $this->render($request, $connection, 'workspace/Schema', $schemas, $schema, $this->catalog->groups($connection, $schema, $database), $database, [
+                // Ansicht, Sortierung, Seiten und Filter, wie sie das Konto zuletzt gesetzt hat.
+                'overview' => SchemaOverview::for($this->user($request), $connection->id, $database, $schema),
+            ]);
         });
     }
 
