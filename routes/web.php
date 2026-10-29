@@ -10,6 +10,7 @@ use App\Http\Controllers\CompareController;
 use App\Http\Controllers\Connections\ConnectionController;
 use App\Http\Controllers\Connections\FavoriteController;
 use App\Http\Controllers\Connections\SharingController;
+use App\Http\Controllers\Connections\SshHostKeyController;
 use App\Http\Controllers\Connections\TestConnectionController;
 use App\Http\Controllers\PaletteController;
 use App\Http\Controllers\Workspace\ConnectionPasswordController;
@@ -37,6 +38,9 @@ Route::middleware('auth')->group(function () {
     // Teilen (V-09): nur Administratoren — die Policy antwortet 403, eine fremde persönliche Verbindung bleibt 404.
     Route::get('connections/{connection}/sharing', [SharingController::class, 'show'])->name('connections.sharing.show');
     Route::put('connections/{connection}/sharing', [SharingController::class, 'update'])->name('connections.sharing.update');
+
+    // SSH-Tunnel (V-08): gespeicherten Host-Schlüssel vergessen, nur mit «verwalten».
+    Route::delete('connections/{connection}/ssh-host-key', SshHostKeyController::class)->name('connections.ssh-host-key.destroy');
 
     // Favorit je Konto (V-06).
     Route::put('connections/{connection}/favorite', FavoriteController::class)->name('connections.favorite');

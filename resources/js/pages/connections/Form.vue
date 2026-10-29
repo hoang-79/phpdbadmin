@@ -1,6 +1,14 @@
 <script setup lang="ts">
-import { Head, Link, useForm, useHttp } from '@inertiajs/vue3';
-import { Check, ChevronRight, Database, Eye, EyeOff, Zap } from '@lucide/vue';
+import { Head, Link, router, useForm, useHttp } from '@inertiajs/vue3';
+import {
+    Check,
+    ChevronRight,
+    Database,
+    Eye,
+    EyeOff,
+    KeyRound,
+    Zap,
+} from '@lucide/vue';
 import { computed, ref } from 'vue';
 import EnvironmentMark from '@/components/connections/EnvironmentMark.vue';
 import TestPanel from '@/components/connections/TestPanel.vue';
@@ -13,6 +21,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { t } from '@/lib/i18n';
 import { home } from '@/routes';
 import { store, test, update } from '@/routes/connections';
+import { destroy as forgetHostKey } from '@/routes/connections/ssh-host-key';
 import type {
     ConnectionEnvironment,
     ConnectionTestResult,
@@ -29,6 +38,7 @@ const props = defineProps<{
     environments: EnvironmentOption[];
     allowedHosts: string[];
     sqliteFolders: string[];
+    sshKeyFolders: string[];
     groups: string[];
 }>();
 
@@ -49,7 +59,20 @@ const form = useForm({
     environment: (props.connection?.environment ??
         'local') as ConnectionEnvironment,
     read_only: props.connection?.readOnly ?? false,
+    // SSH-Tunnel (V-08): Schlüssel und Passphrase sind beim Bearbeiten leer — leer heisst «behalten».
+    ssh: props.connection?.ssh.enabled ?? false,
+    ssh_host: props.connection?.ssh.host ?? '',
+    ssh_port: props.connection?.ssh.port?.toString() ?? '',
+    ssh_username: props.connection?.ssh.username ?? '',
+    ssh_key: '',
+    ssh_key_path: props.connection?.ssh.keyPath ?? '',
+    ssh_passphrase: '',
 });
+
+/** Schlüssel einfügen oder als Datei auf dem Server — nur eines davon geht an den Server. */
+const keySource = ref<'paste' | 'path'>(
+    props.connection?.ssh.keyPath ? 'path' : 'paste',
+);
 
 type TestData = ReturnType<typeof form.data> & { connection: string | null };
 
@@ -58,6 +81,10 @@ const http = useHttp<TestData, ConnectionTestResult>({
     connection: props.connection?.id ?? null,
 });
 const result = ref<ConnectionTestResult | null>(null);
+
+const hostKey = computed(
+    () => result.value?.hostKey ?? props.connection?.ssh.hostKey ?? null,
+);
 const showPassword = ref(false);
 
 const driver = computed(() =>
@@ -102,13 +129,32 @@ function chooseEnvironment(value: ConnectionEnvironment): void {
             ?.readOnlyByDefault ?? false;
 }
 
+/** Nur die gewählte Quelle des Schlüssels geht mit; ohne Tunnel keine SSH-Angaben. */
+function payload(): ReturnType<typeof form.data> {
+    const data = form.data();
+
+    if (!data.ssh || data.driver === 'sqlite') {
+        return {
+            ...data,
+            ssh: false,
+            ssh_key: '',
+            ssh_key_path: '',
+            ssh_passphrase: '',
+        };
+    }
+
+    return keySource.value === 'paste'
+        ? { ...data, ssh_key_path: '' }
+        : { ...data, ssh_key: '' };
+}
+
 async function runTest(): Promise<void> {
     http.clearErrors();
 
     try {
         result.value = await http
             .transform(() => ({
-                ...form.data(),
+                ...payload(),
                 connection: props.connection?.id ?? null,
             }))
             .post(test.url());
@@ -118,10 +164,27 @@ async function runTest(): Promise<void> {
 }
 
 function submit(): void {
+    form.transform(() => payload());
+
     if (props.connection) {
         form.put(update.url(props.connection.id));
     } else {
         form.post(store.url());
+    }
+}
+
+function forgetKey(): void {
+    if (
+        props.connection &&
+        window.confirm(
+            t(
+                'Host-Schlüssel vergessen? Beim nächsten Verbinden nimmt phpdbadmin den Schlüssel an, den der Server dann zeigt.',
+            ),
+        )
+    ) {
+        router.delete(forgetHostKey.url(props.connection.id), {
+            preserveScroll: true,
+        });
     }
 }
 </script>
@@ -309,7 +372,9 @@ function submit(): void {
                     <div class="grid grid-cols-[minmax(0,1fr)_120px] gap-4">
                         <div class="flex min-w-0 flex-col gap-1.5">
                             <Label for="host" class="text-[13px]">{{
-                                t('Host')
+                                form.ssh
+                                    ? t('Host aus Sicht des SSH-Servers')
+                                    : t('Host')
                             }}</Label>
                             <Input
                                 id="host"
@@ -558,6 +623,243 @@ function submit(): void {
                         </Interpolate>
                     </p>
                 </div>
+
+                <fieldset
+                    v-if="isServer"
+                    class="flex min-w-0 flex-col gap-4 rounded-lg border p-4"
+                >
+                    <legend class="px-1 text-[13px] font-medium">
+                        {{ t('SSH-Tunnel') }}
+                    </legend>
+                    <label class="flex items-start gap-2.5 text-sm">
+                        <input
+                            v-model="form.ssh"
+                            type="checkbox"
+                            class="mt-0.5 size-4 accent-primary"
+                        />
+                        <span class="flex flex-col gap-0.5">
+                            <span>{{
+                                t('Über einen SSH-Tunnel verbinden')
+                            }}</span>
+                            <span class="text-xs text-muted-foreground">{{
+                                t(
+                                    'Host und Port oben gelten dann aus Sicht des SSH-Servers — oft 127.0.0.1. Der SSH-Server muss in dieser Installation erlaubt sein.',
+                                )
+                            }}</span>
+                        </span>
+                    </label>
+
+                    <template v-if="form.ssh">
+                        <div class="grid grid-cols-[minmax(0,1fr)_120px] gap-4">
+                            <div class="flex min-w-0 flex-col gap-1.5">
+                                <Label for="ssh_host" class="text-[13px]">{{
+                                    t('SSH-Host')
+                                }}</Label>
+                                <Input
+                                    id="ssh_host"
+                                    v-model="form.ssh_host"
+                                    class="font-mono"
+                                    autocomplete="off"
+                                    spellcheck="false"
+                                    :aria-invalid="
+                                        errors.ssh_host ? true : undefined
+                                    "
+                                />
+                                <InputError :message="errors.ssh_host" />
+                            </div>
+                            <div class="flex flex-col gap-1.5">
+                                <Label for="ssh_port" class="text-[13px]">{{
+                                    t('SSH-Port')
+                                }}</Label>
+                                <Input
+                                    id="ssh_port"
+                                    v-model="form.ssh_port"
+                                    class="font-mono"
+                                    inputmode="numeric"
+                                    placeholder="22"
+                                    :aria-invalid="
+                                        errors.ssh_port ? true : undefined
+                                    "
+                                />
+                                <InputError :message="errors.ssh_port" />
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-1.5">
+                            <Label for="ssh_username" class="text-[13px]">{{
+                                t('SSH-Benutzer')
+                            }}</Label>
+                            <Input
+                                id="ssh_username"
+                                v-model="form.ssh_username"
+                                class="font-mono"
+                                autocomplete="off"
+                                spellcheck="false"
+                                :aria-invalid="
+                                    errors.ssh_username ? true : undefined
+                                "
+                            />
+                            <InputError :message="errors.ssh_username" />
+                        </div>
+
+                        <div class="flex flex-col gap-1.5">
+                            <span class="text-[13px] font-medium">{{
+                                t('Privater Schlüssel')
+                            }}</span>
+                            <div
+                                class="inline-flex w-fit flex-wrap overflow-hidden rounded-md border"
+                                role="radiogroup"
+                                :aria-label="t('Privater Schlüssel')"
+                            >
+                                <button
+                                    type="button"
+                                    role="radio"
+                                    :aria-checked="keySource === 'paste'"
+                                    :class="[
+                                        'border-r px-3 py-[7px] text-sm',
+                                        keySource === 'paste'
+                                            ? 'bg-muted font-medium shadow-[inset_0_-2px_0_var(--primary)]'
+                                            : 'hover:bg-muted',
+                                    ]"
+                                    @click="keySource = 'paste'"
+                                >
+                                    {{ t('Einfügen') }}
+                                </button>
+                                <button
+                                    type="button"
+                                    role="radio"
+                                    :aria-checked="keySource === 'path'"
+                                    :class="[
+                                        'px-3 py-[7px] text-sm',
+                                        keySource === 'path'
+                                            ? 'bg-muted font-medium shadow-[inset_0_-2px_0_var(--primary)]'
+                                            : 'hover:bg-muted',
+                                    ]"
+                                    @click="keySource = 'path'"
+                                >
+                                    {{ t('Datei auf dem Server') }}
+                                </button>
+                            </div>
+                            <template v-if="keySource === 'paste'">
+                                <textarea
+                                    id="ssh_key"
+                                    v-model="form.ssh_key"
+                                    rows="4"
+                                    class="min-h-24 w-full rounded-md border bg-background px-2.5 py-2 font-mono text-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                    autocomplete="off"
+                                    spellcheck="false"
+                                    :aria-label="t('Privater Schlüssel')"
+                                    :placeholder="
+                                        connection?.ssh.hasKey
+                                            ? t(
+                                                  'gespeichert — leer lassen zum Behalten',
+                                              )
+                                            : '-----BEGIN OPENSSH PRIVATE KEY-----'
+                                    "
+                                    :aria-invalid="
+                                        errors.ssh_key ? true : undefined
+                                    "
+                                    aria-describedby="ssh-key-hint"
+                                />
+                                <p
+                                    id="ssh-key-hint"
+                                    class="text-xs text-muted-foreground"
+                                >
+                                    {{
+                                        t(
+                                            'Liegt verschlüsselt in der App-Datenbank und erreicht nie wieder den Browser. Für ssh entsteht nur kurz eine Datei, die nach der Anmeldung gelöscht wird.',
+                                        )
+                                    }}
+                                </p>
+                                <InputError :message="errors.ssh_key" />
+                            </template>
+                            <template v-else>
+                                <Input
+                                    id="ssh_key_path"
+                                    v-model="form.ssh_key_path"
+                                    class="font-mono"
+                                    spellcheck="false"
+                                    :aria-label="t('Schlüsseldatei')"
+                                    :placeholder="`${sshKeyFolders[0] ?? '~/.ssh'}/id_ed25519`"
+                                    :aria-invalid="
+                                        errors.ssh_key_path ? true : undefined
+                                    "
+                                    aria-describedby="ssh-key-path-hint"
+                                />
+                                <p
+                                    id="ssh-key-path-hint"
+                                    class="text-xs text-muted-foreground"
+                                >
+                                    {{ t('Nur Dateien in erlaubten Ordnern:') }}
+                                    <code
+                                        v-for="(folder, index) in sshKeyFolders"
+                                        :key="folder"
+                                        >{{ folder
+                                        }}{{
+                                            index < sshKeyFolders.length - 1
+                                                ? ', '
+                                                : ''
+                                        }}</code
+                                    >
+                                </p>
+                                <InputError :message="errors.ssh_key_path" />
+                            </template>
+                        </div>
+
+                        <div class="flex flex-col gap-1.5">
+                            <Label for="ssh_passphrase" class="text-[13px]">{{
+                                t('Passphrase')
+                            }}</Label>
+                            <Input
+                                id="ssh_passphrase"
+                                v-model="form.ssh_passphrase"
+                                type="password"
+                                autocomplete="new-password"
+                                :placeholder="
+                                    connection?.ssh.hasPassphrase
+                                        ? t(
+                                              'gespeichert — leer lassen zum Behalten',
+                                          )
+                                        : t('nur, wenn der Schlüssel eine hat')
+                                "
+                                :aria-invalid="
+                                    errors.ssh_passphrase ? true : undefined
+                                "
+                            />
+                            <InputError :message="errors.ssh_passphrase" />
+                        </div>
+
+                        <div
+                            class="flex flex-col gap-1.5 rounded-md bg-muted px-3 py-2.5 text-[13px]"
+                            aria-live="polite"
+                        >
+                            <span class="flex items-center gap-1.5 font-medium"
+                                ><KeyRound class="size-3.5" />{{
+                                    t('Host-Schlüssel des SSH-Servers')
+                                }}</span
+                            >
+                            <code
+                                v-if="hostKey"
+                                class="font-mono text-xs break-all"
+                                >{{ hostKey }}</code
+                            >
+                            <span v-else class="text-xs text-text-secondary">{{
+                                t(
+                                    'Noch keiner gespeichert. phpdbadmin nimmt ihn beim ersten Verbinden an und prüft ihn danach — vergleichen Sie den Fingerabdruck nach dem Test mit dem des Servers.',
+                                )
+                            }}</span>
+                            <Button
+                                v-if="connection?.ssh.hostKey"
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                class="w-fit"
+                                @click="forgetKey"
+                                >{{ t('Host-Schlüssel vergessen') }}</Button
+                            >
+                        </div>
+                    </template>
+                </fieldset>
 
                 <label class="flex items-start gap-3 text-sm">
                     <button

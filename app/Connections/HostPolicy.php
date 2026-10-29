@@ -13,17 +13,25 @@ use Symfony\Component\HttpFoundation\IpUtils;
  *
  * SQLite: Der Pfad wird mit realpath() aufgelöst (gegen «..» und Verknüpfungen nach draussen) und muss in einem
  * erlaubten Ordner liegen. Die App-Datenbank von phpdbadmin selbst ist nie erreichbar.
+ *
+ * SSH-Tunnel (V-08): Der SSH-Server wird geprüft wie jeder Host. Das Ziel hinter dem Tunnel nach denselben Regeln,
+ * aber aus Sicht des Tunnels: Ein erlaubter Name geht unverändert an den SSH-Server, eine Adresse muss in einem
+ * erlaubten Netz liegen, jeder andere Name nur, wenn er hier auf erlaubte Adressen auflöst — dann wird die Adresse
+ * weitergereicht. So öffnet der Tunnel keinen Weg, den die Liste nicht schon erlaubt. Dateien mit privaten
+ * Schlüsseln liegen in erlaubten Ordnern wie SQLite-Dateien.
  */
 final class HostPolicy
 {
     /**
      * @param  list<string>  $allowedHosts
      * @param  list<string>  $sqliteFolders
+     * @param  list<string>  $sshKeyFolders
      */
     public function __construct(
         private readonly array $allowedHosts,
         private readonly array $sqliteFolders,
         private readonly ?string $appDatabase = null,
+        private readonly array $sshKeyFolders = [],
     ) {}
 
     public static function fromConfig(): self
@@ -36,6 +44,7 @@ final class HostPolicy
             array_values(array_map('strval', (array) config('phpdbadmin.connections.allowed_hosts', []))),
             array_values(array_map('strval', (array) config('phpdbadmin.connections.sqlite_paths', []))),
             $appDatabase,
+            array_values(array_map('strval', (array) config('phpdbadmin.ssh.key_paths', []))),
         );
     }
 
@@ -71,6 +80,77 @@ final class HostPolicy
     }
 
     /**
+     * Ziel hinter einem SSH-Tunnel, so wie es an `ssh -L` geht: ein erlaubter Name unverändert (aufgelöst wird er
+     * erst auf dem SSH-Server), sonst die geprüfte Adresse.
+     *
+     * @throws ConnectionNotAllowed
+     */
+    public function resolveTunnelTarget(string $host): string
+    {
+        $name = strtolower(trim($host, " \t\n\r\0\x0B[]"));
+
+        if ($name === '') {
+            throw new ConnectionNotAllowed(ConnectionProblem::of(ConnectionProblemKind::HostUnknown));
+        }
+
+        if (filter_var($name, FILTER_VALIDATE_IP) === false && $this->nameIsListed($name)) {
+            if (preg_match('/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/', $name) !== 1) {
+                throw new ConnectionNotAllowed(ConnectionProblem::of(ConnectionProblemKind::HostNotAllowed, $name));
+            }
+
+            return $name;
+        }
+
+        return $this->resolveHost($name);
+    }
+
+    /**
+     * Datei mit einem privaten SSH-Schlüssel: aufgelöst und in einem erlaubten Ordner (PHPDBADMIN_SSH_KEY_PATHS).
+     *
+     * @return string der aufgelöste, geprüfte Pfad
+     *
+     * @throws ConnectionNotAllowed
+     */
+    public function resolveSshKeyPath(string $path): string
+    {
+        $real = realpath($this->expandHome(trim($path)));
+
+        if ($real === false || ! is_file($real)) {
+            throw new ConnectionNotAllowed(ConnectionProblem::of(ConnectionProblemKind::FileMissing, $path));
+        }
+
+        if (! $this->inFolders($real, $this->sshKeyFolders)) {
+            throw new ConnectionNotAllowed(ConnectionProblem::of(ConnectionProblemKind::FileNotAllowed, $path));
+        }
+
+        return $real;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function sshKeyFolders(): array
+    {
+        return $this->sshKeyFolders;
+    }
+
+    /**
+     * @param  list<string>  $folders
+     */
+    private function inFolders(string $real, array $folders): bool
+    {
+        foreach ($folders as $folder) {
+            $realFolder = realpath($this->expandHome($folder));
+
+            if ($realFolder !== false && str_starts_with($real, rtrim($realFolder, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * @return string der aufgelöste, geprüfte Pfad
      *
      * @throws ConnectionNotAllowed
@@ -93,12 +173,8 @@ final class HostPolicy
             ));
         }
 
-        foreach ($this->sqliteFolders as $folder) {
-            $realFolder = realpath($this->expandHome($folder));
-
-            if ($realFolder !== false && str_starts_with($real, rtrim($realFolder, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR)) {
-                return $real;
-            }
+        if ($this->inFolders($real, $this->sqliteFolders)) {
+            return $real;
         }
 
         throw new ConnectionNotAllowed(ConnectionProblem::of(ConnectionProblemKind::FileNotAllowed, $path));

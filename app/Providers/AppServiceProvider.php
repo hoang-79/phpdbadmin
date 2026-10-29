@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Connections\HostPolicy;
+use App\Connections\SshTunnels;
 use App\Connections\TargetConnections;
 use App\Models\DatabaseConnection;
 use App\Models\User;
@@ -28,6 +29,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(TargetConnections::class);
         $this->app->terminating(fn () => $this->app->resolved(TargetConnections::class)
             ? $this->app->make(TargetConnections::class)->releaseAll()
+            : null);
+
+        // SSH-Tunnel der Anfrage (V-08): mit ihren Verbindungen freigegeben, am Ende der Anfrage alle übrigen beendet.
+        $this->app->scoped(SshTunnels::class);
+        $this->app->terminating(fn () => $this->app->resolved(SshTunnels::class)
+            ? $this->app->make(SshTunnels::class)->closeAll()
             : null);
     }
 

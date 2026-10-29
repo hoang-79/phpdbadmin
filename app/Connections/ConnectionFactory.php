@@ -5,11 +5,16 @@ namespace App\Connections;
 use App\Enums\DatabaseDriver;
 use Illuminate\Database\Connection;
 use Pdo\Sqlite;
+use Throwable;
 
 /**
  * Baut Zielverbindungen je Anfrage (ADR-002): Host bzw. Datei zuerst gegen die HostPolicy, dann
  * die Konfiguration des Dialekts. Schreibgeschützt (V-04) in Schichten: Sitzung bzw. Öffnen nur lesend, dazu der
  * Wächter je Anweisung (Dialect::runReadOnly). Nach der Arbeit freigeben (release).
+ *
+ * Mit SSH-Tunnel (V-08) verbindet der Treiber zum lokalen Ende des Tunnels; geprüft werden vorher der SSH-Server und
+ * das Ziel aus Sicht des Tunnels nach denselben Regeln (HostPolicy::resolveTunnelTarget). Der Tunnel lebt so lange
+ * wie die Verbindung.
  */
 final class ConnectionFactory
 {
@@ -19,20 +24,24 @@ final class ConnectionFactory
     /** Name der Faltfunktion für Vergleiche ohne Gross- und Kleinschreibung in SQLite. */
     public const string SQLITE_FOLD = 'phpdbadmin_fold';
 
-    public function __construct(private readonly HostPolicy $policy) {}
+    public function __construct(
+        private readonly HostPolicy $policy,
+        private readonly SshTunnels $tunnels,
+    ) {}
 
     /**
      * @param  int|null  $statementTimeoutMs  Zeitlimit je Anweisung (wo der Treiber eines kennt)
      *
      * @throws ConnectionNotAllowed
+     * @throws TunnelFailed
      */
     public function make(ConnectionSettings $settings, ?int $connectTimeout = null, bool $readOnly = false, ?int $statementTimeoutMs = null): Connection
     {
         $dialect = $settings->driver->dialect();
-        $address = $this->address($settings);
+        $tunnel = $this->tunnel($settings);
         $config = $dialect->connectionConfig(
-            $settings,
-            $address,
+            $tunnel !== null ? $settings->throughTunnel($tunnel->port) : $settings,
+            $tunnel !== null ? '127.0.0.1' : $this->address($settings),
             $connectTimeout ?? (int) config('phpdbadmin.connections.connect_timeout', 5),
             $readOnly,
         );
@@ -42,10 +51,28 @@ final class ConnectionFactory
         // Name nur für Protokolle und Fehlermeldungen — die Verbindung steht in keinem globalen Register (siehe unten).
         $config['name'] = 'target_'.hash('xxh128', serialize([$config, $readOnly, $statementTimeoutMs]));
 
-        $connection = $this->build($config);
-        // Sofort verbinden: Scheitert erst die erste Abfrage, hält Laravel «Connection refused» für eine verlorene
-        // Verbindung und versucht neu — so kommt ein nicht erreichbarer Server als gewöhnlicher PDO-Fehler an.
-        $connection->getPdo();
+        try {
+            $connection = $this->build($config);
+            // Sofort verbinden: Scheitert erst die erste Abfrage, hält Laravel «Connection refused» für eine verlorene
+            // Verbindung und versucht neu — so kommt ein nicht erreichbarer Server als gewöhnlicher PDO-Fehler an.
+            $connection->getPdo();
+        } catch (Throwable $exception) {
+            if ($tunnel !== null) {
+                // Der Tunnel steht, aber der SSH-Server erreicht die Datenbank nicht — das sagt nur ssh.
+                $problem = SshTunnels::problem($tunnel->errorOutput());
+                $this->tunnels->release($tunnel);
+
+                if ($problem->kind === ConnectionProblemKind::SshForwardFailed) {
+                    throw new TunnelFailed($problem);
+                }
+            }
+
+            throw $exception;
+        }
+
+        if ($tunnel !== null) {
+            $this->tunnels->attach($connection, $tunnel);
+        }
 
         $prepare = function (Connection $connection) use ($settings, $dialect, $readOnly, $statementTimeoutMs): void {
             if ($settings->driver === DatabaseDriver::Sqlite) {
@@ -101,20 +128,57 @@ final class ConnectionFactory
     }
 
     /**
-     * Die geprüfte Adresse (Server) bzw. der aufgelöste Pfad (SQLite).
+     * Die geprüfte Adresse (Server) bzw. der aufgelöste Pfad (SQLite). Mit SSH-Tunnel: das Ziel aus Sicht des
+     * SSH-Servers — der SSH-Server selbst muss dafür erlaubt sein.
      *
      * @throws ConnectionNotAllowed
      */
     public function address(ConnectionSettings $settings): string
     {
-        return $settings->driver === DatabaseDriver::Sqlite
-            ? $this->policy->resolveSqlitePath((string) $settings->sqlitePath)
-            : $this->policy->resolveHost((string) $settings->host);
+        if ($settings->driver === DatabaseDriver::Sqlite) {
+            return $this->policy->resolveSqlitePath((string) $settings->sqlitePath);
+        }
+
+        if ($settings->ssh !== null) {
+            $this->policy->resolveHost($settings->ssh->host);
+
+            return $this->policy->resolveTunnelTarget((string) $settings->host);
+        }
+
+        return $this->policy->resolveHost((string) $settings->host);
+    }
+
+    /**
+     * SSH-Tunnel für diese Angaben öffnen (oder einen offenen mitbenutzen); null ohne SSH. Wer ihn selbst öffnet, gibt
+     * ihn mit releaseTunnel() wieder frei.
+     *
+     * @throws ConnectionNotAllowed
+     * @throws TunnelFailed
+     */
+    public function tunnel(ConnectionSettings $settings): ?SshTunnel
+    {
+        if ($settings->ssh === null || ! $settings->driver->isServer()) {
+            return null;
+        }
+
+        return $this->tunnels->open(
+            $settings->ssh,
+            $this->policy->resolveHost($settings->ssh->host),
+            $this->policy->resolveTunnelTarget((string) $settings->host),
+            (int) $settings->port(),
+            $this->policy,
+        );
+    }
+
+    public function releaseTunnel(SshTunnel $tunnel): void
+    {
+        $this->tunnels->release($tunnel);
     }
 
     public function release(Connection $connection): void
     {
         $connection->disconnect();
+        $this->tunnels->releaseFor($connection);
     }
 
     /**
