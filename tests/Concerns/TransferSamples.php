@@ -146,7 +146,8 @@ trait TransferSamples
 
         if ($sourceFile !== null) {
             $path = $transfer->directory().'/source.'.$format->extension();
-            Storage::disk(Transfer::DISK)->put($path, (string) file_get_contents($sourceFile));
+            Storage::disk(Transfer::DISK)->makeDirectory($transfer->directory());
+            copy($sourceFile, Storage::disk(Transfer::DISK)->path($path));
             $transfer->forceFill(['file_path' => $path, 'file_size' => filesize($sourceFile)])->save();
         }
 

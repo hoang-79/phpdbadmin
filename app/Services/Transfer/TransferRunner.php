@@ -114,8 +114,12 @@ final class TransferRunner
             return;
         }
 
-        // Ohne Worker darf die Anfrage länger dauern als üblich — die Grenzen oben halten sie kurz genug.
-        set_time_limit(300);
+        // Ohne Worker darf die Anfrage länger dauern als üblich — die Grenzen oben halten sie kurz genug. Ohne Limit
+        // (Konsole) bleibt es ohne.
+        if ((int) ini_get('max_execution_time') > 0) {
+            set_time_limit(300);
+        }
+
         $this->execute($transfer);
     }
 

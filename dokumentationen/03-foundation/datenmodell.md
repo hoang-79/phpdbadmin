@@ -12,7 +12,7 @@
 4. **Zeitpunkte** als `dateTime` in UTC, nie `timestamp NOT NULL` ohne Vorgabe (MariaDB 10.6 setzt sonst still `ON UPDATE CURRENT_TIMESTAMP`); Anzeige in der Zeitzone des Kontos.
 5. **Lange Texte** (SQL, Fehlermeldungen, Vorher-Werte) als `longText` — `TEXT` endet auf MySQL/MariaDB bei 64 KB.
 6. **JSON** als `json`; Tests vergleichen JSON mit `assertEquals`, nie mit `assertSame` (MySQL ordnet Schlüssel um).
-7. **Kennungen:** `connections` mit ULID (die Kennung steht in Adressen und darf nichts über die Anzahl verraten); übrige Tabellen mit fortlaufender Nummer.
+7. **Kennungen:** `connections` und `transfers` mit ULID (die Kennung steht in Adressen und darf nichts über die Anzahl verraten); übrige Tabellen mit fortlaufender Nummer.
 8. **Aufbewahrung** beim Anlegen mitgebaut: Verlauf, Protokoll, Rückgängig-Sicherungen und Exportdateien haben eine Frist und einen täglichen Aufräumlauf (`model:prune`).
 9. **Kein Datenbankfehler ins eigene Protokoll** schreiben, wenn das Protokoll selbst in der App-Datenbank liegt (Rückkopplung) — Fehler der App-Datenbank gehen nur ins Log.
 
@@ -51,7 +51,7 @@ Regeln: Produktion ist beim Anlegen `read_only = true` (V-04). Eine persönliche
 |---|---|---|
 | `audit_log` | `id`, `user_id`, `connection_id`, `action` (z. B. `data.update`, `schema.alter`, `sql.execute`, `auth.login`), `target` (Schema.Tabelle), `sql` (longText, Werte maskiert), `affected_rows`, `ip_hash`, `created_at` | Protokoll aller schreibenden Aktionen und Anmeldungen (B-04, A-09); Frist einstellbar, Vorgabe 365 Tage |
 | `change_snapshots` | `id`, `audit_log_id`, `user_id`, `connection_id`, `target`, `key` (json: Primärschlüssel), `before` (json), `after` (json), `expires_at` | Rückgängig für Datenänderungen (D-09): Vorher-Werte bis zur Grenze (Vorgabe 1'000 Zeilen je Änderung, 7 Tage) |
-| `transfers` | `id`, `user_id`, `connection_id`, `kind` (`export` · `import`), `format`, `status` (`queued` · `running` · `done` · `failed`), `progress`, `rows`, `file_path`, `error`, `expires_at`, Zeitstempel | Export und Import im Hintergrund (E-01, E-02); Dateien unter `storage/app/private/transfers`, Frist 24 Stunden |
+| `transfers` | `id` (ULID), `user_id`, `connection_id`, `kind` (`export` · `import`), `format` (`csv` · `json` · `sql`), `status` (`draft` · `queued` · `running` · `done` · `failed` · `cancelled`), `dry_run`, `in_background`, `target` (Schema.Tabelle), `options` (json: Umfang, Trennzeichen, Zuordnung …), `progress`, `rows`, `total_rows`, `file_name`, `file_path`, `file_size`, `result` (json: Fehlerzeilen, Anweisungen), `error` (json), `started_at`, `finished_at`, `expires_at`, Zeitstempel | Export und Import im Hintergrund (E-01, E-02, B-07); Dateien unter `storage/app/private/transfers/<id>/`, Frist 24 Stunden; Texte in `result` und `error` als deutscher Schlüssel mit Platzhaltern, übersetzt bei der Ausgabe (TB 06) |
 | `jobs`, `failed_jobs`, `cache` | wie Laravel | Warteschlange, Abbruch-Merker laufender Abfragen (Q-02) |
 
 ## 3. Was bewusst fehlt
@@ -68,7 +68,7 @@ Regeln: Produktion ist beim Anlegen `read_only = true` (V-04). Eine persönliche
 | Einladungen | nach Annahme oder Ablauf (7 Tage), Datensatz nach 30 Tagen | `model:prune` |
 | Verlauf | 90 Tage | `model:prune` |
 | Rückgängig-Sicherungen | 7 Tage | `model:prune` |
-| Exportdateien | 24 Stunden | Aufräumlauf löscht Datei und setzt `file_path` leer |
+| Export- und Importdateien | 24 Stunden | `model:prune` (täglich) löscht Auftrag und Ordner (TB 06) |
 | Protokoll | Einstellung, Vorgabe 365 Tage | `model:prune` |
 | Konto gelöscht | Passkeys, Sitzungen, persönliche Verbindungen, Verlauf, gespeicherte Abfragen mit; Protokolleinträge bleiben mit `user_id = null` und Name im Eintrag | Fremdschlüssel `cascadeOnDelete` bzw. `nullOnDelete` |
 
