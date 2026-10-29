@@ -1,6 +1,6 @@
 # Sicherheit und Bedrohungen — phpdbadmin (F-7)
 
-**Stand:** 28.10.2026 · v0.1 — Bedrohungsmodell für ein Werkzeug, das Zugang zu allen verwalteten Datenbanken hat. Was mit einer Probe belegt ist, verweist auf `SecurityProbeTest` bzw. `ConnectionProbeTest`; der Rest ist Vorgabe für Foundation und Timeboxes und wird dort mit Tests belegt. Vorbild für die Prüfung vor v1.0: White-Box-Durchgang nach OWASP-Kategorien (Lehre aus Basalto und dem AIB Portal: grüne Pipeline ist keine Sicherheitsprüfung).
+**Stand:** 28.10.2026 · v0.1, nachgeführt 29.10.2026 (T-20, T-21 aus TB 10b) — Bedrohungsmodell für ein Werkzeug, das Zugang zu allen verwalteten Datenbanken hat. Was mit einer Probe belegt ist, verweist auf `SecurityProbeTest` bzw. `ConnectionProbeTest`; der Rest ist Vorgabe für Foundation und Timeboxes und wird dort mit Tests belegt. Vorbild für die Prüfung vor v1.0: White-Box-Durchgang nach OWASP-Kategorien (Lehre aus Basalto und dem AIB Portal: grüne Pipeline ist keine Sicherheitsprüfung).
 
 ## 1. Was zu schützen ist
 
@@ -36,6 +36,8 @@
 | T-17 | phpdbadmin verwaltet sich selbst am System vorbei | App-Datenbank nie als Verbindung anbieten | R-17 |
 | T-18 | Probe-Seiten in einer Installation | `routes/probe.php` nur in `local`; in TB 00 entfernt oder übernommen | F-3, F-4 |
 | T-19 | Fremde übernehmen die Ersteinrichtung (erster Besucher einer frisch installierten Seite wird Administrator) | Einrichtung im Browser nur mit dem Einrichtungsschlüssel aus einer Datei auf dem Server (0600, nach der Einrichtung gelöscht), nur solange es kein Konto gibt, gedrosselt, Fehlversuche im Protokoll; alternativ per Konsole | **belegt** TB 00, A-06 |
+| T-20 | Eine hochgeladene Sicherung führt Befehle auf dem phpdbadmin-Server aus: die Clients `mysql`, `mariadb` und `psql` kennen `system`/`\!` (Shell), `tee`/`\o` (Dateien schreiben), `source`/`\i` (Dateien lesen) | Clients nur mit Schutzschalter (`mysql --skip-commands`, `mariadb --sandbox`, psql im Modus `\restrict` mit eigenem geheimem Schlüssel); ohne Schutz spielt phpdbadmin MySQL/MariaDB selbst ein, psql-Textformat abgelehnt; Wiederherstellen nur mit Recht «schreiben»; Passwörter nie auf der Kommandozeile (Optionsdatei 0600 bzw. `PGPASSWORD`) | **belegt** TB 10b, E-03 (`BackupRunnerTest`: Markierungsdateien bleiben aus) |
+| T-21 | Formel-Injektion: ein Zellwert wie `=HYPERLINK(…)` wird in der Tabellenkalkulation zur Formel | Excel-Export schreibt Text nur als Inline-Text, nie als Formel; CSV bleibt unverändert (Daten wörtlich, TB 06) — Hinweis für TB 08 | **belegt** TB 10b, E-04 (`XlsxExportTest`) |
 
 ## 3. Restrisiken
 
