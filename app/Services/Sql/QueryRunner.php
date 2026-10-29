@@ -13,8 +13,8 @@ use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\Process;
 use PDO;
-use PDOException;
 use Pdo\Mysql;
+use PDOException;
 use Throwable;
 
 use function Illuminate\Support\php_binary;
@@ -47,7 +47,7 @@ final class QueryRunner
      * @param  list<string>  $statements
      * @return list<Result>
      */
-    public function run(DatabaseConnection $connection, ?string $database, array $statements, string $runId, bool $mayWrite, int $limit, int $userId): array
+    public function run(DatabaseConnection $connection, ?string $database, array $statements, string $runId, bool $mayWrite, int $limit, int $userId, ?string $searchPath = null): array
     {
         $timeoutMs = (int) config('phpdbadmin.editor.timeout_seconds', 30) * 1000;
         $mayWrite = $mayWrite && ! $connection->read_only;
@@ -59,6 +59,11 @@ final class QueryRunner
         $target = $this->targets->open($connection, $database);
         $dialect = $connection->driver->dialect();
         $dialect->setStatementTimeout($target, $timeoutMs);
+
+        if ($searchPath !== null && $connection->driver === DatabaseDriver::Postgres) {
+            // Unqualifizierte Namen im gewählten Schema suchen; gequotet, weil der Name von aussen kommt.
+            $target->statement('set search_path to "'.str_replace('"', '""', $searchPath).'", public');
+        }
         $sessionId = (string) $target->selectOne($connection->driver === DatabaseDriver::Postgres ? 'select pg_backend_pid() as id' : 'select connection_id() as id')?->id;
 
         $this->cache->put(self::RUN_KEY.$runId, ['connection' => $connection->id, 'database' => $database, 'user' => $userId, 'session' => $sessionId], now()->addMinutes(30));

@@ -69,4 +69,23 @@ return [
         'exact_count_limit' => (int) env('PHPDBADMIN_EXACT_COUNT_LIMIT', 50000),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | SQL-Editor (Q-02, Q-03, Q-04, Q-09)
+    |--------------------------------------------------------------------------
+    |
+    | Zeitgrenze je Anweisung, Zeilen je Ergebnis («mehr laden» bis zur Obergrenze), Frist des Verlaufs. SQLite-
+    | Abfragen laufen in einem Arbeitsprozess; unter PHP-FPM braucht er den Pfad zur PHP-Kommandozeile, falls sie nicht
+    | neben FPM liegt.
+    |
+    */
+
+    'editor' => [
+        'timeout_seconds' => (int) env('PHPDBADMIN_EDITOR_TIMEOUT', 30),
+        'row_limit' => (int) env('PHPDBADMIN_EDITOR_ROWS', 1000),
+        'max_row_limit' => (int) env('PHPDBADMIN_EDITOR_MAX_ROWS', 10000),
+        'history_days' => (int) env('PHPDBADMIN_HISTORY_DAYS', 90),
+        'php_binary' => env('PHPDBADMIN_PHP_BINARY'),
+    ],
+
 ];

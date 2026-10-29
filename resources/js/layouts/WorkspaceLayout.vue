@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { Keyboard, PanelLeft } from '@lucide/vue';
+import { Keyboard, PanelLeft, Search } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import AccountMenu from '@/components/AccountMenu.vue';
 import Wordmark from '@/components/Wordmark.vue';
+import CommandPalette from '@/components/workspace/CommandPalette.vue';
 import ConnectionChip from '@/components/workspace/ConnectionChip.vue';
 import Navigator from '@/components/workspace/Navigator.vue';
 import ShortcutsDialog from '@/components/workspace/ShortcutsDialog.vue';
@@ -28,10 +29,22 @@ const workspace = computed(() => page.props.workspace ?? null);
 const selected = computed(() => page.props.selected ?? null);
 const navigatorOpen = ref(false);
 const shortcutsOpen = ref(false);
+const paletteOpen = ref(false);
+const isMac =
+    typeof navigator !== 'undefined' &&
+    /Mac|iPhone|iPad/.test(navigator.platform);
 
 // «?» öffnet die Kürzel-Übersicht (O-05) — nicht, während man tippt.
 function onKey(event: KeyboardEvent): void {
     const target = event.target as HTMLElement | null;
+
+    // ⌘K / Ctrl+K öffnet die Befehlspalette (O-02) — auch aus dem Editor heraus.
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        paletteOpen.value = true;
+
+        return;
+    }
 
     if (
         event.key === '?' &&
@@ -88,7 +101,30 @@ watch(
             <div v-if="workspace" class="hidden min-w-0 sm:block">
                 <ConnectionChip :connection="workspace.connection" />
             </div>
-            <div class="flex-1" />
+            <div class="flex flex-1 justify-center">
+                <button
+                    type="button"
+                    class="hidden h-9 w-full max-w-md items-center gap-2 rounded-md border bg-muted/50 px-3 text-sm text-muted-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring md:flex"
+                    @click="paletteOpen = true"
+                >
+                    <Search class="size-4" />
+                    <span class="truncate">{{
+                        t('Tabelle, Abfrage oder Befehl suchen …')
+                    }}</span>
+                    <kbd
+                        class="ml-auto rounded border bg-background px-1.5 font-mono text-[11px]"
+                        >{{ isMac ? '⌘K' : 'Ctrl K' }}</kbd
+                    >
+                </button>
+            </div>
+            <button
+                type="button"
+                class="inline-grid size-9 place-items-center rounded-md text-text-secondary outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+                :aria-label="t('Befehlspalette')"
+                @click="paletteOpen = true"
+            >
+                <Search class="size-4" />
+            </button>
             <button
                 type="button"
                 class="hidden size-9 place-items-center rounded-md text-text-secondary outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring sm:inline-grid"
@@ -133,6 +169,11 @@ watch(
         </Sheet>
 
         <ShortcutsDialog v-model:open="shortcutsOpen" />
+        <CommandPalette
+            v-model:open="paletteOpen"
+            :workspace="workspace"
+            @shortcuts="shortcutsOpen = true"
+        />
         <Toaster position="bottom-right" />
     </div>
 </template>

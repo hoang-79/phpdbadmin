@@ -2,9 +2,11 @@
 import { Link } from '@inertiajs/vue3';
 import { Eye, Lock, Table2 } from '@lucide/vue';
 import { computed } from 'vue';
+import { useOpenTabs } from '@/composables/useOpenTabs';
 import { formatBytes } from '@/lib/format';
 import { t, tc } from '@/lib/i18n';
 import { dataHref, structureHref } from '@/lib/workspace';
+import { sql as sqlRoute } from '@/routes/workspace';
 import type { ObjectStructure, Workspace } from '@/types';
 
 /**
@@ -14,7 +16,7 @@ import type { ObjectStructure, Workspace } from '@/types';
 const props = defineProps<{
     workspace: Workspace;
     object: ObjectStructure['object'];
-    active: 'data' | 'structure';
+    active: 'data' | 'structure' | 'sql';
 }>();
 
 const facts = computed(() =>
@@ -29,6 +31,17 @@ const facts = computed(() =>
     ].filter((fact): fact is string => !!fact),
 );
 
+const { tabs: openTabs } = useOpenTabs(props.workspace.connection.id);
+const nextQueryTab = computed(
+    () =>
+        Math.max(
+            0,
+            ...openTabs.value
+                .filter((tab) => tab.kind === 'query')
+                .map((tab) => Number(tab.title)),
+        ) + 1,
+);
+
 const tabs = computed(() => [
     {
         key: 'data',
@@ -40,7 +53,34 @@ const tabs = computed(() => [
         label: t('Struktur'),
         href: structureHref(props.workspace, props.object.name),
     },
+    {
+        key: 'sql',
+        label: t('SQL'),
+        href: sqlRoute.url(props.workspace.connection.id, {
+            query: {
+                tab: nextQueryTab.value,
+                ...(props.workspace.schema
+                    ? { schema: props.workspace.schema }
+                    : {}),
+                ...(props.workspace.database
+                    ? { db: props.workspace.database }
+                    : {}),
+                vorlage: `SELECT * FROM ${quoteName(props.object.name)} LIMIT 100;`,
+            },
+        }),
+    },
 ]);
+
+/** Name für die Vorlage im Editor, gequotet nach Treiber, wenn nötig. */
+function quoteName(name: string): string {
+    if (/^[a-z_][a-z0-9_]*$/.test(name)) {
+        return name;
+    }
+
+    return ['mysql', 'mariadb'].includes(props.workspace.connection.driver)
+        ? `\`${name.replaceAll('`', '``')}\``
+        : `"${name.replaceAll('"', '""')}"`;
+}
 </script>
 
 <template>

@@ -200,3 +200,37 @@ export type RowDetailData = {
         count: number | null;
     }[];
 };
+
+export type SqlResult = {
+    sql: string;
+    status: 'ok' | 'error' | 'cancelled' | 'timeout' | 'skipped';
+    columns: { name: string; type: string | null }[];
+    rows: Cell[][];
+    truncated: boolean;
+    affected: number | null;
+    durationMs: number;
+    message: string | null;
+};
+
+export type SqlHistoryEntry = {
+    id: number;
+    sql: string;
+    status: string;
+    durationMs: number | null;
+    rows: number | null;
+    at: string | null;
+};
+
+export type SavedSqlQuery = {
+    id: number;
+    name: string;
+    sql: string;
+    updatedAt: string | null;
+};
+
+export type SqlEditorSettings = {
+    timeoutSeconds: number;
+    rowLimit: number;
+    maxRowLimit: number;
+    canWrite: boolean;
+};

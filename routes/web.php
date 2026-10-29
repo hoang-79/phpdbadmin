@@ -5,9 +5,11 @@ use App\Http\Controllers\Account\LocaleController;
 use App\Http\Controllers\Account\OnboardingController;
 use App\Http\Controllers\Connections\ConnectionController;
 use App\Http\Controllers\Connections\TestConnectionController;
+use App\Http\Controllers\PaletteController;
 use App\Http\Controllers\Workspace\ConnectionPasswordController;
 use App\Http\Controllers\Workspace\ObjectController;
 use App\Http\Controllers\Workspace\Server;
+use App\Http\Controllers\Workspace\SqlController;
 use App\Http\Controllers\Workspace\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
@@ -30,6 +32,14 @@ Route::middleware('auth')->group(function () {
         Route::get('password', [ConnectionPasswordController::class, 'show'])->name('workspace.password');
         Route::post('password', [ConnectionPasswordController::class, 'store'])->middleware('throttle:connection-test')->name('workspace.password.store');
         Route::get('s/{schema}', [WorkspaceController::class, 'schema'])->where('schema', '[^/]+')->name('workspace.schema');
+
+        // SQL-Editor (Q-01 bis Q-04, Q-07, Q-09).
+        Route::get('sql', [SqlController::class, 'show'])->name('workspace.sql');
+        Route::post('sql/run', [SqlController::class, 'run'])->name('workspace.sql.run');
+        Route::post('sql/cancel', [SqlController::class, 'cancel'])->name('workspace.sql.cancel');
+        Route::get('sql/history', [SqlController::class, 'searchHistory'])->name('workspace.sql.history');
+        Route::post('sql/saved', [SqlController::class, 'save'])->name('workspace.sql.saved.store');
+        Route::delete('sql/saved/{query}', [SqlController::class, 'forget'])->name('workspace.sql.saved.destroy');
         Route::prefix('s/{schema}/o/{object}')->where(['schema' => '[^/]+', 'object' => '[^/]+'])->group(function () {
             Route::get('/', [ObjectController::class, 'data'])->name('workspace.object');
             Route::get('structure', [ObjectController::class, 'structure'])->name('workspace.object.structure');
@@ -52,12 +62,10 @@ Route::middleware('auth')->group(function () {
         Route::post('server/maintenance', [Server\MaintenanceController::class, 'run'])->name('workspace.server.maintenance.run');
     });
 
+    // Befehlspalette ⌘K (O-02): Suchquelle für das Wechseln der Verbindung.
+    Route::get('palette', PaletteController::class)->name('palette');
+
     // Kein Profil (A-05): das Konto zeigt Sicherheit und Darstellung.
     Route::get('account', [AccountController::class, 'show'])->name('account');
     Route::put('account/locale', LocaleController::class)->name('account.locale');
 });
-
-// Feasibility-Proben F-3 und F-4, nur lokal und nur angemeldet — bis Raster (TB 01) und SQL-Editor (TB 05) sie ersetzen.
-if (app()->environment('local')) {
-    Route::middleware('auth')->group(__DIR__.'/probe.php');
-}

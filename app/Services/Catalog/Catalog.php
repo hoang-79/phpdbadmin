@@ -126,6 +126,40 @@ final class Catalog
         return $groups;
     }
 
+    /**
+     * Tabellen und Sichten mit ihren Spalten für die Vervollständigung im SQL-Editor (Q-01) — eine Abfrage je Treiber,
+     * höchstens 20'000 Spalten.
+     *
+     * @return array<string, list<string>>
+     */
+    public function completion(DatabaseConnection $connection, string $schema, ?string $database = null): array
+    {
+        $target = $this->targets->open($connection, $database);
+        $dialect = $connection->driver->dialect();
+
+        $rows = $dialect->runReadOnly($target, fn (): array => match ($connection->driver) {
+            DatabaseDriver::Sqlite => $target->select(
+                'select m.name as t, p.name as c from '.$target->getQueryGrammar()->wrap($schema).'.sqlite_master m
+                 join pragma_table_info(m.name, ?) p
+                 where m.type in (\'table\', \'view\') and m.name not like \'sqlite_%\'
+                 order by m.name, p.cid limit 20000',
+                [$schema],
+            ),
+            default => $target->select(
+                'select table_name as t, column_name as c from information_schema.columns where table_schema = ?
+                 order by table_name, ordinal_position limit 20000',
+                [$schema],
+            ),
+        });
+
+        $tables = [];
+        foreach ($rows as $row) {
+            $tables[(string) $row->t][] = (string) $row->c;
+        }
+
+        return $tables;
+    }
+
     private function withoutRoutinesNote(): string
     {
         return __('SQLite kennt keine gespeicherten Funktionen und Prozeduren.');

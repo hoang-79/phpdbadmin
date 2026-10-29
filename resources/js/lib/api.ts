@@ -23,7 +23,14 @@ export type ApiFailure =
               serverMessage: string | null;
           };
       }
-    | { reason: 'network'; message: string };
+    | { reason: 'network'; message: string }
+    | {
+          reason: 'confirm';
+          dangers: { sql: string; reason: string }[];
+          production: boolean;
+          wrongName?: boolean;
+      }
+    | { reason: 'empty' };
 
 export class ApiError extends Error {
     constructor(public readonly failure: ApiFailure) {
@@ -91,4 +98,12 @@ export function getJson<T>(url: string): Promise<T> {
 
 export function putJson(url: string, data: unknown): Promise<void> {
     return request<void>(url, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export function postJson<T>(url: string, data: unknown): Promise<T> {
+    return request<T>(url, { method: 'POST', body: JSON.stringify(data) });
+}
+
+export function deleteJson(url: string): Promise<void> {
+    return request<void>(url, { method: 'DELETE' });
 }

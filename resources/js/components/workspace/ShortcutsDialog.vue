@@ -21,6 +21,7 @@ const groups = computed(() => [
     {
         title: t('Überall'),
         items: [
+            { keys: [command, 'K'], label: t('Befehlspalette') },
             { keys: ['?'], label: t('Diese Übersicht') },
             { keys: ['/'], label: t('Objekte im Navigator filtern') },
             { keys: ['Esc'], label: t('Dialog oder Auswahl schliessen') },
@@ -41,6 +42,22 @@ const groups = computed(() => [
                 keys: [t('Umschalt'), t('Klick')],
                 label: t('Weitere Spalte zur Sortierung'),
             },
+        ],
+    },
+    {
+        title: t('SQL-Editor'),
+        items: [
+            {
+                keys: [command, '↵'],
+                label: t(
+                    'Anweisung an der Schreibmarke oder Auswahl ausführen',
+                ),
+            },
+            {
+                keys: [t('Umschalt'), command, '↵'],
+                label: t('Alles ausführen'),
+            },
+            { keys: ['Ctrl', t('Leertaste')], label: t('Vervollständigen') },
         ],
     },
 ]);
