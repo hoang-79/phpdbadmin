@@ -14,6 +14,7 @@ return [
     'boolean' => ':Attribute: ja oder nein.',
     'digits' => ':Attribute: genau :digits Ziffern eingeben.',
     'email' => 'Das ist keine gültige E-Mail-Adresse.',
+    'enum' => ':Attribute: dieser Wert ist nicht erlaubt.',
     'in' => ':Attribute: dieser Wert ist nicht erlaubt.',
     'integer' => ':Attribute: ganze Zahl erwartet.',
     'max' => [

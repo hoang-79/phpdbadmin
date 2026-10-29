@@ -6,15 +6,19 @@ use App\Enums\ConnectionEnvironment;
 use App\Enums\ConnectionPermission;
 use App\Enums\DatabaseDriver;
 use App\Enums\SslMode;
+use App\Policies\DatabaseConnectionPolicy;
 use Carbon\CarbonImmutable;
 use Database\Factories\DatabaseConnectionFactory;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Eine gespeicherte Zielverbindung (V-01). Das Passwort ist verschlüsselt und verlässt den Server nie (V-03).
@@ -41,6 +45,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property-read User $owner
+ * @property-read Collection<int, ConnectionMembership> $memberships
  */
 #[Hidden(['password'])]
 class DatabaseConnection extends Model
@@ -85,17 +90,29 @@ class DatabaseConnection extends Model
     /**
      * Konten mit Recht an einer geteilten Verbindung (A-07, V-09).
      *
-     * @return BelongsToMany<User, $this>
+     * @return BelongsToMany<User, $this, ConnectionMembership>
      */
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'connection_user', 'connection_id')
+            ->using(ConnectionMembership::class)
             ->withPivot(['permission', 'favorite', 'last_opened_at']);
     }
 
     /**
-     * Was ein Konto sieht: eigene Verbindungen und geteilte, an denen es ein Recht hat (V-09). Alles andere ist
-     * für dieses Konto nicht vorhanden (404, T-16).
+     * Zeilen in `connection_user` — Rechte und persönliche Merker der Konten.
+     *
+     * @return HasMany<ConnectionMembership, $this>
+     */
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(ConnectionMembership::class, 'connection_id');
+    }
+
+    /**
+     * Was ein Konto sieht (V-09): eigene Verbindungen und geteilte, an denen es ein Recht hat; Administratoren sehen
+     * alle geteilten. Persönliche Verbindungen anderer sieht niemand — auch kein Administrator. Alles andere ist für
+     * dieses Konto nicht vorhanden (404, T-16). Gleiche Regel wie {@see self::permissionFor()}.
      *
      * @param  Builder<self>  $query
      * @return Builder<self>
@@ -106,20 +123,85 @@ class DatabaseConnection extends Model
             ->where('owner_id', $user->id)
             ->orWhere(fn (Builder $shared) => $shared
                 ->where('shared', true)
-                ->whereHas('members', fn (Builder $member) => $member->where('users.id', $user->id))));
+                ->unless($user->isAdmin(), fn (Builder $member) => $member
+                    ->whereHas('members', fn (Builder $members) => $members->where('users.id', $user->id)))));
     }
 
-    /** Bearbeiten und Löschen: Besitzer oder Recht «verwalten». */
-    public function isManageableBy(User $user): bool
+    /**
+     * Recht des Kontos an dieser Verbindung (A-07) oder null, wenn es sie nicht sieht: Besitzer und — an geteilten
+     * Verbindungen — Administratoren haben «verwalten», Mitglieder das Recht aus `connection_user`. Ein Eintrag dort
+     * zählt nur, solange die Verbindung geteilt ist. Grundlage der {@see DatabaseConnectionPolicy}.
+     */
+    public function permissionFor(User $user): ?ConnectionPermission
     {
         if ($this->owner_id === $user->id) {
-            return true;
+            return ConnectionPermission::Manage;
         }
 
-        return $this->shared && $this->members()
-            ->where('users.id', $user->id)
-            ->wherePivot('permission', ConnectionPermission::Manage->value)
-            ->exists();
+        if (! $this->shared) {
+            return null;
+        }
+
+        if ($user->isAdmin()) {
+            return ConnectionPermission::Manage;
+        }
+
+        return $this->membershipOf($user)?->permission;
+    }
+
+    /**
+     * Zeile des Kontos in `connection_user`. Ist `memberships` schon geladen (die Übersicht lädt nur die Zeilen des
+     * angemeldeten Kontos), wird nicht neu gefragt.
+     */
+    public function membershipOf(User $user): ?ConnectionMembership
+    {
+        if ($this->relationLoaded('memberships')) {
+            return $this->memberships->firstWhere('user_id', $user->id);
+        }
+
+        return $this->memberships()->where('user_id', $user->id)->first();
+    }
+
+    /** Bearbeiten und Löschen — dieselbe Regel wie die Fähigkeit «manage» der Policy. */
+    public function isManageableBy(User $user): bool
+    {
+        return Gate::forUser($user)->allows('manage', $this);
+    }
+
+    /** Favorit des Kontos setzen oder entfernen (V-06). */
+    public function markFavorite(User $user, bool $favorite): void
+    {
+        $this->remember($user, ['favorite' => $favorite]);
+    }
+
+    /** Arbeitsbildschirm geöffnet: Grundlage für «zuletzt geöffnet» (V-06). */
+    public function markOpenedBy(User $user): void
+    {
+        $this->remember($user, ['last_opened_at' => now()]);
+    }
+
+    /**
+     * Persönliche Merker in `connection_user`. Mitglieder haben dort schon ihre Zeile; Besitzer und Administratoren
+     * bekommen eine mit ihrem wirksamen Recht «verwalten» — so gibt eine Merker-Zeile nie mehr Recht, als das Konto
+     * ohnehin hat. Verliert ein Administrator die Rolle, verschwinden diese Zeilen (Verwaltung, Rolle ändern).
+     *
+     * @param  array{favorite?: bool, last_opened_at?: CarbonImmutable}  $markers
+     */
+    private function remember(User $user, array $markers): void
+    {
+        $permission = $this->permissionFor($user);
+
+        if ($permission === null) {
+            return;
+        }
+
+        ConnectionMembership::query()->upsert(
+            [['connection_id' => $this->id, 'user_id' => $user->id, 'permission' => $permission->value, ...$markers]],
+            ['connection_id', 'user_id'],
+            array_keys($markers),
+        );
+
+        $this->unsetRelation('memberships');
     }
 
     public function sslMode(): SslMode

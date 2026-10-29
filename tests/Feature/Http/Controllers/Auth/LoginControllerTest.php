@@ -134,6 +134,21 @@ class LoginControllerTest extends TestCase
             ->assertSessionHasErrors(['code' => 'Code: genau 6 Ziffern eingeben.']);
     }
 
+    public function test_disabled_account_gets_no_code_and_cannot_use_an_earlier_one(): void
+    {
+        $user = User::factory()->create();
+        $this->post(route('login.code'), ['email' => $user->email]);
+        $code = $this->sentCode($user);
+        $user->forceFill(['disabled_at' => now()])->save();
+
+        $this->post(route('login.code.verify'), ['code' => $code])->assertSessionHasErrors('code');
+        $this->assertGuest();
+
+        Notification::fake();
+        $this->post(route('login.code'), ['email' => $user->email])->assertRedirect(route('login.code.show'));
+        Notification::assertNothingSent();
+    }
+
     public function test_rejects_invalid_address(): void
     {
         $this->post(route('login.code'), ['email' => 'kein-mail'])

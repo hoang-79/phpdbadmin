@@ -95,7 +95,8 @@ class ProcessControllerTest extends TestCase
         $entry = AuditEntry::query()->sole();
         $this->assertSame('server.kill', $entry->action);
         $this->assertSame('#'.$id, $entry->target);
-        $this->assertSame($driver === DatabaseDriver::Postgres ? 'SELECT pg_terminate_backend('.$id.')' : 'KILL '.$id, $entry->sql);
+        // Werte, auch Kennungen, stehen im Protokoll nur als Platzhalter (B-04); die Kennung steht im Kontext.
+        $this->assertSame($driver === DatabaseDriver::Postgres ? 'SELECT pg_terminate_backend(?)' : 'KILL ?', $entry->sql);
         $this->assertSame(['ok', 'session', $connection->id], [$entry->context['outcome'] ?? null, $entry->context['mode'] ?? null, $entry->context['connection'] ?? null]);
         $this->assertTrue($this->sessionDiesSoon($secondPdo), 'Die beendete Sitzung antwortet noch');
     }
@@ -110,7 +111,7 @@ class ProcessControllerTest extends TestCase
 
         $entry = AuditEntry::query()->sole();
         $this->assertSame('failed', $entry->context['outcome'] ?? null);
-        $this->assertSame('KILL QUERY 999999999', $entry->sql);
+        $this->assertSame('KILL QUERY ?', $entry->sql);
     }
 
     /**

@@ -2,12 +2,14 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Fortify;
+use Laravel\Passkeys\Passkeys;
 
 /**
  * Fortify nur noch für die Passkey-Zeremonie (ADR-008).
@@ -26,6 +28,9 @@ class FortifyServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureRateLimiting();
+
+        // Gesperrte Konten (Verwaltung) melden sich auch per Passkey nicht an.
+        Passkeys::authorizeLoginUsing(fn (Request $request, mixed $user): bool => ! ($user instanceof User && $user->isDisabled()));
     }
 
     private function configureRateLimiting(): void

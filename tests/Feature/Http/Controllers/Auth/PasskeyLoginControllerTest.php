@@ -54,6 +54,20 @@ class PasskeyLoginControllerTest extends TestCase
         $this->assertSame(['method' => 'passkey'], AuditEntry::query()->where('action', 'auth.failed')->sole()->context);
     }
 
+    public function test_disabled_account_cannot_sign_in_with_passkey(): void
+    {
+        $user = User::factory()->create();
+        $this->registerPasskey($user);
+        $this->post(route('logout'));
+        $user->forceFill(['disabled_at' => now()])->save();
+
+        $options = $this->getJson(route('passkey.login-options'))->assertOk()->json('options');
+
+        $this->postJson(route('passkey.login'), ['credential' => $this->device->assert($options)])->assertStatus(422);
+
+        $this->assertGuest();
+    }
+
     private function registerPasskey(User $user): void
     {
         $this->actingAs($user)->withSession(['auth.password_confirmed_at' => time()]);

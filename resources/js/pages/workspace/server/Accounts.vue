@@ -127,7 +127,7 @@ const levelLabels = computed<Record<string, string>>(() => ({
 }));
 
 const attributeLabels = computed<Record<string, string>>(() => ({
-    locked: t('gesperrt'),
+    locked: t('Anmeldung gesperrt'),
     expired: t('Passwort abgelaufen'),
     role: t('Rolle'),
     superuser: t('Superuser'),

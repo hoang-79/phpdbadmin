@@ -36,6 +36,9 @@ final class ConnectionFactory
             $connectTimeout ?? (int) config('phpdbadmin.connections.connect_timeout', 5),
             $readOnly,
         );
+        // Laravel setzt gebundene Werte sonst in die Meldung jeder QueryException ein (B-04, T-11); die Werte in den
+        // Meldungen der Server selbst ersetzt App\Services\Audit\Masking.
+        $config['mask_bindings_in_exception_messages'] = true;
         // Name nur für Protokolle und Fehlermeldungen — die Verbindung steht in keinem globalen Register (siehe unten).
         $config['name'] = 'target_'.hash('xxh128', serialize([$config, $readOnly, $statementTimeoutMs]));
 

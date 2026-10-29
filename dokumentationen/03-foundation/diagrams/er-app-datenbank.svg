@@ -49,7 +49,7 @@
   <text x="40" y="175" class="mono" text-anchor="start">role</text>
   <text x="40" y="192" class="mono" text-anchor="start">locale, theme, density</text>
   <text x="40" y="209" class="mono" text-anchor="start">timezone</text>
-  <text x="40" y="226" class="mono" text-anchor="start">last_login_at</text>
+  <text x="40" y="226" class="mono" text-anchor="start">last_login_at, disabled_at</text>
   <rect x="30" y="290" width="230" height="140" rx="6" class="kernhell"/>
   <rect x="30" y="290" width="230" height="26" rx="6" class="kern"/>
   <text x="40" y="308" class="hw" text-anchor="start">passkeys</text>
@@ -125,8 +125,8 @@
   <rect x="560" y="360" width="250" height="26" rx="6" class="kern"/>
   <text x="570" y="378" class="hw" text-anchor="start">audit_log</text>
   <text x="570" y="404" class="mono" text-anchor="start">id</text>
-  <text x="570" y="421" class="mono" text-anchor="start">user_id →</text>
-  <text x="570" y="438" class="mono" text-anchor="start">connection_id →</text>
+  <text x="570" y="421" class="mono" text-anchor="start">user_id →, user_name</text>
+  <text x="570" y="438" class="mono" text-anchor="start">connection_id, …_name</text>
   <text x="570" y="455" class="mono" text-anchor="start">action, target</text>
   <text x="570" y="472" class="mono" text-anchor="start">sql (maskiert)</text>
   <text x="570" y="489" class="mono" text-anchor="start">affected_rows, ip_hash</text>

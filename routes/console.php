@@ -8,5 +8,6 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Fristen (Datenmodell § 1.8): Verlauf, Protokoll, Exporte — alles mit Prunable räumt der tägliche Lauf auf.
-Schedule::command('model:prune')->daily();
+// Aufbewahrung (Datenmodell § 1.8, § 4): täglich alles löschen, was seine Frist überschritten hat — etwa das
+// Protokoll nach phpdbadmin.audit.retention_days. Braucht den Cron-Eintrag für `schedule:run`.
+Schedule::command('model:prune')->daily()->onOneServer()->withoutOverlapping();

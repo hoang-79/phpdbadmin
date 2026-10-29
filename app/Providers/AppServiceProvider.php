@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -35,9 +36,16 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         $this->bindConnections();
 
+        // Verwaltung (Wireframe 14): Konten, Einladungen, Rechte und Protokoll — nur für Administratoren (A-07).
+        Gate::define('administrate', fn (User $user): bool => $user->isAdmin());
+
         // «Verbindung testen» baut echte Verbindungen auf: je Konto höchstens zwanzig je Minute.
         RateLimiter::for('connection-test', fn (Request $request): Limit => Limit::perMinute(20)
             ->by('connection-test:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
+
+        // Einladungen verschicken Mails: je Konto höchstens zwanzig je Stunde.
+        RateLimiter::for('invitations', fn (Request $request): Limit => Limit::perHour(20)
+            ->by('invitations:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
     }
 
     /**

@@ -73,7 +73,8 @@ class LoginController extends Controller
 
         $user = User::query()->where('email', $email)->first();
 
-        if ($user === null || ! $this->codes->consume($email, LoginCode::PURPOSE_LOGIN, $request->code())) {
+        // Gesperrt: wie ein falscher Code — die Antwort verrät nicht, dass es das Konto gibt.
+        if ($user === null || $user->isDisabled() || ! $this->codes->consume($email, LoginCode::PURPOSE_LOGIN, $request->code())) {
             $this->audit->record('auth.failed', $user, context: [
                 'method' => 'code',
                 'email_hash' => Fingerprint::ofEmail($email),
@@ -135,7 +136,8 @@ class LoginController extends Controller
 
         $user = User::query()->where('email', $email)->first();
 
-        if ($user === null) {
+        // Unbekannt oder gesperrt: keine Mail, dieselbe Antwort.
+        if ($user === null || $user->isDisabled()) {
             return;
         }
 

@@ -74,8 +74,7 @@ final class ServerChanges
             'outcome' => $error === null ? 'ok' : 'failed',
             'statements' => count($plan->statements),
             'executed' => $executed,
-            ...($error !== null ? ['error' => $error] : []),
-        ], $plan->auditSql());
+        ], connection: $connection, sql: $plan->auditSql(), error: $error);
     }
 
     /**

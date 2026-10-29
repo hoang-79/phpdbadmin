@@ -9,7 +9,6 @@ use App\Models\ChangeSnapshot;
 use App\Models\DatabaseConnection;
 use App\Models\User;
 use App\Services\Audit\AuditLog;
-use App\Support\SqlMask;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
@@ -115,12 +114,10 @@ final class RowEditor
 
         $counts = array_count_values(array_column($snapshots, 'operation'));
         $entry = $this->audit->record('data.change', $user, $schema.'.'.$table, [
-            'connection_id' => $connection->id,
             'inserted' => $counts['insert'] ?? 0,
             'updated' => $counts['update'] ?? 0,
             'deleted' => $counts['delete'] ?? 0,
-            'affected_rows' => count($snapshots),
-        ], SqlMask::mask(implode(";\n", $statements)));
+        ], connection: $connection, sql: implode(";\n", $statements), affectedRows: count($snapshots));
 
         $undoable = count($snapshots) <= (int) config('phpdbadmin.data.undo_rows', 1000);
 
@@ -203,11 +200,7 @@ final class RowEditor
         }, $first->database);
 
         ChangeSnapshot::query()->where('audit_log_id', $auditId)->update(['undone_at' => now()]);
-        $this->audit->record('data.undo', $user, $first->schema.'.'.$first->target, [
-            'connection_id' => $connection->id,
-            'undone_audit_id' => $auditId,
-            'affected_rows' => $snapshots->count(),
-        ]);
+        $this->audit->record('data.undo', $user, $first->schema.'.'.$first->target, ['undone_audit_id' => $auditId], connection: $connection, affectedRows: $snapshots->count());
 
         return ['rows' => $snapshots->count()];
     }

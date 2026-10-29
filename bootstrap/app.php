@@ -1,14 +1,18 @@
 <?php
 
+use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetLocale;
+use App\Services\Audit\Masking;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -20,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance']);
 
         $middleware->web(append: [
+            EnsureAccountIsActive::class,
             SetLocale::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
@@ -30,6 +35,19 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // Datenbankfehler ohne Werte ins Log (B-04, T-11): Laravel setzt gebundene Werte in die Meldung ein, die Server
+        // zitieren Werte. Ersetzt den üblichen Eintrag (false), auch für Fehler der App-Datenbank (Datenmodell § 1.9).
+        $exceptions->report(function (QueryException $exception): bool {
+            Log::error(Masking::exception($exception), [
+                'exception' => $exception::class,
+                'code' => $exception->getCode(),
+                'connection' => $exception->getConnectionName(),
+                'trace' => Masking::message($exception->getTraceAsString(), $exception->getBindings()),
+            ]);
+
+            return false;
+        });
 
         // Gedrosselt (benannte Limiter der Anmeldung): Meldung am Feld statt Fehlerseite.
         $exceptions->render(function (ThrottleRequestsException $exception, Request $request) {

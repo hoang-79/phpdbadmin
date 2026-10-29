@@ -18,7 +18,6 @@ use App\Services\Sql\QueryRunner;
 use App\Services\Sql\StatementClassifier;
 use App\Services\Sql\StatementKind;
 use App\Services\Sql\StatementSplitter;
-use App\Support\SqlMask;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -150,10 +149,7 @@ class SqlController extends WorkspaceController
             ]);
 
             if ($result['status'] === 'ok' && $this->classifier->kind($result['sql']) === StatementKind::Write) {
-                $this->audit->record('sql.execute', $user, $connection->name, [
-                    'connection_id' => $connection->id,
-                    'affected_rows' => $result['affected'],
-                ], SqlMask::mask($result['sql']));
+                $this->audit->record('sql.execute', $user, connection: $connection, sql: $result['sql'], affectedRows: $result['affected']);
             }
         }
 

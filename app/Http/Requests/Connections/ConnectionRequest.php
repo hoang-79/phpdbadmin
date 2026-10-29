@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Connections;
 
 use App\Enums\ConnectionEnvironment;
+use App\Models\DatabaseConnection;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -13,6 +14,17 @@ use Illuminate\Validation\Rule;
 class ConnectionRequest extends FormRequest
 {
     use ValidatesConnectionSettings;
+
+    /**
+     * Anlegen darf jedes Konto; Bearbeiten nur mit dem Recht «verwalten» (A-07). Eine fremde Verbindung kommt gar
+     * nicht bis hier — die Routenbindung antwortet mit 404.
+     */
+    public function authorize(): bool
+    {
+        $connection = $this->route('connection');
+
+        return ! $connection instanceof DatabaseConnection || ($this->user()?->can('manage', $connection) ?? false);
+    }
 
     /**
      * @return array<string, ValidationRule|array<mixed>|string>

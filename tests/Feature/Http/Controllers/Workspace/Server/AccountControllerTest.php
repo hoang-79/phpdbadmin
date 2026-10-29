@@ -159,7 +159,8 @@ class AccountControllerTest extends TestCase
             AuditEntry::query()->orderBy('id')->pluck('action')->all(),
         );
         $this->assertSame(['ok'], AuditEntry::query()->get()->pluck('context.outcome')->unique()->values()->all());
-        $this->assertStringContainsString(PlannedStatement::MASK, (string) AuditEntry::query()->where('action', 'server.user.create')->value('sql'));
+        // Seit TB 07 maskiert das Protokoll alle Literale (B-04) — auch das schon verdeckte Passwort steht nur als «?» da.
+        $this->assertStringContainsString('IDENTIFIED BY ?', strtoupper(str_replace('PASSWORD ?', 'IDENTIFIED BY ?', (string) AuditEntry::query()->where('action', 'server.user.create')->value('sql'))));
         $this->assertStringNotContainsString('W04-Geheim', AuditEntry::query()->get()->toJson());
         $this->assertStringNotContainsString('W04-Geheim', (string) json_encode(session()->all()));
     }
