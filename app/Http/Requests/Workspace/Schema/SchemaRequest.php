@@ -7,8 +7,9 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 
 /**
- * Datenbank (MySQL, MariaDB) bzw. Schema (PostgreSQL) anlegen oder löschen, bei SQLite eine neue Datei in einem
- * erlaubten Ordner (S-05). Löschen nur mit dem eingetippten Namen.
+ * Datenbank (MySQL, MariaDB) bzw. Schema (PostgreSQL) anlegen oder löschen, bei PostgreSQL mit «alle Datenbanken» auch
+ * eine ganze Datenbank löschen, bei SQLite eine neue Datei in einem erlaubten Ordner (S-05). Löschen nur mit dem
+ * eingetippten Namen.
  */
 class SchemaRequest extends SchemaChangeRequest
 {
@@ -20,7 +21,8 @@ class SchemaRequest extends SchemaChangeRequest
         $isSqlite = $this->targetConnection()->driver === DatabaseDriver::Sqlite;
 
         return [
-            'operation' => ['required', $isSqlite ? Rule::in(['create']) : Rule::in(['create', 'drop'])],
+            // drop-database: ganze Datenbank bei PostgreSQL mit «alle Datenbanken»; drop: Datenbank (MySQL, MariaDB) bzw. Schema.
+            'operation' => ['required', $isSqlite ? Rule::in(['create']) : Rule::in(['create', 'drop', 'drop-database'])],
             'name' => $isSqlite ? ['prohibited'] : ['required', 'string', 'max:255'],
             'folder' => $isSqlite ? ['required', 'string', 'max:1024'] : ['prohibited'],
             'file' => $isSqlite ? ['required', 'string', 'max:255'] : ['prohibited'],

@@ -182,6 +182,13 @@ final class SchemaChanges
      */
     private function serverMessage(Throwable $error): string
     {
-        return ($error instanceof QueryException ? ($error->getPrevious() ?? $error) : $error)->getMessage();
+        $message = ($error instanceof QueryException ? ($error->getPrevious() ?? $error) : $error)->getMessage();
+
+        // PostgreSQL 55006 (object_in_use): DROP DATABASE, während noch Sitzungen mit ihr verbunden sind.
+        if ($error instanceof QueryException && $error->getCode() === '55006') {
+            return __('Die Datenbank ist noch in Benutzung — andere Sitzungen sind mit ihr verbunden. Schliessen Sie diese und versuchen Sie es erneut.').' '.$message;
+        }
+
+        return $message;
     }
 }

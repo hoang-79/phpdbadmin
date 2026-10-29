@@ -17,6 +17,8 @@ import {
     Zap,
 } from '@lucide/vue';
 import { onBeforeUnmount, onMounted, ref, computed, watch } from 'vue';
+import NavigatorDropButton from '@/components/workspace/NavigatorDropButton.vue';
+import DropDialog from '@/components/workspace/schema/DropDialog.vue';
 import { formatRows } from '@/lib/environment';
 import { t } from '@/lib/i18n';
 import {
@@ -24,6 +26,7 @@ import {
     diagramHref,
     objectHref,
     schemaHref,
+    structureBlock,
 } from '@/lib/workspace';
 import { workspace as workspaceRoute } from '@/routes';
 import type {
@@ -137,6 +140,38 @@ watch(
     () => (schemaCollapsed.value = false),
 );
 
+// Datenbank bzw. Schema direkt hier löschen (S-05): Papierkorb beim Überfahren, Bestätigung mit dem Namen im Dialog.
+const dropTarget = ref<{ name: string; scope: 'schema' | 'database' } | null>(
+    null,
+);
+const dropOpen = ref(false);
+const dropBlocked = computed(() => structureBlock(props.workspace.connection));
+
+/** Ganze Datenbanken nur bei PostgreSQL mit «alle Datenbanken» — nie die Wartungsdatenbank, über die verbunden wird. */
+function canDropDatabase(name: string): boolean {
+    return (
+        props.workspace.connection.canWrite &&
+        props.workspace.databases !== null &&
+        name !== 'postgres'
+    );
+}
+
+/** Schemas (PostgreSQL) bzw. Datenbanken (MySQL, MariaDB — nur ohne festen Datenbanknamen); SQLite nie. */
+const canDropSchemas = computed(() => {
+    const { connection } = props.workspace;
+
+    return (
+        connection.canWrite &&
+        (connection.driver === 'pgsql' ||
+            (connection.driver !== 'sqlite' && !props.workspace.databaseFixed))
+    );
+});
+
+function askDrop(name: string, scope: 'schema' | 'database'): void {
+    dropTarget.value = { name, scope };
+    dropOpen.value = true;
+}
+
 function isOpen(group: NavigatorGroup): boolean {
     return term.value !== '' || !collapsed.value[group.key];
 }
@@ -186,41 +221,66 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
         </div>
 
         <div class="min-h-0 flex-1 overflow-y-auto px-2 pb-3 text-sm">
-            <Link
+            <div
                 v-for="name in databasesBefore"
                 :key="`db-${name}`"
-                :href="
-                    workspaceRoute(workspace.connection.id, {
-                        query: { db: name },
-                    })
-                "
-                class="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-background"
+                class="group flex items-center rounded-md hover:bg-background"
             >
-                <ChevronRight class="size-3.5 shrink-0 text-text-secondary" />
-                <Database class="size-4 shrink-0 text-text-secondary" />
-                <span class="truncate">{{ name }}</span>
-            </Link>
-            <button
-                v-if="workspace.databaseLabel"
-                type="button"
-                class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left font-medium hover:bg-background"
-                :aria-expanded="databaseOpen"
-                :aria-current="workspace.databases ? 'location' : undefined"
-                :title="databaseOpen ? t('Zuklappen') : t('Aufklappen')"
-                @click="databaseCollapsed = !databaseCollapsed"
-            >
-                <component
-                    :is="databaseOpen ? ChevronDown : ChevronRight"
-                    class="size-3.5 shrink-0 text-text-secondary"
-                />
-                <Database class="size-4 shrink-0 text-text-secondary" />
-                <span class="truncate">{{ workspace.databaseLabel }}</span>
-                <span
-                    class="ml-auto shrink-0 text-xs font-normal text-muted-foreground"
-                    >{{ workspace.connection.driverLabel }}
-                    {{ workspace.connection.serverVersion }}</span
+                <Link
+                    :href="
+                        workspaceRoute(workspace.connection.id, {
+                            query: { db: name },
+                        })
+                    "
+                    class="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5"
                 >
-            </button>
+                    <ChevronRight
+                        class="size-3.5 shrink-0 text-text-secondary"
+                    />
+                    <Database class="size-4 shrink-0 text-text-secondary" />
+                    <span class="truncate">{{ name }}</span>
+                </Link>
+                <NavigatorDropButton
+                    v-if="canDropDatabase(name)"
+                    :name="name"
+                    :blocked="dropBlocked"
+                    @drop="askDrop(name, 'database')"
+                />
+            </div>
+            <div
+                v-if="workspace.databaseLabel"
+                class="group flex items-center rounded-md hover:bg-background"
+            >
+                <button
+                    type="button"
+                    class="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left font-medium"
+                    :aria-expanded="databaseOpen"
+                    :aria-current="workspace.databases ? 'location' : undefined"
+                    :title="databaseOpen ? t('Zuklappen') : t('Aufklappen')"
+                    @click="databaseCollapsed = !databaseCollapsed"
+                >
+                    <component
+                        :is="databaseOpen ? ChevronDown : ChevronRight"
+                        class="size-3.5 shrink-0 text-text-secondary"
+                    />
+                    <Database class="size-4 shrink-0 text-text-secondary" />
+                    <span class="truncate">{{ workspace.databaseLabel }}</span>
+                    <span
+                        class="ml-auto shrink-0 text-xs font-normal text-muted-foreground"
+                        >{{ workspace.connection.driverLabel }}
+                        {{ workspace.connection.serverVersion }}</span
+                    >
+                </button>
+                <NavigatorDropButton
+                    v-if="
+                        workspace.database &&
+                        canDropDatabase(workspace.database)
+                    "
+                    :name="workspace.database"
+                    :blocked="dropBlocked"
+                    @drop="askDrop(workspace.database, 'database')"
+                />
+            </div>
 
             <ul
                 v-if="databaseOpen"
@@ -229,7 +289,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                 <li v-for="name in workspace.schemas" :key="name">
                     <div
                         v-if="name === workspace.schema"
-                        class="flex items-center rounded-md font-medium"
+                        class="group flex items-center rounded-md font-medium"
                     >
                         <!-- Der Pfeil klappt zu und auf, der Name führt zur Übersicht. -->
                         <button
@@ -269,25 +329,41 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                                 {{ workspace.connection.serverVersion }}</span
                             >
                         </Link>
+                        <NavigatorDropButton
+                            v-if="canDropSchemas"
+                            :name="name"
+                            :blocked="dropBlocked"
+                            @drop="askDrop(name, 'schema')"
+                        />
                     </div>
-                    <Link
+                    <div
                         v-else
-                        :href="schemaHref(workspace, name)"
-                        class="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-background"
+                        class="group flex items-center rounded-md hover:bg-background"
                     >
-                        <ChevronRight
-                            class="size-3.5 shrink-0 text-text-secondary"
+                        <Link
+                            :href="schemaHref(workspace, name)"
+                            class="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5"
+                        >
+                            <ChevronRight
+                                class="size-3.5 shrink-0 text-text-secondary"
+                            />
+                            <component
+                                :is="
+                                    workspace.schemaKind === 'schema'
+                                        ? Layers
+                                        : Database
+                                "
+                                class="size-4 shrink-0 text-text-secondary"
+                            />
+                            <span class="truncate">{{ name }}</span>
+                        </Link>
+                        <NavigatorDropButton
+                            v-if="canDropSchemas"
+                            :name="name"
+                            :blocked="dropBlocked"
+                            @drop="askDrop(name, 'schema')"
                         />
-                        <component
-                            :is="
-                                workspace.schemaKind === 'schema'
-                                    ? Layers
-                                    : Database
-                            "
-                            class="size-4 shrink-0 text-text-secondary"
-                        />
-                        <span class="truncate">{{ name }}</span>
-                    </Link>
+                    </div>
 
                     <ul
                         v-if="name === workspace.schema && schemaOpen"
@@ -440,20 +516,40 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
                 </li>
             </ul>
 
-            <Link
+            <div
                 v-for="name in databasesAfter"
                 :key="`db-${name}`"
-                :href="
-                    workspaceRoute(workspace.connection.id, {
-                        query: { db: name },
-                    })
-                "
-                class="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-background"
+                class="group flex items-center rounded-md hover:bg-background"
             >
-                <ChevronRight class="size-3.5 shrink-0 text-text-secondary" />
-                <Database class="size-4 shrink-0 text-text-secondary" />
-                <span class="truncate">{{ name }}</span>
-            </Link>
+                <Link
+                    :href="
+                        workspaceRoute(workspace.connection.id, {
+                            query: { db: name },
+                        })
+                    "
+                    class="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5"
+                >
+                    <ChevronRight
+                        class="size-3.5 shrink-0 text-text-secondary"
+                    />
+                    <Database class="size-4 shrink-0 text-text-secondary" />
+                    <span class="truncate">{{ name }}</span>
+                </Link>
+                <NavigatorDropButton
+                    v-if="canDropDatabase(name)"
+                    :name="name"
+                    :blocked="dropBlocked"
+                    @drop="askDrop(name, 'database')"
+                />
+            </div>
         </div>
+
+        <DropDialog
+            v-if="dropTarget"
+            v-model:open="dropOpen"
+            :workspace="workspace"
+            :name="dropTarget.name"
+            :scope="dropTarget.scope"
+        />
     </nav>
 </template>

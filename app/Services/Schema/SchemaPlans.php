@@ -2,10 +2,13 @@
 
 namespace App\Services\Schema;
 
+use App\Connections\ConnectionNotAllowed;
 use App\Connections\HostPolicy;
+use App\Connections\TargetConnections;
 use App\Enums\ApplyMode;
 use App\Enums\DatabaseDriver;
 use App\Models\DatabaseConnection;
+use App\Services\Catalog\Catalog;
 use App\Services\Server\ServerInspector;
 use App\Support\TrustedSql;
 use Illuminate\Database\Connection;
@@ -30,7 +33,14 @@ final class SchemaPlans
     /** Eigener Typ: Wörter, höchstens eine Klammer mit Zahlen, auf Wunsch «[]» — nie Anführungszeichen oder «;». */
     private const string CUSTOM_TYPE = '/^[A-Za-z][A-Za-z0-9_]*( [A-Za-z][A-Za-z0-9_]*)*( ?\(\s*\d+(\s*,\s*\d+)?\s*\))?( [A-Za-z][A-Za-z0-9_]*)*(\[\])?$/';
 
-    public function __construct(private readonly ServerInspector $inspector, private readonly HostPolicy $hosts) {}
+    /** Datenbanken, die PostgreSQL selbst braucht — nie über phpdbadmin löschen. */
+    private const array POSTGRES_SYSTEM_DATABASES = ['template0', 'template1'];
+
+    public function __construct(
+        private readonly ServerInspector $inspector,
+        private readonly HostPolicy $hosts,
+        private readonly TargetConnections $targets,
+    ) {}
 
     /**
      * Tabelle anlegen (S-02).
@@ -538,6 +548,11 @@ final class SchemaPlans
             throw ValidationException::withMessages(['name' => __('Die Verbindung ist auf diese Datenbank eingestellt — löschen Sie sie über eine Verbindung ohne festen Datenbanknamen.')]);
         }
 
+        // MySQL und MariaDB: eine Datenbank auf dem Server — nie die von phpdbadmin selbst (T-17).
+        if ($driver !== DatabaseDriver::Postgres) {
+            $this->checkNotAppDatabase($connection, $name);
+        }
+
         $tables = count($this->inspector->tablesOn($target, $connection, $name, withViews: true));
         $sql = $driver === DatabaseDriver::Postgres
             ? 'DROP SCHEMA '.SchemaName::quote($driver, $name).' CASCADE'
@@ -546,6 +561,53 @@ final class SchemaPlans
         return new SchemaPlan('database.drop', $name, $driver, ApplyMode::for($driver), [$sql], [], [
             $this->schemaLoss($tables),
         ], $name, ['name' => $name, 'tables' => $tables]);
+    }
+
+    /**
+     * Ganze Datenbank löschen bei PostgreSQL mit «alle Datenbanken» (S-05) — mit allen Schemas, Tabellen und Daten, nur
+     * mit dem Namen zur Bestätigung. $target ist die Verbindung zur Wartungsdatenbank: DROP DATABASE geht nie über eine
+     * Verbindung zur Datenbank selbst und nie in einer Transaktion. Nie die Wartungsdatenbank, über die phpdbadmin
+     * verbindet, nie die Vorlagen des Servers, nie die App-Datenbank von phpdbadmin (T-17).
+     *
+     * @throws ValidationException
+     */
+    public function dropDatabase(Connection $target, DatabaseConnection $connection, string $name): SchemaPlan
+    {
+        $driver = $connection->driver;
+
+        if ($driver !== DatabaseDriver::Postgres || $connection->database !== null) {
+            throw ValidationException::withMessages(['name' => __('Ganze Datenbanken löscht phpdbadmin hier nur bei PostgreSQL-Verbindungen mit «alle Datenbanken».')]);
+        }
+
+        if (in_array($name, self::POSTGRES_SYSTEM_DATABASES, true)) {
+            throw ValidationException::withMessages(['name' => __('Diese Datenbank braucht PostgreSQL selbst — sie lässt sich hier nicht löschen.')]);
+        }
+
+        if ($name === Catalog::POSTGRES_MAINTENANCE_DATABASE) {
+            throw ValidationException::withMessages(['name' => __('Über die Datenbank «:name» verbindet phpdbadmin mit dem Server — sie lässt sich hier nicht löschen.', ['name' => $name])]);
+        }
+
+        if (! in_array($name, $driver->dialect()->databases($target), true)) {
+            throw ValidationException::withMessages(['name' => __('Diese Datenbank gibt es auf dem Server nicht.')]);
+        }
+
+        if (! SchemaName::isSafe($name)) {
+            throw ValidationException::withMessages(['name' => __('Dieser Name lässt sich hier nicht verarbeiten — nutzen Sie den SQL-Editor.')]);
+        }
+
+        $this->checkNotAppDatabase($connection, $name);
+
+        // Was darin ist, zählt eine eigene Verbindung, die gleich wieder schliesst — sonst wäre die Datenbank in Benutzung.
+        [$schemas, $tables] = $this->targets->separate($connection, fn (Connection $database): array => [
+            count($driver->dialect()->schemas($database)),
+            (int) $database->selectOne("select count(*) as total from pg_class c join pg_namespace n on n.oid = c.relnamespace where c.relkind in ('r', 'p', 'v', 'm', 'f') and n.nspname <> 'information_schema' and n.nspname not like 'pg\\_%'")?->total,
+        ], $name);
+
+        return new SchemaPlan('database.drop', $name, $driver, ApplyMode::Statements, ['DROP DATABASE '.SchemaName::quote($driver, $name)], [
+            __('DROP DATABASE läuft ausserhalb einer Transaktion. Sind noch andere Sitzungen mit der Datenbank verbunden, lehnt der Server ab.'),
+        ], [
+            __('Gelöscht wird die ganze Datenbank mit allem darin — Schemas: :schemas, Tabellen und Sichten: :tables.', ['schemas' => $schemas, 'tables' => $tables]),
+        ], $name, ['name' => $name, 'scope' => 'database', 'schemas' => $schemas, 'tables' => $tables]);
     }
 
     /**
@@ -932,6 +994,23 @@ final class SchemaPlans
      * Schemas anlegen und löschen gibt es nur auf Servern; MySQL und MariaDB mit festem Datenbanknamen zeigen neue
      * Datenbanken gar nicht — dort ist es gesperrt.
      */
+    /**
+     * Die App-Datenbank von phpdbadmin ist nie Ziel (T-17) — auch nicht von DROP DATABASE über eine Verbindung zu einer
+     * anderen Datenbank desselben Servers. Geprüft mit derselben Schranke wie beim Verbinden.
+     *
+     * @throws ValidationException
+     */
+    private function checkNotAppDatabase(DatabaseConnection $connection, string $name): void
+    {
+        try {
+            $this->targets->credentials($connection, $name);
+        } catch (ConnectionNotAllowed $exception) {
+            throw ValidationException::withMessages(['name' => $exception->problem->isAppDatabase()
+                ? __('Das ist die eigene Datenbank von phpdbadmin — sie lässt sich hier nicht löschen.')
+                : $exception->problem->title()]);
+        }
+    }
+
     private function checkServerSchemas(DatabaseConnection $connection): void
     {
         if (! $connection->driver->isServer()) {
