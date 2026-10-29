@@ -11,6 +11,7 @@ use App\Models\AuditEntry;
 use App\Models\DatabaseConnection;
 use App\Models\Transfer;
 use App\Models\User;
+use App\Support\QueueHeartbeat;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -114,6 +115,7 @@ class TransferControllerTest extends TestCase
     {
         config(['queue.default' => 'database']);
         Queue::fake([RunExport::class]);
+        app(QueueHeartbeat::class)->beat();
         $connection = $this->sqliteSamples();
 
         $this->actingAs($this->user)->post(route('workspace.transfers.export', $connection), [

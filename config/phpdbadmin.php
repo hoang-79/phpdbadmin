@@ -111,7 +111,8 @@ return [
     | Export und Import (E-01, E-02, B-07, ADR-007)
     |--------------------------------------------------------------------------
     |
-    | Aufträge laufen im Hintergrund über die Warteschlange. Ohne Worker (QUEUE_CONNECTION=sync oder
+    | Aufträge laufen im Hintergrund über die Warteschlange, wenn sich ein Worker in den letzten 90 Sekunden gemeldet
+    | hat. Ohne Worker (keiner gemeldet, QUEUE_CONNECTION=sync oder
     | PHPDBADMIN_TRANSFERS_BACKGROUND=false) — und für Verbindungen, deren Passwort nur in der Sitzung liegt — laufen
     | sie gleich in der Anfrage, aber nur bis zu den Grenzen: Zeilen beim Export, Dateigrösse beim Import. Dateien
     | liegen unter storage/app/private/transfers und werden nach der Frist gelöscht (model:prune, täglich).
@@ -120,6 +121,8 @@ return [
 
     'transfers' => [
         'background' => (bool) env('PHPDBADMIN_TRANSFERS_BACKGROUND', true),
+        // Ein Worker gilt als da, wenn er sich in dieser Zeit gemeldet hat (QueueHeartbeat).
+        'worker_seconds' => (int) env('PHPDBADMIN_TRANSFERS_WORKER_SECONDS', 90),
         'sync_max_rows' => (int) env('PHPDBADMIN_TRANSFERS_SYNC_MAX_ROWS', 100000),
         'sync_max_bytes' => (int) env('PHPDBADMIN_TRANSFERS_SYNC_MAX_MB', 20) * 1024 * 1024,
         'max_upload_kb' => (int) env('PHPDBADMIN_TRANSFERS_MAX_UPLOAD_MB', 512) * 1024,

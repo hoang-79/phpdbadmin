@@ -14,9 +14,11 @@ use App\Models\Transfer;
 use App\Services\Transfer\TransferCancelled;
 use App\Services\Transfer\TransferProgress;
 use App\Services\Transfer\TransferRunner;
+use App\Support\QueueHeartbeat;
 use App\Support\TransferSummary;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Queue\Events\JobPopping;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -61,6 +63,7 @@ class TransferRunnerTest extends TestCase
         Storage::fake(Transfer::DISK);
         config(['queue.default' => 'database']);
         Queue::fake([RunExport::class]);
+        app(QueueHeartbeat::class)->beat();
         $transfer = $this->exportOf($this->sqliteSamples());
 
         app(TransferRunner::class)->start($transfer);
@@ -91,6 +94,20 @@ class TransferRunnerTest extends TestCase
         $this->assertFalse($transfer->in_background);
     }
 
+    public function test_queue_counts_as_worked_only_while_a_worker_reports_in(): void
+    {
+        config(['queue.default' => 'database']);
+        $runner = app(TransferRunner::class);
+
+        $this->assertFalse($runner->hasWorker(), 'Ohne Lebenszeichen kein Worker — sonst wartet der Auftrag ewig.');
+
+        event(new JobPopping('database', 'default'));
+        $this->assertTrue($runner->hasWorker());
+
+        $this->travel(91)->seconds();
+        $this->assertFalse($runner->hasWorker(), 'Ein verstummter Worker zählt nicht mehr.');
+    }
+
     public function test_limit_without_worker_explains_rows_and_how_to_set_up_a_worker(): void
     {
         config(['phpdbadmin.transfers.sync_max_rows' => 100]);
@@ -108,6 +125,7 @@ class TransferRunnerTest extends TestCase
         Storage::fake(Transfer::DISK);
         config(['queue.default' => 'database', 'phpdbadmin.transfers.sync_max_rows' => 5]);
         Queue::fake([RunExport::class]);
+        app(QueueHeartbeat::class)->beat();
         $settings = $this->scratchSettings(DatabaseDriver::MariaDb, $this->folder);
         $this->createTransferSamples(app(ConnectionFactory::class)->make($settings), DatabaseDriver::MariaDb);
         $connection = $this->savedConnection($settings, attributes: ['store_password' => false, 'password' => null]);

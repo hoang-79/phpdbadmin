@@ -6,12 +6,16 @@ use App\Connections\HostPolicy;
 use App\Connections\TargetConnections;
 use App\Models\DatabaseConnection;
 use App\Models\User;
+use App\Support\QueueHeartbeat;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Queue\Events\JobPopping;
+use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +30,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Eine Sammlung offener Zielverbindungen je Anfrage; am Ende der Anfrage freigegeben.
         $this->app->scoped(TargetConnections::class);
+
+        // Ein Worker-Prozess hält sein Lebenszeichen über alle Aufträge hinweg (Drosselung im Objekt).
+        $this->app->singleton(QueueHeartbeat::class);
         $this->app->terminating(fn () => $this->app->resolved(TargetConnections::class)
             ? $this->app->make(TargetConnections::class)->releaseAll()
             : null);
@@ -35,6 +42,9 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->bindConnections();
+
+        // Lebenszeichen des Workers (B-07): ohne Worker laufen Aufträge in der Anfrage statt ewig zu warten.
+        Event::listen([JobPopping::class, JobProcessing::class], fn () => $this->app->make(QueueHeartbeat::class)->beat());
 
         // Verwaltung (Wireframe 14): Konten, Einladungen, Rechte und Protokoll — nur für Administratoren (A-07).
         Gate::define('administrate', fn (User $user): bool => $user->isAdmin());

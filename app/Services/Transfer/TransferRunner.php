@@ -14,6 +14,7 @@ use App\Jobs\RunImport;
 use App\Models\DatabaseConnection;
 use App\Models\Transfer;
 use App\Services\Audit\AuditLog;
+use App\Support\QueueHeartbeat;
 use Illuminate\Database\QueryException;
 use PDOException;
 use Throwable;
@@ -35,11 +36,14 @@ final class TransferRunner
         private readonly SqlImporter $sql,
         private readonly Statistics $statistics,
         private readonly AuditLog $audit,
+        private readonly QueueHeartbeat $heartbeat,
     ) {}
 
     public function hasWorker(): bool
     {
-        return (bool) config('phpdbadmin.transfers.background', true) && config('queue.default') !== 'sync';
+        return (bool) config('phpdbadmin.transfers.background', true)
+            && config('queue.default') !== 'sync'
+            && $this->heartbeat->isAlive();
     }
 
     /** Kann ein Worker den Auftrag übernehmen? Ohne gespeichertes Passwort nicht — er hätte keines. */

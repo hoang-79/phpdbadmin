@@ -1,6 +1,6 @@
 # Timebox 06 — Export und Import im Hintergrund, Statistik
 
-**Stand:** 29.10.2026 · ✅ gebaut auf einem eigenen Zweig (parallel zu TB 02/03/07), Sichtprüfung im Browser nach dem Zusammenführen durch den Hauptstrang.
+**Stand:** 29.10.2026 · ✅ abgeschlossen — gebaut auf einem eigenen Zweig (parallel zu TB 02/03/07), zusammengeführt mit `2f0301c`, im Browser geprüft.
 
 ## Ziel
 
@@ -35,7 +35,7 @@ Wireframe-Bereich 11 (Export und Import).
 
 **Statistik (E-06).** `Dialect::analyze`: `ANALYZE TABLE` bei MySQL/MariaDB (meldet Fehler als Ergebniszeile, deshalb gelesen und geprüft; aktualisiert auch die bis zu 24 Stunden alte Zahl in `information_schema` von MySQL 8), sonst `ANALYZE schema.tabelle`. Nach jedem CSV-Import automatisch (abwählbar), auf der Seite auf Knopfdruck mit Eintrag `data.analyze`.
 
-**Aufträge und Warteschlange (B-07).** Tabelle `transfers` ([Datenmodell](../03-foundation/datenmodell.md) § 2.4, ULID, Frist 24 Stunden, täglicher `model:prune` löscht Auftrag und Ordner). `RunExport`/`RunImport` tragen **nur die Kennung**; der Worker liest Zugangsdaten aus der App-Datenbank. Im Hintergrund läuft ein Auftrag, wenn ein Worker konfiguriert ist (`QUEUE_CONNECTION` nicht `sync`, `PHPDBADMIN_TRANSFERS_BACKGROUND` nicht `false`) **und** die Verbindung ihr Passwort speichert — «nur für diese Sitzung» kommt nie in die Warteschlange. Sonst läuft er in der Anfrage bis zu Grenzen (Vorgabe 100'000 Zeilen bzw. 20 MB) mit einer Meldung, die den Grund und den Ausweg nennt. Wer zuerst «wartet» auf «läuft» setzt, führt aus (bedingtes Update gegen Doppelläufe); `retry_after` der Warteschlange auf 3'660 s angehoben, weil ein Auftrag bis zu einer Stunde laufen darf. Fortschritt in `progress` und `rows`, höchstens zweimal je Sekunde geschrieben; dabei fragt der Lauf, ob abgebrochen wurde. Zeitlimit je Anweisung während eines Auftrags 600 s statt 15 s.
+**Aufträge und Warteschlange (B-07).** Tabelle `transfers` ([Datenmodell](../03-foundation/datenmodell.md) § 2.4, ULID, Frist 24 Stunden, täglicher `model:prune` löscht Auftrag und Ordner). `RunExport`/`RunImport` tragen **nur die Kennung**; der Worker liest Zugangsdaten aus der App-Datenbank. Im Hintergrund läuft ein Auftrag, wenn ein Worker konfiguriert ist (`QUEUE_CONNECTION` nicht `sync`, `PHPDBADMIN_TRANSFERS_BACKGROUND` nicht `false`), **sich in den letzten 90 Sekunden gemeldet hat** (`App\Support\QueueHeartbeat`, Lebenszeichen bei `JobPopping`/`JobProcessing`, höchstens alle 15 s in den Cache) **und** die Verbindung ihr Passwort speichert — «nur für diese Sitzung» kommt nie in die Warteschlange. Sonst läuft er in der Anfrage bis zu Grenzen (Vorgabe 100'000 Zeilen bzw. 20 MB) mit einer Meldung, die den Grund und den Ausweg nennt. Wer zuerst «wartet» auf «läuft» setzt, führt aus (bedingtes Update gegen Doppelläufe); `retry_after` der Warteschlange auf 3'660 s angehoben, weil ein Auftrag bis zu einer Stunde laufen darf. Fortschritt in `progress` und `rows`, höchstens zweimal je Sekunde geschrieben; dabei fragt der Lauf, ob abgebrochen wurde. Zeitlimit je Anweisung während eines Auftrags 600 s statt 15 s.
 
 **Oberfläche.** Seite `workspace/transfers/Index` unter `c/{connection}/transfers` (Einstieg im Menü des Verbindungs-Chips): Exportieren, Importieren, Statistik, Aufträge mit Fortschritt, Abbrechen, Herunterladen bis zur Frist und Hinweis, wenn eine Minute lang kein Worker abholt. Die Oberfläche fragt den Stand alle 1,5 s über `transfers/status` ab (nur App-Datenbank) — und nur, solange ein Auftrag läuft. `?schema=…&table=…` belegt den Export vor (`transfersHref` in `resources/js/lib/transfers.ts`) — die Adresse für den Knopf «Exportieren» im Objektkopf. Seite `workspace/transfers/Import`: Schritte, Datei mit «anders lesen», Zuordnung mit Beispielwerten und Hinweis auf fehlende Pflichtspalten, Probelauf mit Fehlerzeilen, Import.
 
@@ -87,7 +87,10 @@ Neu: `RoundTripTest` (16), `CsvImporterTest` (14), `SqlImporterTest` (10), `Stat
 - Fehlerzeilen eines Imports als CSV zum Korrigieren herunterladen (Wireframe 11).
 - CSV-Export ohne Schutz vor Formeln (`=`, `+`, `-`, `@` am Anfang öffnet Excel als Formel) — bewusst, weil er die Daten verändern würde; Option für TB 08 (Sicherheitsprüfung).
 - MySQL mit `sql_mode` `ANSI_QUOTES` oder `NO_BACKSLASH_ESCAPES`: der Zerleger erkennt das nicht.
-- Sichtprüfung bei 1440 und 375 px im Browser — nach dem Zusammenführen.
+
+## Nach dem Zusammenführen
+
+Sichtprüfung bei 1440 und 375 px (MariaDB, Umgebung Test): Knopf «Exportieren» im Objektkopf belegt Tabelle und Schema vor, CSV-Export von 240 Zeilen fertig mit Herunterladen, Abbrechen, Statistik aktualisieren mit Meldung. **Befund:** Laravels Vorgabe `QUEUE_CONNECTION=database` ohne laufenden Worker liess jeden Export für immer «wartet» stehen — `hasWorker()` sah nur die Konfiguration. Behoben mit dem Lebenszeichen des Workers (siehe oben, Test `test_queue_counts_as_worked_only_while_a_worker_reports_in`). Der gleiche deutsche Schlüssel «Aktualisieren» bedeutete zweierlei (Prozessliste: *Refresh*, Statistik: *Update*) — der Statistik-Knopf heisst jetzt «Statistik aktualisieren».
 
 ## Gelernt
 
