@@ -4,12 +4,22 @@ namespace Tests\Feature\Console\Commands;
 
 use App\Enums\UserRole;
 use App\Models\User;
+use App\Services\Setup\CheckResult;
+use App\Services\Setup\SystemCheck;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class InstallCommandTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Die Systemprüfung hat eigene Tests; hier zählt nur, was nach einer bestandenen Prüfung passiert.
+        $this->mock(SystemCheck::class)->shouldReceive('run')->andReturn([CheckResult::ok('alles da')]);
+    }
 
     public function test_creates_exactly_one_admin_account(): void
     {
@@ -55,6 +65,18 @@ class InstallCommandTest extends TestCase
     public function test_rejects_invalid_address(): void
     {
         $this->artisan('phpdbadmin:install', ['--name' => 'Hoang', '--email' => 'kein-mail'])->assertFailed();
+
+        $this->assertSame(0, User::query()->count());
+    }
+
+    public function test_stops_before_creating_an_account_when_the_check_fails(): void
+    {
+        $this->mock(SystemCheck::class)->shouldReceive('run')->andReturn([CheckResult::fail('Oberfläche nicht gebaut', 'npm ci && npm run build')]);
+
+        $this->artisan('phpdbadmin:install', ['--name' => 'Hoang', '--email' => 'hoang@example.com'])
+            ->expectsOutputToContain('Oberfläche nicht gebaut')
+            ->expectsOutputToContain('Die Einrichtung bricht ab')
+            ->assertFailed();
 
         $this->assertSame(0, User::query()->count());
     }

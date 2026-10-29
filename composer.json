@@ -1,11 +1,16 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/vue-starter-kit",
+    "name": "nguyen-development/phpdbadmin",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "Datenbanken im Browser verwalten — MariaDB, MySQL, PostgreSQL und SQLite. Selbst gehostet, Anmeldung ohne Passwort.",
     "keywords": [
-        "laravel",
-        "framework"
+        "database",
+        "admin",
+        "mysql",
+        "mariadb",
+        "postgresql",
+        "sqlite",
+        "laravel"
     ],
     "license": "MIT",
     "require": {
@@ -45,10 +50,10 @@
         "setup": [
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
-            "@php artisan key:generate",
-            "@php artisan migrate --force",
-            "npm install",
-            "npm run build"
+            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+            "npm ci",
+            "npm run build",
+            "@php artisan phpdbadmin:install"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
@@ -117,6 +122,14 @@
         ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ],
+        "upgrade": [
+            "composer install",
+            "npm ci",
+            "npm run build",
+            "@php artisan migrate --force",
+            "@php artisan optimize:clear",
+            "@php artisan phpdbadmin:check"
         ]
     },
     "extra": {
@@ -140,6 +153,8 @@
     "prefer-stable": true,
     "scripts-descriptions": {
         "test:app-db": "Testsuite mit der App-Datenbank auf MariaDB (3306), MySQL (3307) und PostgreSQL (5432) — B-06",
-        "ci:local": "Lokale Prüfkette in der Reihenfolge der CI, dann die App-Datenbank auf allen Servern — B-03, B-08"
+        "ci:local": "Lokale Prüfkette in der Reihenfolge der CI, dann die App-Datenbank auf allen Servern — B-03, B-08",
+        "setup": "Einrichten in einem leeren Ordner: Abhängigkeiten, .env, Oberfläche bauen, App-Datenbank, erstes Konto — B-05",
+        "upgrade": "Nach git pull: Abhängigkeiten, Oberfläche, Migrationen, Systemprüfung"
     }
 }
