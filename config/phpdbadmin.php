@@ -164,4 +164,20 @@ return [
         'timeout' => (int) env('PHPDBADMIN_SSH_TIMEOUT', 10),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Laravel Herd erkennen (V-07)
+    |--------------------------------------------------------------------------
+    |
+    | Vorschläge im Formular «Verbindung anlegen»: laufende Dienste und die Datenbanken der Herd-Sites aus ihrer .env.
+    | Ohne Angabe nur bei APP_ENV=local und vorhandenem Herd-Ordner; nur für Administratoren. Passwörter aus fremden
+    | .env gehen nie an den Browser.
+    |
+    */
+
+    'herd' => [
+        'enabled' => env('PHPDBADMIN_HERD'),
+        'path' => env('PHPDBADMIN_HERD_PATH'),
+    ],
+
 ];

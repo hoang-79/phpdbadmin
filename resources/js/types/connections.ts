@@ -114,3 +114,22 @@ export type ConnectionTestResult = {
         serverMessage: string | null;
     } | null;
 };
+
+/** Vorschlag aus Laravel Herd (V-07) — ohne Passwort, nur ob es eines gibt. */
+export type HerdSuggestion = {
+    id: string;
+    origin: 'service' | 'site';
+    name: string;
+    driver: DatabaseDriver;
+    driverLabel: string;
+    host: string | null;
+    port: number | null;
+    username: string | null;
+    database: string | null;
+    hasPassword: boolean;
+    sqlitePath: string | null;
+    running: boolean | null;
+    version: string | null;
+    folder: string | null;
+    allowed: boolean;
+};

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Http\Controllers\Connections;
 
+use App\Connections\HerdDiscovery;
 use App\Enums\ConnectionEnvironment;
 use App\Enums\ConnectionPermission;
 use App\Enums\DatabaseDriver;
@@ -10,6 +11,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\Concerns\FakeHerd;
 use Tests\TestCase;
 
 /**
@@ -17,6 +19,7 @@ use Tests\TestCase;
  */
 class ConnectionControllerTest extends TestCase
 {
+    use FakeHerd;
     use RefreshDatabase;
 
     private string $folder;
@@ -423,6 +426,58 @@ class ConnectionControllerTest extends TestCase
         return DatabaseConnection::factory()->for($owner, 'owner')->create([
             'ssh_host' => '127.0.0.1', 'ssh_port' => 2222, 'ssh_username' => 'deploy',
             'ssh_key' => self::PRIVATE_KEY, 'ssh_passphrase' => 'Geheim-Phrase-8',
+        ]);
+    }
+
+    public function test_admin_gets_herd_suggestions_without_passwords(): void
+    {
+        $this->enableFakeHerd();
+
+        $response = $this->actingAs(User::factory()->admin()->create())->get(route('connections.create'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->missing('herd')
+            ->loadDeferredProps(fn (Assert $reload) => $reload
+                ->where('herd', fn ($suggestions): bool => collect($suggestions)->contains(fn (array $suggestion): bool => $suggestion['name'] === 'shop' && $suggestion['hasPassword'] === true)
+                    && ! str_contains((string) json_encode($suggestions), self::HERD_SHOP_PASSWORD))
+                ->etc()));
+        $this->assertStringNotContainsString(self::HERD_SHOP_PASSWORD, (string) $response->getContent());
+    }
+
+    public function test_member_gets_no_herd_suggestions(): void
+    {
+        $this->enableFakeHerd();
+
+        $this->actingAs(User::factory()->create())->get(route('connections.create'))
+            ->assertInertia(fn (Assert $page) => $page->where('herd', null));
+    }
+
+    public function test_herd_suggestion_brings_the_password_from_the_site_only_for_the_same_server(): void
+    {
+        $this->enableFakeHerd();
+        $admin = User::factory()->admin()->create();
+        $shop = collect(app(HerdDiscovery::class)->suggestions())->firstWhere('name', 'shop');
+        $this->assertNotNull($shop);
+        $payload = ['name' => 'shop', 'driver' => 'mysql', 'host' => '127.0.0.1', 'port' => '3307', 'username' => 'shop', 'database' => 'shop',
+            'password' => '', 'store_password' => true, 'environment' => 'local', 'herd_source' => $shop->id];
+
+        $this->actingAs($admin)->post(route('connections.store'), $payload)->assertRedirect(route('home'));
+        $this->assertSame(self::HERD_SHOP_PASSWORD, DatabaseConnection::query()->sole()->password);
+
+        $this->actingAs($admin)->post(route('connections.store'), [...$payload, 'name' => 'anderer Port', 'port' => '3306'])->assertRedirect(route('home'));
+        $this->assertNull(DatabaseConnection::query()->where('name', 'anderer Port')->sole()->password);
+    }
+
+    private function enableFakeHerd(): void
+    {
+        $listener = stream_socket_server('tcp://127.0.0.1:0');
+        $this->assertNotFalse($listener);
+        $name = (string) stream_socket_get_name($listener, false);
+        fclose($listener);
+
+        config([
+            'phpdbadmin.herd.enabled' => true,
+            'phpdbadmin.herd.path' => $this->fakeHerd($this->folder.'/herd', (int) substr($name, (int) strrpos($name, ':') + 1), 1),
         ]);
     }
 }

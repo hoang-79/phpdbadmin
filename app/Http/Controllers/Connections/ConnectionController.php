@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Connections;
 
 use App\Connections\ConnectionSettings;
 use App\Connections\ConnectionTester;
+use App\Connections\HerdDiscovery;
+use App\Connections\HerdSuggestion;
 use App\Connections\HostPolicy;
 use App\Connections\KnownHosts;
 use App\Enums\ConnectionEnvironment;
@@ -52,19 +54,25 @@ class ConnectionController extends Controller
         ]);
     }
 
-    public function create(Request $request, HostPolicy $policy): Response
-    {
-        return Inertia::render('connections/Form', [
-            'connection' => null,
-            ...$this->formOptions($this->user($request), $policy),
-        ]);
-    }
-
-    public function store(ConnectionRequest $request, ConnectionTester $tester): RedirectResponse
+    public function create(Request $request, HostPolicy $policy, HerdDiscovery $herd): Response
     {
         $user = $this->user($request);
 
-        $connection = new DatabaseConnection([...$this->attributes($request), ...$this->sshSecrets($request, null)]);
+        return Inertia::render('connections/Form', [
+            'connection' => null,
+            ...$this->formOptions($user, $policy),
+            // Vorschläge aus Laravel Herd (V-07): nur lokal und nur für Administratoren; nachgeladen, ohne Passwörter.
+            'herd' => $user->isAdmin() && $herd->enabled()
+                ? Inertia::defer(fn (): array => array_map(fn (HerdSuggestion $suggestion): array => $suggestion->toArray(), $herd->suggestions()))
+                : null,
+        ]);
+    }
+
+    public function store(ConnectionRequest $request, ConnectionTester $tester, HerdDiscovery $herd): RedirectResponse
+    {
+        $user = $this->user($request);
+
+        $connection = new DatabaseConnection([...$this->attributes($request), ...$this->sshSecrets($request, null), ...$this->herdPassword($request, $user, $herd)]);
         $connection->owner_id = $user->id;
         $connection->save();
 
@@ -179,6 +187,28 @@ class ConnectionController extends Controller
             'ssh_username' => $this->usesSsh($request) ? $text('ssh_username') : null,
             'ssh_key_path' => $this->usesSsh($request) ? $text('ssh_key_path') : null,
         ];
+    }
+
+    /**
+     * Vorschlag aus Herd übernommen und das Passwortfeld leer gelassen: das Passwort aus der `.env` der Site — nur für
+     * Administratoren, nur lokal und nur, wenn Host, Port und Benutzer zur Quelle passen (V-07).
+     *
+     * @return array{password?: string}
+     */
+    private function herdPassword(ConnectionRequest $request, User $user, HerdDiscovery $herd): array
+    {
+        if (! $request->filled('herd_source') || $request->filled('password') || ! $request->boolean('store_password', true) || ! $user->isAdmin() || ! $herd->enabled()) {
+            return [];
+        }
+
+        $password = $herd->passwordFor(
+            $request->string('herd_source')->toString(),
+            $request->string('host')->toString(),
+            $request->filled('port') ? $request->integer('port') : null,
+            $request->string('username')->toString(),
+        );
+
+        return $password !== null ? ['password' => $password] : [];
     }
 
     private function usesSsh(ConnectionRequest $request): bool

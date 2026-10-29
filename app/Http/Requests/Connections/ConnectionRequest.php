@@ -38,6 +38,8 @@ class ConnectionRequest extends FormRequest
             'read_only' => ['boolean'],
             'store_password' => ['boolean'],
             ...$this->settingsRules(),
+            // Vorschlag aus Laravel Herd (V-07): Kennung der Quelle, aus der das Passwort kommen darf.
+            'herd_source' => ['nullable', 'string', 'max:64'],
         ];
     }
 

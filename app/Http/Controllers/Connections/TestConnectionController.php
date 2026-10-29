@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Connections;
 
 use App\Connections\ConnectionSettings;
 use App\Connections\ConnectionTester;
+use App\Connections\HerdDiscovery;
 use App\Connections\SshSettings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Connections\TestConnectionRequest;
@@ -17,7 +18,7 @@ use Illuminate\Http\JsonResponse;
  */
 class TestConnectionController extends Controller
 {
-    public function __invoke(TestConnectionRequest $request, ConnectionTester $tester): JsonResponse
+    public function __invoke(TestConnectionRequest $request, ConnectionTester $tester, HerdDiscovery $herd): JsonResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 403);
@@ -28,6 +29,11 @@ class TestConnectionController extends Controller
         // Beim Bearbeiten mit leerem Passwortfeld: das gespeicherte verwenden.
         if ($saved !== null && $settings->driver->isServer() && ($settings->password === null)) {
             $settings = $settings->withPassword($saved->password);
+        }
+
+        // Vorschlag aus Herd übernommen (V-07): Passwort aus der Quelle — nur Administratoren, nur passender Host.
+        if ($saved === null && $settings->driver->isServer() && $settings->password === null && $request->filled('herd_source') && $user->isAdmin() && $herd->enabled()) {
+            $settings = $settings->withPassword($herd->passwordFor($request->string('herd_source')->toString(), $settings->host, $settings->port, $settings->username));
         }
 
         // Ebenso Schlüssel und Passphrase des SSH-Tunnels (V-08).
