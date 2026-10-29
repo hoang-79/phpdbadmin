@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { Database, Eye, Table2 } from '@lucide/vue';
+import { Database, Eye, Table2, Waypoints } from '@lucide/vue';
 import { computed } from 'vue';
 import Notice from '@/components/Notice.vue';
 import SchemaActions from '@/components/workspace/schema/SchemaActions.vue';
 import { formatRows, titlePrefix } from '@/lib/environment';
 import { t, tc } from '@/lib/i18n';
-import { dataHref } from '@/lib/workspace';
+import { dataHref, diagramHref } from '@/lib/workspace';
 import type { Workspace } from '@/types';
 
 /** Schema bzw. Datenbank im Überblick (Wireframe 05 ohne gewähltes Objekt). */
@@ -44,6 +44,12 @@ const title = computed(
         </Notice>
 
         <div v-if="workspace.schema" class="flex flex-col gap-1">
+            <Link
+                v-if="tables.length"
+                :href="diagramHref(workspace)"
+                class="inline-flex items-center gap-1.5 self-start text-sm text-primary underline-offset-2 hover:underline sm:order-last"
+                ><Waypoints class="size-4" />{{ t('Beziehungsdiagramm') }}</Link
+            >
             <h1 class="flex items-center gap-2 font-mono text-xl font-semibold">
                 <Database class="size-5 text-text-secondary" />{{
                     workspace.schema

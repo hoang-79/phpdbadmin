@@ -112,6 +112,39 @@ trait TargetDatabases
             $connection->statement('drop function if exists vertrag_netto');
             $connection->statement('drop event if exists vertrag_aufraeumen');
         }
+
+        $this->dropOtherObjects($connection, $driver);
+    }
+
+    /**
+     * Routinen, Ereignisse und Sequenzen, die Tests angelegt haben (S-06) — Tabellen und Sichten löscht Laravel.
+     */
+    protected function dropOtherObjects(Connection $connection, DatabaseDriver $driver): void
+    {
+        if ($driver === DatabaseDriver::MySql || $driver === DatabaseDriver::MariaDb) {
+            foreach ($connection->select('select routine_name as name, routine_type as kind from information_schema.routines where routine_schema = database()') as $routine) {
+                $connection->unprepared('drop '.strtolower((string) $routine->kind).' if exists `'.str_replace('`', '``', (string) $routine->name).'`');
+            }
+
+            foreach ($connection->select('select event_name as name from information_schema.events where event_schema = database()') as $event) {
+                $connection->unprepared('drop event if exists `'.str_replace('`', '``', (string) $event->name).'`');
+            }
+        }
+
+        if ($driver === DatabaseDriver::Postgres) {
+            foreach ($connection->select(
+                "select p.oid::regprocedure::text as signature, p.prokind as kind from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                 where n.nspname = 'public' and p.prokind in ('f', 'p') and not exists (select 1 from pg_depend d where d.objid = p.oid and d.deptype = 'e')",
+            ) as $routine) {
+                $connection->unprepared('drop '.($routine->kind === 'p' ? 'procedure' : 'function').' if exists '.$routine->signature.' cascade');
+            }
+
+            foreach ($connection->select("select quote_ident(sequencename) as name from pg_sequences where schemaname = 'public'") as $sequence) {
+                $connection->unprepared('drop sequence if exists public.'.$sequence->name.' cascade');
+            }
+
+            $connection->getSchemaBuilder()->dropAllTypes();
+        }
     }
 
     /**

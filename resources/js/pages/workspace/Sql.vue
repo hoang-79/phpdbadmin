@@ -7,6 +7,7 @@ import {
     CircleSlash,
     Clock,
     History,
+    ListTree,
     PanelRight,
     Play,
     Save,
@@ -16,7 +17,7 @@ import {
     Sparkles,
     WandSparkles,
 } from '@lucide/vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import Notice from '@/components/Notice.vue';
 import AiAssistDialog from '@/components/workspace/sql/AiAssistDialog.vue';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ import {
 } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Spinner } from '@/components/ui/spinner';
+import ExplainPanel from '@/components/workspace/sql/ExplainPanel.vue';
 import ResultPanel from '@/components/workspace/sql/ResultPanel.vue';
 import SqlEditor from '@/components/workspace/sql/SqlEditor.vue';
 import { ApiError, deleteJson, getJson, postJson } from '@/lib/api';
@@ -47,6 +49,7 @@ import {
     store as storeSavedRoute,
 } from '@/routes/workspace/sql/saved';
 import type {
+    ExplainRequest,
     SavedSqlQuery,
     SqlEditorSettings,
     SqlHistoryEntry,
@@ -100,6 +103,49 @@ onMounted(() => {
     text.value =
         stored.trim() === '' && props.template ? props.template : stored;
 });
+
+// EXPLAIN (Q-06): die Anweisung unter der Schreibmarke bzw. die Auswahl, ⌘E — der Plan ersetzt die Ergebnisse, bis
+// man ihn schliesst.
+const explainRequest = ref<ExplainRequest | null>(null);
+
+function explainStatement(): void {
+    const selected = editorRef.value?.selection() ?? '';
+    const isSelection = selected.trim() !== '';
+    const sqlText = isSelection ? selected : text.value;
+
+    if (sqlText.trim() === '') {
+        failure.value = t(
+            'Da steht keine Anweisung — nur Kommentare oder nichts.',
+        );
+
+        return;
+    }
+
+    failure.value = null;
+    explainRequest.value = {
+        sql: sqlText,
+        cursor: isSelection ? null : (editorRef.value?.cursorByte() ?? 0),
+        selection: isSelection,
+        schema: props.workspace.schema,
+        at: Date.now(),
+    };
+}
+
+function onExplainKey(event: KeyboardEvent): void {
+    const target = event.target as HTMLElement | null;
+
+    if (
+        (event.metaKey || event.ctrlKey) &&
+        event.key.toLowerCase() === 'e' &&
+        !['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName ?? '')
+    ) {
+        event.preventDefault();
+        explainStatement();
+    }
+}
+
+onMounted(() => window.addEventListener('keydown', onExplainKey));
+onBeforeUnmount(() => window.removeEventListener('keydown', onExplainKey));
 
 watch(storageKey, (key) => {
     text.value = window.localStorage.getItem(key) ?? '';
@@ -207,6 +253,8 @@ async function run(requested: Mode | 'all' = mode.value): Promise<void> {
     if (running.value) {
         return;
     }
+
+    explainRequest.value = null;
 
     const selected = editorRef.value?.selection() ?? '';
     const effective: Mode =
@@ -444,6 +492,14 @@ const statusIcons: Record<string, unknown> = {
                         {{ option.label }}
                     </button>
                 </div>
+                <Button
+                    size="sm"
+                    variant="outline"
+                    :title="t('Plan der Anweisung an der Schreibmarke (⌘E)')"
+                    @click="explainStatement"
+                >
+                    <ListTree />{{ t('Erklären') }}
+                </Button>
                 <Button size="sm" variant="outline" @click="format">
                     <WandSparkles />{{ t('Formatieren') }}
                 </Button>
@@ -539,7 +595,14 @@ const statusIcons: Record<string, unknown> = {
                 <Notice variant="danger">{{ failure }}</Notice>
             </div>
 
+            <ExplainPanel
+                v-if="explainRequest"
+                :workspace="workspace"
+                :request="explainRequest"
+                @close="explainRequest = null"
+            />
             <ResultPanel
+                v-else
                 :workspace="workspace"
                 :results="results"
                 :max-row-limit="editor.maxRowLimit"

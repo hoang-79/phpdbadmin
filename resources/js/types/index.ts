@@ -6,3 +6,4 @@ export * from './server';
 export * from './admin';
 export * from './transfers';
 export * from './schema';
+export * from './objects';

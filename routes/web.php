@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ObjectKind;
 use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Account\AiKeyController;
 use App\Http\Controllers\Account\LocaleController;
@@ -15,6 +16,9 @@ use App\Http\Controllers\Connections\TestConnectionController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\PaletteController;
 use App\Http\Controllers\Workspace\ConnectionPasswordController;
+use App\Http\Controllers\Workspace\DefinitionController;
+use App\Http\Controllers\Workspace\DiagramController;
+use App\Http\Controllers\Workspace\ExplainController;
 use App\Http\Controllers\Workspace\ImportController;
 use App\Http\Controllers\Workspace\ObjectController;
 use App\Http\Controllers\Workspace\RowChangeController;
@@ -65,6 +69,8 @@ Route::middleware('auth')->group(function () {
         Route::get('sql', [SqlController::class, 'show'])->name('workspace.sql');
         Route::post('sql/run', [SqlController::class, 'run'])->name('workspace.sql.run');
         Route::post('sql/cancel', [SqlController::class, 'cancel'])->name('workspace.sql.cancel');
+        // EXPLAIN als Baum mit Hinweisen (Q-06).
+        Route::post('sql/explain', [ExplainController::class, 'explain'])->name('workspace.sql.explain');
         Route::get('sql/history', [SqlController::class, 'searchHistory'])->name('workspace.sql.history');
         Route::post('sql/saved', [SqlController::class, 'save'])->name('workspace.sql.saved.store');
         Route::delete('sql/saved/{query}', [SqlController::class, 'forget'])->name('workspace.sql.saved.destroy');
@@ -99,6 +105,19 @@ Route::middleware('auth')->group(function () {
         Route::get('schemas/sqlite-folders', [Schema\SchemaController::class, 'folders'])->name('workspace.schemas.folders');
         Route::post('schemas/preview', [Schema\SchemaController::class, 'preview'])->name('workspace.schemas.preview');
         Route::post('schemas', [Schema\SchemaController::class, 'apply'])->name('workspace.schemas.apply');
+
+        // Objekte neben den Tabellen (S-06): Sichten, Routinen, Trigger, Ereignisse, Sequenzen, Typen — ansehen mit
+        // Zugang, anlegen, ändern und löschen mit «schreiben», Vorschau zuerst.
+        Route::prefix('s/{schema}/x/{kind}')->where(['schema' => '[^/]+', 'kind' => ObjectKind::pattern()])->group(function () {
+            Route::get('/', [DefinitionController::class, 'create'])->name('workspace.definition.create');
+            Route::post('preview', [DefinitionController::class, 'preview'])->name('workspace.definition.preview');
+            Route::post('/', [DefinitionController::class, 'apply'])->name('workspace.definition.apply');
+            Route::get('{name}', [DefinitionController::class, 'detail'])->where('name', '[^/]+')->name('workspace.definition');
+        });
+
+        // Beziehungsdiagramm eines Schemas (S-07): ansehen und als SVG herunterladen.
+        Route::get('s/{schema}/diagram', [DiagramController::class, 'diagram'])->where('schema', '[^/]+')->name('workspace.diagram');
+        Route::post('s/{schema}/diagram/svg', [DiagramController::class, 'svg'])->where('schema', '[^/]+')->name('workspace.diagram.svg');
 
         // Server-Verwaltung (W-01 bis W-05): ansehen mit Zugang, ändern nur mit «verwalten» und ohne Schreibschutz.
         Route::get('server', Server\OverviewController::class)->name('workspace.server');
