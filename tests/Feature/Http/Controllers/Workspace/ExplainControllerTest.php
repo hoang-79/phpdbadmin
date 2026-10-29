@@ -176,6 +176,20 @@ class ExplainControllerTest extends TestCase
         }
     }
 
+    #[DataProvider('mysqlDrivers')]
+    public function test_mysql_explain_of_a_change_rolls_back_what_functions_write_while_planning(DatabaseDriver $driver): void
+    {
+        [$connection, $schema, $target] = $this->prepared($driver);
+        $target->statement('create table e_spur (n integer)');
+        // MariaDB wertet die Funktion beim Planen aus — und schreibt dabei.
+        $target->unprepared('create function e_merk() returns int deterministic modifies sql data begin insert into e_spur values (1); return 5; end');
+
+        $this->explain($connection, $schema, 'delete from e_ohne where id = e_merk()')->assertOk();
+
+        $this->assertSame(0, (int) $target->table('e_spur')->count());
+        $this->assertSame(2000, (int) $target->table('e_ohne')->count());
+    }
+
     public function test_foreign_connection_is_404(): void
     {
         [$connection] = $this->prepared(DatabaseDriver::Sqlite, User::factory()->create());

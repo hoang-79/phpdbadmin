@@ -149,15 +149,24 @@ final class Explainer
 
     /**
      * MySQL/MariaDB: EXPLAIN einer Änderung ausserhalb der Nur-lesen-Transaktion — ohne ANALYZE führt der Server sie
-     * nicht aus. Der Wächter setzt die Sitzung bei jeder lesenden Anweisung auf «read only» — für diese zurück.
+     * nicht aus. Aber MariaDB wertet beim Planen Funktionen aus, auch solche, die schreiben (gemessen: 10.11 schrieb
+     * bei `EXPLAIN SELECT … WHERE id = f()` zwei Zeilen) — deshalb in einer Transaktion, die immer zurückgerollt wird.
+     * Der Wächter setzt die Sitzung bei jeder lesenden Anweisung auf «read only» — für diese zurück.
      *
      * @return list<array<string, mixed>>
      */
     private function asChange(Connection $target, string $explain): array
     {
         $target->statement('set session transaction read write');
+        $target->beginTransaction();
 
-        return $this->fetch($target, $explain);
+        try {
+            return $this->fetch($target, $explain);
+        } finally {
+            if ($target->transactionLevel() > 0) {
+                $target->rollBack();
+            }
+        }
     }
 
     /**
