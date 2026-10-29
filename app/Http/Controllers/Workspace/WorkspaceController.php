@@ -145,6 +145,8 @@ class WorkspaceController extends Controller
                 // PostgreSQL mit «alle Datenbanken»: Auswahl im Navigator, die gewählte in der Adresse (?db=).
                 'databases' => $databases,
                 'database' => $database,
+                // Verbindung auf eine Datenbank festgelegt: Datenbanken (MySQL, MariaDB) lassen sich dann nicht löschen.
+                'databaseFixed' => $connection->database !== null,
                 'databaseLabel' => match ($connection->driver) {
                     DatabaseDriver::Postgres => $database ?? $connection->database ?? Catalog::POSTGRES_MAINTENANCE_DATABASE,
                     DatabaseDriver::Sqlite => basename((string) $connection->sqlite_path),

@@ -3,10 +3,13 @@
 namespace Tests\Feature\Http\Controllers\Workspace\Schema;
 
 use App\Connections\ConnectionFactory;
+use App\Connections\HostPolicy;
+use App\Enums\ConnectionPermission;
 use App\Enums\DatabaseDriver;
 use App\Models\AuditEntry;
 use App\Models\DatabaseConnection;
 use App\Models\User;
+use Illuminate\Database\Connection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PDO;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -17,7 +20,9 @@ use Tests\TestCase;
 /**
  * Datenbank bzw. Schema anlegen und löschen (S-05) je Treiber: MySQL und MariaDB eine Datenbank (nur über eine
  * Verbindung ohne festen Datenbanknamen), PostgreSQL ein Schema, SQLite eine neue Datei in einem erlaubten Ordner.
- * Löschen nur mit dem eingetippten Namen. Datenbanken heissen «phpdbadmin_s05_…» und werden im Test wieder entfernt.
+ * Löschen nur mit dem eingetippten Namen. Bei PostgreSQL mit «alle Datenbanken» auch eine ganze Datenbank — über die
+ * Wartungsdatenbank, nie die Vorlagen, die Wartungsdatenbank selbst oder die App-Datenbank von phpdbadmin.
+ * Datenbanken heissen «phpdbadmin_s05_…» und werden im Test wieder entfernt.
  */
 #[Group('target-databases')]
 class SchemaControllerTest extends TestCase
@@ -77,6 +82,150 @@ class SchemaControllerTest extends TestCase
             $this->assertSame(['database.create', 'database.drop'], AuditEntry::query()->orderBy('id')->pluck('action')->all());
         } finally {
             $root->statement(($isPostgres ? 'drop schema if exists ' : 'drop database if exists ').$name.($isPostgres ? ' cascade' : ''));
+        }
+    }
+
+    public function test_drops_a_whole_postgres_database_only_with_its_name_even_while_it_is_open(): void
+    {
+        $connection = $this->savedConnection($this->serverSettings(DatabaseDriver::Postgres, ['database' => null]), $this->user);
+        $root = app(ConnectionFactory::class)->make($this->serverSettings(DatabaseDriver::Postgres));
+        $name = 'phpdbadmin_s05_db_'.getmypid();
+        $this->createPostgresDatabase($root, $name, withContent: true);
+
+        try {
+            $this->actingAs($this->user)->postJson(route('workspace.schemas.preview', $connection), ['operation' => 'drop-database', 'name' => $name, 'database' => $name])
+                ->assertOk()
+                ->assertJsonPath('mode', 'statements')
+                ->assertJsonPath('before', [])
+                ->assertJsonPath('statements.0.sql', 'DROP DATABASE "'.$name.'"')
+                ->assertJsonPath('confirmName', $name)
+                ->assertJsonPath('losses', ['Gelöscht wird die ganze Datenbank mit allem darin — Schemas: 2, Tabellen und Sichten: 1.']);
+            $this->assertContains($name, $this->postgresDatabases($root), 'die Vorschau führt nichts aus');
+
+            $this->post(route('workspace.schemas.apply', $connection), ['operation' => 'drop-database', 'name' => $name, 'database' => $name])
+                ->assertSessionHasErrors(['confirm_name' => "Geben Sie zur Bestätigung den Namen «{$name}» ein."]);
+            $this->post(route('workspace.schemas.apply', $connection), ['operation' => 'drop-database', 'name' => $name, 'database' => $name, 'confirm_name' => 'falsch'])
+                ->assertSessionHasErrors('confirm_name');
+            $this->assertContains($name, $this->postgresDatabases($root));
+            $this->assertSame(0, AuditEntry::query()->count());
+
+            // Die gelöschte Datenbank war gerade offen (database): trotzdem über die Wartungsdatenbank, danach zur Vorgabe.
+            $this->post(route('workspace.schemas.apply', $connection), ['operation' => 'drop-database', 'name' => $name, 'database' => $name, 'confirm_name' => $name])
+                ->assertSessionHasNoErrors()
+                ->assertRedirect(route('workspace', $connection))
+                ->assertInertiaFlash('toast.message', "Datenbank {$name} gelöscht.");
+            $this->assertNotContains($name, $this->postgresDatabases($root));
+
+            $entry = AuditEntry::query()->sole();
+            $this->assertSame(['database.drop', $name, 'DROP DATABASE "'.$name.'"'], [$entry->action, $entry->target, $entry->sql]);
+            $this->assertSame(['database', 2, 1, 'ok'], [$entry->context['scope'], $entry->context['schemas'], $entry->context['tables'], $entry->context['outcome']]);
+        } finally {
+            $root->statement('drop database if exists "'.$name.'"');
+        }
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function protectedDatabases(): array
+    {
+        return [
+            'Vorlage' => ['template1', 'Diese Datenbank braucht PostgreSQL selbst — sie lässt sich hier nicht löschen.'],
+            'Wartungsdatenbank' => ['postgres', 'Über die Datenbank «postgres» verbindet phpdbadmin mit dem Server — sie lässt sich hier nicht löschen.'],
+            'gibt es nicht' => ['phpdbadmin_s05_gibt_es_nicht', 'Diese Datenbank gibt es auf dem Server nicht.'],
+        ];
+    }
+
+    #[DataProvider('protectedDatabases')]
+    public function test_never_drops_templates_the_maintenance_database_or_unknown_names(string $name, string $message): void
+    {
+        $connection = $this->savedConnection($this->serverSettings(DatabaseDriver::Postgres, ['database' => null]), $this->user);
+
+        $this->actingAs($this->user)->postJson(route('workspace.schemas.apply', $connection), ['operation' => 'drop-database', 'name' => $name, 'confirm_name' => $name])
+            ->assertJsonValidationErrors(['name' => $message]);
+
+        $this->assertSame(0, AuditEntry::query()->count());
+    }
+
+    public function test_never_drops_the_app_database_of_phpdbadmin(): void
+    {
+        $root = app(ConnectionFactory::class)->make($this->serverSettings(DatabaseDriver::Postgres));
+        $name = 'phpdbadmin_s05_app_'.getmypid();
+        $this->createPostgresDatabase($root, $name);
+        $this->pretendAppDatabase(DatabaseDriver::Postgres, $name);
+        $connection = $this->savedConnection($this->serverSettings(DatabaseDriver::Postgres, ['database' => null]), $this->user);
+
+        try {
+            $this->actingAs($this->user)->postJson(route('workspace.schemas.apply', $connection), ['operation' => 'drop-database', 'name' => $name, 'confirm_name' => $name])
+                ->assertJsonValidationErrors(['name' => 'Das ist die eigene Datenbank von phpdbadmin — sie lässt sich hier nicht löschen.']);
+            $this->assertContains($name, $this->postgresDatabases($root));
+        } finally {
+            $root->statement('drop database if exists "'.$name.'"');
+        }
+    }
+
+    public function test_never_drops_the_app_database_on_mariadb_either(): void
+    {
+        $settings = $this->serverSettings(DatabaseDriver::MariaDb);
+        $root = app(ConnectionFactory::class)->make($settings);
+        $name = 'phpdbadmin_s05_app_'.getmypid();
+        $root->statement('create database if not exists '.$name);
+        $this->pretendAppDatabase(DatabaseDriver::MariaDb, $name);
+        $connection = $this->savedConnection($settings, $this->user);
+
+        try {
+            $this->actingAs($this->user)->postJson(route('workspace.schemas.apply', $connection), ['operation' => 'drop', 'name' => $name, 'confirm_name' => $name])
+                ->assertJsonValidationErrors(['name' => 'Das ist die eigene Datenbank von phpdbadmin — sie lässt sich hier nicht löschen.']);
+            $this->assertContains($name, DatabaseDriver::MariaDb->dialect()->schemas($root));
+        } finally {
+            $root->statement('drop database if exists '.$name);
+        }
+    }
+
+    /**
+     * @return array<string, array{0: DatabaseDriver}>
+     */
+    public static function withoutAllDatabases(): array
+    {
+        return [
+            'PostgreSQL mit fester Datenbank' => [DatabaseDriver::Postgres],
+            'MariaDB' => [DatabaseDriver::MariaDb],
+        ];
+    }
+
+    #[DataProvider('withoutAllDatabases')]
+    public function test_whole_databases_are_dropped_only_with_all_databases(DatabaseDriver $driver): void
+    {
+        $connection = $this->savedConnection($this->serverSettings($driver), $this->user);
+
+        $this->actingAs($this->user)->postJson(route('workspace.schemas.preview', $connection), ['operation' => 'drop-database', 'name' => 'phpdbadmin_s05_nie'])
+            ->assertJsonValidationErrors(['name' => 'Ganze Datenbanken löscht phpdbadmin hier nur bei PostgreSQL-Verbindungen mit «alle Datenbanken».']);
+    }
+
+    public function test_dropping_a_database_needs_the_write_permission_and_no_write_protection(): void
+    {
+        $root = app(ConnectionFactory::class)->make($this->serverSettings(DatabaseDriver::Postgres));
+        $name = 'phpdbadmin_s05_recht_'.getmypid();
+        $this->createPostgresDatabase($root, $name);
+        $settings = $this->serverSettings(DatabaseDriver::Postgres, ['database' => null]);
+        $payload = ['operation' => 'drop-database', 'name' => $name, 'confirm_name' => $name];
+
+        try {
+            $protected = $this->savedConnection($settings, $this->user, ['read_only' => true]);
+            $this->actingAs($this->user)->postJson(route('workspace.schemas.apply', $protected), $payload)
+                ->assertForbidden()
+                ->assertJsonPath('message', 'Diese Verbindung ist schreibgeschützt — Strukturänderungen sind gesperrt.');
+
+            $shared = $this->savedConnection($settings, User::factory()->create(), ['shared' => true]);
+            $shared->members()->attach($this->user, ['permission' => ConnectionPermission::Read->value]);
+            $this->actingAs($this->user)->postJson(route('workspace.schemas.apply', $shared), $payload)
+                ->assertForbidden()
+                ->assertJsonPath('message', 'Dafür braucht es das Recht «schreiben» an dieser Verbindung.');
+
+            $this->assertContains($name, $this->postgresDatabases($root));
+            $this->assertSame(0, AuditEntry::query()->count());
+        } finally {
+            $root->statement('drop database if exists "'.$name.'"');
         }
     }
 
@@ -156,6 +305,46 @@ class SchemaControllerTest extends TestCase
             ->assertJsonValidationErrors(['operation' => 'SQLite-Dateien löscht phpdbadmin nicht — das geht im Dateisystem.']);
 
         $this->assertFileExists($this->folder.'/bestand.sqlite');
+    }
+
+    /**
+     * Neue Datenbank auf dem PostgreSQL-Server, auf Wunsch mit einem zweiten Schema und einer Tabelle darin.
+     */
+    private function createPostgresDatabase(Connection $root, string $name, bool $withContent = false): void
+    {
+        $root->statement('drop database if exists "'.$name.'"');
+        $root->statement('create database "'.$name.'"');
+
+        if ($withContent) {
+            $factory = app(ConnectionFactory::class);
+            $database = $factory->make($this->serverSettings(DatabaseDriver::Postgres, ['database' => $name]));
+            $database->statement('create schema extra');
+            $database->statement('create table extra.notizen (id integer primary key)');
+            $factory->release($database);
+        }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function postgresDatabases(Connection $root): array
+    {
+        return array_map(fn (object $row): string => (string) $row->datname, $root->select('select datname from pg_database'));
+    }
+
+    /**
+     * Die App-Datenbank liegt (zum Schein) auf dem Testserver unter diesem Namen — wie HostPolicy::fromConfig() sie sähe.
+     */
+    private function pretendAppDatabase(DatabaseDriver $driver, string $name): void
+    {
+        $port = $this->serverSettings($driver)->port();
+        $this->app->bind(HostPolicy::class, fn (): HostPolicy => new HostPolicy(['127.0.0.1'], [$this->folder], appServer: [
+            'driver' => $driver,
+            'host' => '127.0.0.1',
+            'port' => (int) $port,
+            'database' => $name,
+        ]));
+        $this->app->forgetScopedInstances();
     }
 
     private function sqliteConnection(): DatabaseConnection

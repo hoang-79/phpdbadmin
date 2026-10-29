@@ -13,6 +13,7 @@ import { computed, ref, watch } from 'vue';
 import InputError from '@/components/InputError.vue';
 import Notice from '@/components/Notice.vue';
 import ChangeDialog from '@/components/workspace/schema/ChangeDialog.vue';
+import DropDialog from '@/components/workspace/schema/DropDialog.vue';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -32,19 +33,18 @@ import type { SchemaPayload, Workspace } from '@/types';
 
 /**
  * Oben auf der Schema-Seite (S-02, S-05): «Tabelle anlegen» und ein Menü, um eine Datenbank (MySQL, MariaDB) bzw. ein
- * Schema (PostgreSQL) anzulegen oder das gezeigte zu löschen; bei SQLite eine neue Datei in einem erlaubten Ordner.
- * Löschen nur mit dem eingetippten Namen. Ohne Recht «schreiben» oder bei Schreibschutz gesperrt, mit Grund.
+ * Schema (PostgreSQL) anzulegen oder das gezeigte zu löschen (DropDialog, wie im Navigator); bei SQLite eine neue Datei
+ * in einem erlaubten Ordner. Löschen nur mit dem eingetippten Namen. Ohne Recht «schreiben» oder bei Schreibschutz gesperrt, mit Grund.
  */
 const props = defineProps<{
     workspace: Workspace;
 }>();
 
-type Operation = 'create' | 'drop';
-
 const isSqlite = computed(() => props.workspace.connection.driver === 'sqlite');
 const isSchema = computed(() => props.workspace.schemaKind === 'schema');
-const operation = ref<Operation>('create');
 const open = ref(false);
+/** Löschen des gezeigten Schemas bzw. der gezeigten Datenbank — eigener Dialog, wie im Navigator. */
+const dropOpen = ref(false);
 const name = ref('');
 const folder = ref('');
 const file = ref('');
@@ -64,7 +64,7 @@ const change = useSchemaChange({
         }
 
         return {
-            operation: operation.value,
+            operation: 'create',
             name: name.value.trim(),
             ...databaseField(props.workspace),
         };
@@ -74,9 +74,8 @@ const { plan, loading, failure, errors, message, processing } = change;
 
 const blocked = computed(() => structureBlock(props.workspace.connection));
 
-async function start(next: Operation): Promise<void> {
-    operation.value = next;
-    name.value = next === 'drop' ? (props.workspace.schema ?? '') : '';
+async function startCreate(): Promise<void> {
+    name.value = '';
     file.value = '';
     change.reset();
     open.value = true;
@@ -88,16 +87,12 @@ async function start(next: Operation): Promise<void> {
         folders.value = response.folders;
         folder.value = response.folders[0] ?? '';
     }
-
-    if (next === 'drop') {
-        void change.refresh();
-    }
 }
 
 watchDebounced(
     [name, folder, file],
     () => {
-        if (!open.value || operation.value === 'drop') {
+        if (!open.value) {
             return;
         }
 
@@ -117,15 +112,9 @@ const dialog = computed(() => {
         return { title: t('Neue SQLite-Datei'), apply: t('Datei anlegen') };
     }
 
-    if (operation.value === 'create') {
-        return isSchema.value
-            ? { title: t('Schema anlegen'), apply: t('Schema anlegen') }
-            : { title: t('Datenbank anlegen'), apply: t('Datenbank anlegen') };
-    }
-
     return isSchema.value
-        ? { title: t('Schema löschen'), apply: t('Schema löschen') }
-        : { title: t('Datenbank löschen'), apply: t('Datenbank löschen') };
+        ? { title: t('Schema anlegen'), apply: t('Schema anlegen') }
+        : { title: t('Datenbank anlegen'), apply: t('Datenbank anlegen') };
 });
 
 function apply(confirmation: {
@@ -182,11 +171,11 @@ watch(
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" class="w-60">
-                    <DropdownMenuItem v-if="isSqlite" @select="start('create')">
+                    <DropdownMenuItem v-if="isSqlite" @select="startCreate">
                         <FilePlus2 />{{ t('Neue SQLite-Datei …') }}
                     </DropdownMenuItem>
                     <template v-else>
-                        <DropdownMenuItem @select="start('create')">
+                        <DropdownMenuItem @select="startCreate">
                             <DatabaseZap />{{
                                 isSchema
                                     ? t('Schema anlegen …')
@@ -197,7 +186,7 @@ watch(
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                                 variant="destructive"
-                                @select="start('drop')"
+                                @select="dropOpen = true"
                             >
                                 <Trash2 />{{
                                     t(':name löschen …', {
@@ -228,7 +217,6 @@ watch(
         <ChangeDialog
             v-model:open="open"
             :title="dialog.title"
-            :description="operation === 'drop' ? workspace.schema : null"
             :plan="plan"
             :loading="loading"
             :error="message"
@@ -290,10 +278,7 @@ watch(
                     <InputError :message="errors.file" />
                 </div>
             </template>
-            <div
-                v-else-if="operation === 'create'"
-                class="flex flex-col gap-1.5"
-            >
+            <div v-else class="flex flex-col gap-1.5">
                 <label for="schema-name" class="text-[13px] font-medium">{{
                     t('Name')
                 }}</label>
@@ -308,5 +293,13 @@ watch(
                 <InputError :message="errors.name" />
             </div>
         </ChangeDialog>
+
+        <DropDialog
+            v-if="workspace.schema"
+            v-model:open="dropOpen"
+            :workspace="workspace"
+            :name="workspace.schema"
+            scope="schema"
+        />
     </div>
 </template>

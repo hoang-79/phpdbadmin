@@ -34,6 +34,8 @@ export type Workspace = {
     };
     databases: string[] | null;
     database: string | null;
+    /** Verbindung auf eine Datenbank festgelegt — Datenbanken (MySQL, MariaDB) lassen sich dann nicht löschen. */
+    databaseFixed: boolean;
     databaseLabel: string | null;
     schemaKind: 'schema' | 'database';
     schemas: string[];

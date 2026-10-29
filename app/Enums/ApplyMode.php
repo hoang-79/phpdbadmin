@@ -70,7 +70,10 @@ enum ApplyMode: string
     public function explanation(DatabaseDriver $driver): string
     {
         return match ($this) {
-            self::Statements => __(':driver schliesst bei jeder Strukturänderung die Transaktion ab. Schlägt eine Anweisung fehl, bleiben die vorherigen bestehen; phpdbadmin hält dann an und zeigt, was angewendet ist.', ['driver' => $driver->label()]),
+            // PostgreSQL nur für DROP DATABASE, das in keiner Transaktion laufen darf.
+            self::Statements => $driver === DatabaseDriver::Postgres
+                ? __('Diese Anweisung läuft ausserhalb einer Transaktion und lässt sich nicht zurückrollen.')
+                : __(':driver schliesst bei jeder Strukturänderung die Transaktion ab. Schlägt eine Anweisung fehl, bleiben die vorherigen bestehen; phpdbadmin hält dann an und zeigt, was angewendet ist.', ['driver' => $driver->label()]),
             self::Transaction => __('Schlägt eine Anweisung fehl, wird keine angewendet — die Tabelle bleibt, wie sie war.'),
             self::Rebuild => __('Fremdschlüssel werden ausserhalb der Transaktion kurz ausgeschaltet und vor dem Abschluss geprüft. Schlägt etwas fehl, wird nichts angewendet.'),
         };

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Workspace\Schema;
 
 use App\Enums\DatabaseDriver;
+use App\Http\Requests\Workspace\Schema\SchemaChangeRequest;
 use App\Http\Requests\Workspace\Schema\SchemaRequest;
 use App\Models\DatabaseConnection;
 use App\Services\Schema\SchemaPlan;
@@ -12,8 +13,9 @@ use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 
 /**
- * Datenbank (MySQL, MariaDB) bzw. Schema (PostgreSQL) anlegen und löschen, bei SQLite eine neue Datei in einem
- * erlaubten Ordner (S-05). Löschen nur mit dem eingetippten Namen.
+ * Datenbank (MySQL, MariaDB) bzw. Schema (PostgreSQL) anlegen und löschen, bei PostgreSQL mit «alle Datenbanken» auch
+ * eine ganze Datenbank löschen, bei SQLite eine neue Datei in einem erlaubten Ordner (S-05). Löschen nur mit dem
+ * eingetippten Namen.
  */
 class SchemaController extends SchemaEditorController
 {
@@ -56,6 +58,13 @@ class SchemaController extends SchemaEditorController
                     return to_route('workspace.schema', $this->withDatabase([$connection, $name], $database));
                 }
 
+                if ($request->operation() === 'drop-database') {
+                    $this->toast(__('Datenbank :name gelöscht.', ['name' => $name]));
+
+                    // Auch wenn die gelöschte gerade offen war: zurück zur Vorgabe des Servers.
+                    return to_route('workspace', [$connection]);
+                }
+
                 $this->toast($this->droppedMessage($connection->driver, $name));
 
                 return to_route('workspace', $this->withDatabase([$connection], $database));
@@ -69,9 +78,24 @@ class SchemaController extends SchemaEditorController
             return $this->plans->createSqliteFile($connection, $request->text('folder'), $request->text('file'));
         }
 
-        return $request->operation() === 'create'
-            ? $this->plans->createSchema($target, $connection, $request->text('name'))
-            : $this->plans->dropSchema($target, $connection, $request->text('name'));
+        return match ($request->operation()) {
+            'create' => $this->plans->createSchema($target, $connection, $request->text('name')),
+            'drop-database' => $this->plans->dropDatabase($target, $connection, $request->text('name')),
+            default => $this->plans->dropSchema($target, $connection, $request->text('name')),
+        };
+    }
+
+    /**
+     * Eine ganze Datenbank löscht phpdbadmin über die Wartungsdatenbank — nie über eine Verbindung zu ihr selbst, auch
+     * wenn sie gerade gewählt ist.
+     */
+    protected function requestedDatabase(SchemaChangeRequest $request): ?string
+    {
+        if ($request instanceof SchemaRequest && $request->operation() === 'drop-database') {
+            return null;
+        }
+
+        return parent::requestedDatabase($request);
     }
 
     private function createdMessage(DatabaseDriver $driver, string $name): string
