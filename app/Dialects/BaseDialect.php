@@ -74,6 +74,15 @@ abstract class BaseDialect implements Dialect
     }
 
     /**
+     * PostgreSQL und SQLite: `ANALYZE schema.tabelle` — Fehler kommen als Ausnahme.
+     */
+    public function analyze(Connection $connection, string $schema, string $table): void
+    {
+        // Gequoteter Name der Tabelle aus dem Katalog, kein Wert der Person.
+        $connection->statement('analyze '.$connection->getQueryGrammar()->wrap($schema.'.'.$table));
+    }
+
+    /**
      * Geschätzte Zeilenzahl je Tabelle aus der Statistik des Servers — nie ein count(*) über grosse Tabellen.
      *
      * @return array<string, int>

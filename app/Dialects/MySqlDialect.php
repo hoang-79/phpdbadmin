@@ -15,6 +15,7 @@ use Illuminate\Database\QueryException;
 use InvalidArgumentException;
 use PDO;
 use Pdo\Mysql;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -560,6 +561,21 @@ class MySqlDialect extends BaseDialect
         }
 
         return $values;
+    }
+
+    /**
+     * `ANALYZE TABLE` meldet Fehler als Ergebniszeile statt als Ausnahme — deshalb lesen und prüfen. MySQL 8 aktualisiert
+     * dabei auch die zwischengespeicherte Zeilenzahl in information_schema (sonst bis zu 24 Stunden alt).
+     */
+    public function analyze(Connection $connection, string $schema, string $table): void
+    {
+        foreach ($connection->select('analyze table '.$connection->getQueryGrammar()->wrap($schema.'.'.$table)) as $row) {
+            $values = array_change_key_case((array) $row);
+
+            if (strtolower((string) ($values['msg_type'] ?? '')) === 'error') {
+                throw new RuntimeException((string) ($values['msg_text'] ?? 'ANALYZE TABLE'));
+            }
+        }
     }
 
     protected function rowEstimates(Connection $connection, string $schema): array

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import {
     ClipboardCopy,
     Columns3,
+    Download,
     Eye,
     Plus,
     RotateCcw,
@@ -37,6 +38,7 @@ import { formatTime } from '@/lib/format';
 import { titlePrefix } from '@/lib/environment';
 import { formatSort, parseSort, toggleSort } from '@/lib/grid';
 import { formatNumber, t, tc } from '@/lib/i18n';
+import { transfersHref } from '@/lib/transfers';
 import {
     countUrl,
     dataHref,
@@ -484,6 +486,17 @@ function stepRow(step: number): void {
     <div class="flex h-full min-h-0 flex-col">
         <ObjectHeader :workspace="workspace" :object="object" active="data">
             <template #actions>
+                <Button size="sm" variant="outline" as-child>
+                    <Link
+                        :href="
+                            transfersHref(workspace, {
+                                schema: workspace.schema,
+                                table: object.name,
+                            })
+                        "
+                        ><Download />{{ t('Exportieren') }}</Link
+                    >
+                </Button>
                 <Button
                     v-if="editing.allowed"
                     size="sm"

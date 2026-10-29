@@ -40,7 +40,9 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
-            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
+            // Länger als der längste Auftrag (Export/Import: höchstens 3600 s) — sonst gäbe die Warteschlange einen
+            // laufenden Auftrag einem zweiten Worker (B-07).
+            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 3660),
             'after_commit' => false,
         ],
 

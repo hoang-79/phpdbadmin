@@ -4,3 +4,4 @@ export * from './connections';
 export * from './workspace';
 export * from './server';
 export * from './admin';
+export * from './transfers';

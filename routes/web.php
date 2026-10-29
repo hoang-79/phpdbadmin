@@ -12,10 +12,12 @@ use App\Http\Controllers\Connections\SharingController;
 use App\Http\Controllers\Connections\TestConnectionController;
 use App\Http\Controllers\PaletteController;
 use App\Http\Controllers\Workspace\ConnectionPasswordController;
+use App\Http\Controllers\Workspace\ImportController;
 use App\Http\Controllers\Workspace\ObjectController;
 use App\Http\Controllers\Workspace\RowChangeController;
 use App\Http\Controllers\Workspace\Server;
 use App\Http\Controllers\Workspace\SqlController;
+use App\Http\Controllers\Workspace\TransferController;
 use App\Http\Controllers\Workspace\WorkspaceController;
 use App\Http\Controllers\Workspace\WriteUnlockController;
 use Illuminate\Support\Facades\Route;
@@ -82,6 +84,20 @@ Route::middleware('auth')->group(function () {
         Route::get('server/maintenance', [Server\MaintenanceController::class, 'index'])->name('workspace.server.maintenance');
         Route::post('server/maintenance/preview', [Server\MaintenanceController::class, 'preview'])->name('workspace.server.maintenance.preview');
         Route::post('server/maintenance', [Server\MaintenanceController::class, 'run'])->name('workspace.server.maintenance.run');
+
+        // Export und Import (E-01, E-02, E-06, B-07, Wireframe 11). Aufträge sieht nur das eigene Konto.
+        Route::prefix('transfers')->name('workspace.transfers.')->group(function () {
+            Route::get('/', [TransferController::class, 'index'])->name('index');
+            Route::get('status', [TransferController::class, 'status'])->name('status');
+            Route::post('export', [TransferController::class, 'export'])->name('export');
+            Route::post('analyze', [TransferController::class, 'analyze'])->name('analyze');
+            Route::post('import', [ImportController::class, 'store'])->name('import');
+            Route::get('{transfer}', [ImportController::class, 'edit'])->whereUlid('transfer')->name('edit');
+            Route::patch('{transfer}', [ImportController::class, 'update'])->whereUlid('transfer')->name('update');
+            Route::post('{transfer}/run', [ImportController::class, 'run'])->whereUlid('transfer')->name('run');
+            Route::post('{transfer}/cancel', [TransferController::class, 'cancel'])->whereUlid('transfer')->name('cancel');
+            Route::get('{transfer}/download', [TransferController::class, 'download'])->whereUlid('transfer')->name('download');
+        });
     });
 
     // Befehlspalette ⌘K (O-02): Suchquelle für das Wechseln der Verbindung.

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import {
+    ArrowDownUp,
     ChevronDown,
     Lock,
     LockOpen,
@@ -19,6 +20,7 @@ import { t } from '@/lib/i18n';
 import { home } from '@/routes';
 import { edit } from '@/routes/connections';
 import { server } from '@/routes/workspace';
+import { index as transfers } from '@/routes/workspace/transfers';
 import type { Workspace } from '@/types';
 
 /**
@@ -125,6 +127,13 @@ const short = { local: 'LOKAL', test: 'TEST', production: 'PROD' };
             <DropdownMenuItem as-child>
                 <Link :href="server(connection.id)" class="gap-2"
                     ><Server class="size-4" />{{ t('Server') }}</Link
+                >
+            </DropdownMenuItem>
+            <DropdownMenuItem as-child>
+                <Link :href="transfers(connection.id)" class="gap-2"
+                    ><ArrowDownUp class="size-4" />{{
+                        t('Export und Import')
+                    }}</Link
                 >
             </DropdownMenuItem>
             <DropdownMenuItem as-child>

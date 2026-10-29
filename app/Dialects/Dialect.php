@@ -279,4 +279,10 @@ interface Dialect
      * @return list<MaintenanceResult>
      */
     public function runMaintenance(Connection $connection, PlannedStatement $statement): array;
+
+    /**
+     * Statistik einer Tabelle aktualisieren (E-06): nach eigenen Importen und auf Knopfdruck — ohne sie schätzen die
+     * Server die Zeilenzahl falsch und sortieren MySQL und MariaDB über einen Index hundertmal langsamer (F-3).
+     */
+    public function analyze(Connection $connection, string $schema, string $table): void;
 }
