@@ -71,3 +71,48 @@ export type AdminInvitation = {
     acceptedAt: string | null;
     state: 'open' | 'accepted' | 'expired';
 };
+
+export type AuditResult = 'ok' | 'rejected' | 'error' | 'read_only';
+
+/** Eine Zeile im Protokoll (B-04) — Werte stehen nie darin, nur Platzhalter. */
+export type AuditRow = {
+    id: number;
+    createdAt: string;
+    account: string;
+    connection: {
+        name: string;
+        environment: ConnectionEnvironment | null;
+        readOnly: boolean;
+        removed: boolean;
+    } | null;
+    action: string;
+    label: string;
+    sql: string | null;
+    detail: string | null;
+    affectedRows: number | null;
+    result: AuditResult;
+};
+
+export type AuditFilters = {
+    account: number | null;
+    connection: string | null;
+    category: string | null;
+    period: string;
+    search: string | null;
+};
+
+export type FilterOption<T = string> = {
+    value: T;
+    label: string;
+};
+
+export type AuditPage = {
+    data: AuditRow[];
+    total: number;
+    from: number | null;
+    to: number | null;
+    currentPage: number;
+    lastPage: number;
+    previousUrl: string | null;
+    nextUrl: string | null;
+};

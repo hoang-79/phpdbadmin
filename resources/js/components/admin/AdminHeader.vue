@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { Send, Users } from '@lucide/vue';
+import { FileText, Send, Users } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import InviteDialog from '@/components/admin/InviteDialog.vue';
 import { Button } from '@/components/ui/button';
 import { formatNumber, t } from '@/lib/i18n';
 import { index as accounts } from '@/routes/admin/accounts';
+import { index as audit } from '@/routes/admin/audit';
 import { index as invitations } from '@/routes/admin/invitations';
 import type { AdminTabs } from '@/types';
 
-/** Kopf der Verwaltung (Wireframe 14): Titel, «Person einladen», Reiter Konten · Einladungen. */
+/** Kopf der Verwaltung (Wireframe 14): Titel, «Person einladen», Reiter Konten · Einladungen · Protokoll. */
 const props = defineProps<{
     tabs: AdminTabs;
-    active: 'accounts' | 'invitations';
+    active: 'accounts' | 'invitations' | 'audit';
 }>();
 
 const inviting = ref(false);
@@ -31,6 +32,13 @@ const links = computed(() => [
         label: t('Einladungen'),
         count: props.tabs.invitations,
         icon: Send,
+    },
+    {
+        key: 'audit',
+        href: audit(),
+        label: t('Protokoll'),
+        count: null,
+        icon: FileText,
     },
 ]);
 </script>

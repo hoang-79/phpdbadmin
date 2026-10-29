@@ -66,7 +66,7 @@ class ConnectionController extends Controller
         $connection->save();
 
         $this->recordVersion($connection, $tester);
-        $this->audit->record('connection.created', $user, $connection->id, ['name' => $connection->name, 'driver' => $connection->driver->value]);
+        $this->audit->record('connection.created', $user, context: ['driver' => $connection->driver->value], connection: $connection);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Verbindung «:name» gespeichert.', ['name' => $connection->name])]);
 
@@ -115,7 +115,7 @@ class ConnectionController extends Controller
         $connection->update($attributes);
 
         $this->recordVersion($connection, $tester);
-        $this->audit->record('connection.updated', $user, $connection->id, ['name' => $connection->name]);
+        $this->audit->record('connection.updated', $user, connection: $connection);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Verbindung «:name» gespeichert.', ['name' => $connection->name])]);
 
@@ -128,7 +128,7 @@ class ConnectionController extends Controller
         Gate::authorize('manage', $connection);
 
         $connection->delete();
-        $this->audit->record('connection.deleted', $user, $connection->id, ['name' => $connection->name]);
+        $this->audit->record('connection.deleted', $user, connection: $connection);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Verbindung «:name» entfernt.', ['name' => $connection->name])]);
 

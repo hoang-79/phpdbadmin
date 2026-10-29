@@ -4,6 +4,7 @@ use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Account\LocaleController;
 use App\Http\Controllers\Account\OnboardingController;
 use App\Http\Controllers\Admin\AccountController as AdminAccountController;
+use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\InvitationController as AdminInvitationController;
 use App\Http\Controllers\Connections\ConnectionController;
 use App\Http\Controllers\Connections\SharingController;
@@ -40,7 +41,7 @@ Route::middleware('auth')->group(function () {
             ->where(['schema' => '[^/]+', 'object' => '[^/]+'])->name('workspace.object.structure');
     });
 
-    // Verwaltung (Wireframe 14): Konten, Einladungen, Rechte — nur Administratoren (403 für alle anderen).
+    // Verwaltung (Wireframe 14): Konten, Einladungen, Rechte, Protokoll — nur Administratoren (403 für alle anderen).
     Route::middleware('can:administrate')->prefix('admin')->name('admin.')->group(function () {
         Route::get('accounts', [AdminAccountController::class, 'index'])->name('accounts.index');
         Route::get('accounts/{account}', [AdminAccountController::class, 'show'])->name('accounts.show');
@@ -54,6 +55,10 @@ Route::middleware('auth')->group(function () {
         Route::post('invitations', [AdminInvitationController::class, 'store'])->middleware('throttle:invitations')->name('invitations.store');
         Route::post('invitations/{invitation}/resend', [AdminInvitationController::class, 'resend'])->middleware('throttle:invitations')->name('invitations.resend');
         Route::delete('invitations/{invitation}', [AdminInvitationController::class, 'destroy'])->name('invitations.destroy');
+
+        // Protokoll (B-04): Filter, Seiten, Export als CSV.
+        Route::get('audit', [AuditController::class, 'index'])->name('audit.index');
+        Route::get('audit/export', [AuditController::class, 'export'])->name('audit.export');
     });
 
     // Kein Profil (A-05): das Konto zeigt Sicherheit und Darstellung.

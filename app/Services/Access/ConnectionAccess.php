@@ -36,7 +36,7 @@ final class ConnectionAccess
         });
 
         $connection->unsetRelation('memberships');
-        $this->audit->record($shared ? 'connection.shared' : 'connection.unshared', $actor, $connection->id, ['name' => $connection->name]);
+        $this->audit->record($shared ? 'connection.shared' : 'connection.unshared', $actor, connection: $connection);
 
         return true;
     }
@@ -71,12 +71,10 @@ final class ConnectionAccess
 
         $connection->unsetRelation('memberships');
         $this->audit->record('connection.permission', $actor, $account->email, [
-            'name' => $connection->name,
-            'connection' => $connection->id,
             'account' => $account->name,
             'from' => $current?->value,
             'to' => $permission?->value,
-        ]);
+        ], connection: $connection);
 
         return true;
     }

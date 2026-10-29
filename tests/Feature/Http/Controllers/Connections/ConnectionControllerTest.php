@@ -115,7 +115,7 @@ class ConnectionControllerTest extends TestCase
         $raw = (string) DB::table('connections')->value('password');
         $this->assertNotSame('Geheim-Speichern-2', $raw);
         $this->assertStringNotContainsString('Geheim-Speichern-2', $raw);
-        $this->assertDatabaseHas('audit_log', ['action' => 'connection.created', 'target' => $connection->id]);
+        $this->assertDatabaseHas('audit_log', ['action' => 'connection.created', 'connection_id' => $connection->id]);
     }
 
     public function test_does_not_store_password_when_asked_not_to(): void
@@ -304,7 +304,7 @@ class ConnectionControllerTest extends TestCase
         $this->actingAs($user)->delete(route('connections.destroy', $connection))->assertRedirect(route('home'));
 
         $this->assertModelMissing($connection);
-        $this->assertDatabaseHas('audit_log', ['action' => 'connection.deleted', 'target' => $connection->id]);
+        $this->assertDatabaseHas('audit_log', ['action' => 'connection.deleted', 'connection_id' => $connection->id]);
     }
 
     public function test_guest_is_sent_to_login(): void

@@ -38,7 +38,7 @@ class SharingControllerTest extends TestCase
 
         $this->assertTrue($connection->refresh()->shared);
         $this->assertSame(ConnectionPermission::Write, $connection->permissionFor($this->member));
-        $this->assertDatabaseHas('audit_log', ['action' => 'connection.shared', 'user_id' => $this->admin->id, 'target' => $connection->id]);
+        $this->assertDatabaseHas('audit_log', ['action' => 'connection.shared', 'user_id' => $this->admin->id, 'connection_id' => $connection->id]);
         $this->assertDatabaseHas('audit_log', ['action' => 'connection.permission', 'target' => $this->member->email]);
         // Sichtbar (403 statt 404), aber mit «schreiben» nicht zu bearbeiten.
         $this->actingAs($this->member)->get(route('connections.edit', $connection))->assertForbidden();
@@ -83,7 +83,7 @@ class SharingControllerTest extends TestCase
 
         $this->assertFalse($connection->refresh()->shared);
         $this->assertDatabaseMissing('connection_user', ['connection_id' => $connection->id, 'user_id' => $this->member->id]);
-        $this->assertDatabaseHas('audit_log', ['action' => 'connection.unshared', 'target' => $connection->id]);
+        $this->assertDatabaseHas('audit_log', ['action' => 'connection.unshared', 'connection_id' => $connection->id]);
         $this->actingAs($this->member)->get(route('workspace', $connection))->assertNotFound();
         $this->actingAs($this->admin)->get(route('connections.edit', $connection))->assertNotFound();
         $this->actingAs($owner)->get(route('connections.edit', $connection))->assertOk();
