@@ -4,6 +4,7 @@ namespace App\Services\Transfer;
 
 use App\Connections\ConnectionNotAllowed;
 use App\Connections\PasswordRequired;
+use App\Connections\ReadOnlyConnection;
 use App\Connections\TargetConnections;
 use App\Enums\DatabaseDriver;
 use App\Enums\TransferFormat;
@@ -14,8 +15,10 @@ use App\Jobs\RunImport;
 use App\Models\DatabaseConnection;
 use App\Models\Transfer;
 use App\Services\Audit\AuditLog;
+use App\Services\Audit\Masking;
 use App\Support\QueueHeartbeat;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Gate;
 use PDOException;
 use Throwable;
 
@@ -147,6 +150,7 @@ final class TransferRunner
         $target = null;
 
         try {
+            $this->authorize($transfer, $connection);
             $target = $this->targets->open($connection, $transfer->openDatabase());
             $dialect->setStatementTimeout($target, (int) config('phpdbadmin.transfers.statement_timeout_ms', 600000));
             $progress = new TransferProgress($transfer);
@@ -254,6 +258,27 @@ final class TransferRunner
     }
 
     /**
+     * Beim Einreihen geprüft, beim Ausführen noch einmal (T-06): Recht entzogen, Konto gesperrt oder Verbindung inzwischen
+     * schreibgeschützt — dann läuft nichts.
+     *
+     * @throws TransferFailed
+     * @throws ReadOnlyConnection
+     */
+    private function authorize(Transfer $transfer, DatabaseConnection $connection): void
+    {
+        $isImport = $transfer->kind === TransferKind::Import;
+        $user = $transfer->user;
+
+        if ($user->disabled_at !== null || ! Gate::forUser($user)->allows($isImport ? 'write' : 'view', $connection)) {
+            throw new TransferFailed(__('Das Konto darf das auf dieser Verbindung nicht mehr.', locale: 'de'));
+        }
+
+        if ($isImport && ! $transfer->dry_run) {
+            $this->targets->assertWritable($connection);
+        }
+    }
+
+    /**
      * Fehler für die Oberfläche — ohne SQL mit eingesetzten Werten (T-11).
      *
      * @return TransferMessage
@@ -262,6 +287,7 @@ final class TransferRunner
     {
         return match (true) {
             $exception instanceof TransferFailed => $exception->toMessage(),
+            $exception instanceof ReadOnlyConnection => ['text' => __('Die Verbindung ist inzwischen schreibgeschützt — es wurde nichts importiert.', locale: 'de')],
             $exception instanceof PasswordRequired => ['text' => __('Diese Verbindung speichert ihr Passwort nicht, und im Hintergrund gibt es keines. Starten Sie den Auftrag erneut, nachdem Sie das Passwort eingegeben haben.', locale: 'de')],
             $exception instanceof ConnectionNotAllowed => ['text' => __('Die Verbindung liess sich nicht öffnen.', locale: 'de'), 'detail' => $exception->problem->kind->value],
             $exception instanceof QueryException => ['text' => __('Die Datenbank hat den Auftrag abgebrochen.', locale: 'de'), 'detail' => $this->serverMessage($exception->getPrevious() ?? $exception)],
@@ -272,12 +298,14 @@ final class TransferRunner
 
     private function serverMessage(Throwable $exception): string
     {
-        return mb_strimwidth($exception->getMessage(), 0, 500, '…');
+        // Servermeldungen können Werte enthalten (T-11) — maskiert wie im Protokoll.
+        return mb_strimwidth(Masking::exception($exception), 0, 500, '…');
     }
 
     private function isExpected(Throwable $exception): bool
     {
         return $exception instanceof TransferFailed
+            || $exception instanceof ReadOnlyConnection
             || $exception instanceof PasswordRequired
             || $exception instanceof ConnectionNotAllowed
             || $exception instanceof QueryException

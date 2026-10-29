@@ -2,6 +2,10 @@
 
 namespace Tests\Feature\Http\Controllers\Connections;
 
+use App\Connections\ConnectionFactory;
+use App\Connections\ConnectionNotAllowed;
+use App\Connections\ConnectionProblemKind;
+use App\Connections\ConnectionSettings;
 use App\Models\DatabaseConnection;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -76,6 +80,28 @@ class TestConnectionControllerTest extends TestCase
             ->postJson(route('connections.test'), ['driver' => 'pgsql', 'host' => '10.255.255.1', 'username' => 'x', 'database' => 'x'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['host' => 'Dieser Host ist in dieser Installation nicht erlaubt.']);
+    }
+
+    public function test_database_name_cannot_smuggle_a_second_host_into_the_dsn(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->postJson(route('connections.test'), ['driver' => 'pgsql', 'host' => '127.0.0.1', 'username' => 'x', 'database' => "postgres' host='10.0.0.5"])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['database' => 'Datenbanknamen mit ; \' " = \\ oder Steuerzeichen nimmt phpdbadmin nicht an.']);
+    }
+
+    public function test_stored_connection_with_such_a_name_never_connects(): void
+    {
+        $connection = DatabaseConnection::factory()->for(User::factory()->create(), 'owner')->create([
+            'driver' => 'mysql', 'host' => '127.0.0.1', 'port' => 3307, 'database' => 'shop;host=10.0.0.5;port=3306', 'username' => 'root', 'password' => '',
+        ]);
+
+        try {
+            app(ConnectionFactory::class)->make(ConnectionSettings::fromConnection($connection));
+            $this->fail('Verbunden trotz eingeschleustem Host');
+        } catch (ConnectionNotAllowed $exception) {
+            $this->assertSame(ConnectionProblemKind::DatabaseNotAllowed, $exception->problem->kind);
+        }
     }
 
     public function test_saved_connection_records_version_after_successful_test(): void

@@ -33,7 +33,9 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Keine Route «storage/{path}» (N-02): hier liegen Exporte, Importdateien und der Einrichtungsschlüssel;
+            // heruntergeladen wird nur über die geprüften Endpunkte.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

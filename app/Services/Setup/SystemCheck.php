@@ -2,6 +2,8 @@
 
 namespace App\Services\Setup;
 
+use App\Connections\ConnectionNotAllowed;
+use App\Connections\HostPolicy;
 use App\Support\QueueHeartbeat;
 use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Support\Facades\Cache;
@@ -48,6 +50,8 @@ class SystemCheck
             $this->frontendBuild(),
             $this->writableFolders(),
             $this->secureContext(),
+            $this->secureCookie(),
+            $this->appDatabaseExposure(),
             $this->mail(),
             $this->worker(),
             $this->scheduler(),
@@ -169,6 +173,40 @@ class SystemCheck
         }
 
         return CheckResult::warn('Adresse '.$url.' ohne HTTPS', 'Passkeys gehen nur über HTTPS (oder localhost). APP_URL auf https:// setzen und ein Zertifikat einrichten.');
+    }
+
+    private function secureCookie(): CheckResult
+    {
+        if (app()->isProduction() && str_starts_with((string) config('app.url'), 'https://') && ! config('session.secure')) {
+            return CheckResult::warn('Sitzungs-Cookie auch über HTTP', 'SESSION_SECURE_COOKIE=true setzen — dann geht das Cookie nur über HTTPS.');
+        }
+
+        return CheckResult::ok('Sitzungs-Cookie '.(config('session.secure') ? 'nur über HTTPS' : 'Vorgabe'));
+    }
+
+    /**
+     * Liegt die App-Datenbank auf einem Server, den Zielverbindungen erreichen dürfen (T-17)? Die Datenbank selbst ist
+     * gesperrt — bei MySQL/MariaDB liest ein Konto mit Rechten aber auch über «datenbank.tabelle».
+     */
+    private function appDatabaseExposure(): CheckResult
+    {
+        $default = (string) config('database.default');
+        $driver = (string) config("database.connections.{$default}.driver");
+
+        if ($driver === 'sqlite') {
+            return CheckResult::ok('App-Datenbank als Datei (SQLite), für Verbindungen gesperrt');
+        }
+
+        try {
+            app(HostPolicy::class)->resolveHost((string) config("database.connections.{$default}.host"));
+        } catch (ConnectionNotAllowed) {
+            return CheckResult::ok('App-Datenbank auf einem Server ausserhalb der erlaubten Hosts');
+        }
+
+        return CheckResult::warn(
+            'App-Datenbank auf einem erlaubten Server',
+            'Verbindungen erreichen diesen Server. Die App-Datenbank ist gesperrt, aber ein Datenbankkonto mit Rechten auf sie könnte sie über vollständige Namen lesen. Eigenes Konto mit Passwort für die App verwenden, das niemand für Zielverbindungen kennt — oder SQLite.',
+        );
     }
 
     private function mail(): CheckResult

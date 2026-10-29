@@ -106,10 +106,17 @@ final class QueryRunner
      */
     public function cancel(DatabaseConnection $connection, string $runId, int $userId): bool
     {
-        $this->cache->put(self::CANCEL_KEY.$runId, true, now()->addMinutes(30));
         $run = $this->cache->get(self::RUN_KEY.$runId);
 
-        if (! is_array($run) || $run['connection'] !== $connection->id || $run['user'] !== $userId || ! ctype_digit((string) $run['session'])) {
+        // Ein fremder Lauf bleibt unberührt (N-02) — erst prüfen, dann den Merker setzen. Ist der Lauf noch nicht
+        // eingetragen (Abbrechen gleich nach dem Start), gilt der Merker für den eigenen, der gleich beginnt.
+        if (is_array($run) && ($run['connection'] !== $connection->id || $run['user'] !== $userId)) {
+            return false;
+        }
+
+        $this->cache->put(self::CANCEL_KEY.$runId, true, now()->addMinutes(30));
+
+        if (! is_array($run) || ! ctype_digit((string) $run['session'])) {
             return $connection->driver === DatabaseDriver::Sqlite;
         }
 

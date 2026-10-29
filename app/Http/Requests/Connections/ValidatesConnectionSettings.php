@@ -31,7 +31,7 @@ trait ValidatesConnectionSettings
             'port' => ['exclude_if:driver,sqlite', 'nullable', 'integer', 'between:1,65535'],
             // «Alle Datenbanken anzeigen»: kein Datenbankname — sonst ist er Pflicht.
             'all_databases' => ['boolean'],
-            'database' => ['exclude_if:driver,sqlite', Rule::excludeIf(fn (): bool => $this->boolean('all_databases')), 'required', 'string', 'max:255'],
+            'database' => ['exclude_if:driver,sqlite', Rule::excludeIf(fn (): bool => $this->boolean('all_databases')), 'required', 'string', 'max:255', $this->safeDatabaseName(...)],
             'username' => ['exclude_if:driver,sqlite', 'required', 'string', 'max:255'],
             'password' => ['exclude_if:driver,sqlite', 'nullable', 'string', 'max:1024'],
             'sslmode' => ['exclude_if:driver,sqlite', 'nullable', Rule::in($sslModes)],
@@ -65,6 +65,14 @@ trait ValidatesConnectionSettings
             $fail($exception->problem->kind === ConnectionProblemKind::HostUnknown
                 ? __('Dieser Name lässt sich nicht auflösen.')
                 : __('Dieser Host ist in dieser Installation nicht erlaubt.'));
+        }
+    }
+
+    /** Gegen DSN-Injektion (T-05): kein «;», keine Anführungszeichen, kein «=», kein Backslash, keine Steuerzeichen. */
+    private function safeDatabaseName(string $attribute, mixed $value, Closure $fail): void
+    {
+        if (! HostPolicy::isSafeDatabaseName((string) $value)) {
+            $fail(__('Datenbanknamen mit ; \' " = \\ oder Steuerzeichen nimmt phpdbadmin nicht an.'));
         }
     }
 

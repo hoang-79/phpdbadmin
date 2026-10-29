@@ -177,6 +177,29 @@ class LoginControllerTest extends TestCase
         Notification::assertSentTimes(LoginCodeNotification::class, 5);
     }
 
+    /**
+     * T-01: Jeder Versuch von einer anderen IP (und damit mit einem anderen Schlüssel für die Grenze je Sitzung) — wie
+     * ein Angreifer, der Sitzung und Adresse wechselt. Die Grenze je Mail-Adresse hält trotzdem.
+     */
+    public function test_code_guesses_are_throttled_per_address_even_with_a_new_session_each_time(): void
+    {
+        $user = User::factory()->create();
+        $this->post(route('login.code'), ['email' => $user->email]);
+        $wrong = $this->sentCode($user) === '000000' ? '111111' : '000000';
+
+        for ($attempt = 1; $attempt <= 10; $attempt++) {
+            $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.'.$attempt])
+                ->post(route('login.code.verify'), ['code' => $wrong])
+                ->assertSessionHasErrors(['code' => 'Der Code stimmt nicht oder ist abgelaufen. Fordern Sie bei Bedarf einen neuen an.']);
+        }
+
+        $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.99'])
+            ->post(route('login.code.verify'), ['code' => $this->sentCode($user)])
+            ->assertSessionHasErrors('code');
+        $this->assertStringStartsWith('Zu viele Versuche', (string) session('errors')?->first('code'));
+        $this->assertGuest();
+    }
+
     public function test_resend_waits_before_sending_new_code(): void
     {
         $user = User::factory()->create();

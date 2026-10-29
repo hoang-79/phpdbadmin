@@ -45,6 +45,9 @@ class RowChangeController extends WorkspaceController
 
     public function preview(RowChangesRequest $request, DatabaseConnection $connection, string $schema, string $object): JsonResponse
     {
+        // Auch die Vorschau nur mit Recht «schreiben»: sie zählt Kaskaden über Abfragen an der Zieldatenbank.
+        Gate::authorize('write', $connection);
+
         return $this->answer($connection, function () use ($request, $connection, $schema, $object): JsonResponse {
             return response()->json($this->editor->preview($connection, $this->database($request, $connection), $schema, $object, $request->changes()));
         });

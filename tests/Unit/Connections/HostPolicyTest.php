@@ -5,6 +5,7 @@ namespace Tests\Unit\Connections;
 use App\Connections\ConnectionNotAllowed;
 use App\Connections\ConnectionProblemKind;
 use App\Connections\HostPolicy;
+use App\Enums\DatabaseDriver;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -141,5 +142,60 @@ class HostPolicyTest extends TestCase
         } catch (ConnectionNotAllowed $exception) {
             $this->assertSame($kind, $exception->problem->kind);
         }
+    }
+
+    /**
+     * @return array<string, array{0: string}>
+     */
+    public static function injectedDatabaseNames(): array
+    {
+        return [
+            'PostgreSQL: zweiter Host' => ["postgres' host='10.0.0.5' port='5432"],
+            'MySQL: zweiter Host' => ['shop;host=10.0.0.5;port=3306'],
+            'Gleichheitszeichen' => ['sslmode=disable'],
+            'Doppeltes Anführungszeichen' => ['a"b'],
+            'Backslash' => ['a\\b'],
+            'Nullbyte' => ["a\x00b"],
+            'Zeilenumbruch' => ["a\nb"],
+        ];
+    }
+
+    #[DataProvider('injectedDatabaseNames')]
+    public function test_database_names_that_would_change_the_dsn_are_refused(string $database): void
+    {
+        $this->assertFalse(HostPolicy::isSafeDatabaseName($database));
+
+        try {
+            (new HostPolicy(['192.0.2.10'], []))->guardDatabase(DatabaseDriver::Postgres, '192.0.2.10', 5432, $database);
+            $this->fail('Name wurde erlaubt: '.$database);
+        } catch (ConnectionNotAllowed $exception) {
+            $this->assertSame(ConnectionProblemKind::DatabaseNotAllowed, $exception->problem->kind);
+        }
+    }
+
+    public function test_ordinary_database_names_pass(): void
+    {
+        foreach (['shop', 'über-daten 2026', 'kunden_alt', 'Lager.2025'] as $name) {
+            $this->assertTrue(HostPolicy::isSafeDatabaseName($name), $name);
+        }
+    }
+
+    public function test_the_app_database_on_a_server_is_never_a_target(): void
+    {
+        $policy = new HostPolicy(['127.0.0.1'], [], appServer: ['driver' => DatabaseDriver::MariaDb, 'host' => 'localhost', 'port' => 3306, 'database' => 'phpdbadmin']);
+
+        try {
+            // Über den MySQL-Treiber, mit anderer Schreibweise des Namens — derselbe Server.
+            $policy->guardDatabase(DatabaseDriver::MySql, '127.0.0.1', null, 'PHPDBADMIN');
+            $this->fail('App-Datenbank wurde erlaubt');
+        } catch (ConnectionNotAllowed $exception) {
+            $this->assertTrue($exception->problem->isAppDatabase());
+        }
+
+        // Andere Datenbank, anderer Port, anderer Treiber: erlaubt.
+        $policy->guardDatabase(DatabaseDriver::MySql, '127.0.0.1', 3306, 'shop');
+        $policy->guardDatabase(DatabaseDriver::MySql, '127.0.0.1', 3307, 'phpdbadmin');
+        $policy->guardDatabase(DatabaseDriver::Postgres, '127.0.0.1', 3306, 'phpdbadmin');
+        $this->addToAssertionCount(3);
     }
 }

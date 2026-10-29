@@ -180,6 +180,18 @@ class QueryRunnerTest extends TestCase
         $this->assertSame('cancelled', $results[0]['status']);
     }
 
+    public function test_a_run_of_another_account_cannot_be_cancelled(): void
+    {
+        $connection = $this->connectionWithNumbers(DatabaseDriver::Sqlite, 1);
+        Cache::put('sql-lauf:fremd', ['connection' => $connection->id, 'database' => null, 'user' => $connection->owner_id + 1000, 'session' => null]);
+
+        $this->assertFalse(app(QueryRunner::class)->cancel($connection, 'fremd', $connection->owner_id));
+        $this->assertFalse(Cache::has('sql-abbruch:fremd'));
+
+        $this->assertTrue(app(QueryRunner::class)->cancel($connection, 'eigener-start', $connection->owner_id));
+        $this->assertTrue(Cache::has('sql-abbruch:eigener-start'), 'Abbrechen gleich nach dem Start setzt den Merker');
+    }
+
     private function connectionWithNumbers(DatabaseDriver $driver, int $count): DatabaseConnection
     {
         $settings = $this->scratchSettings($driver, $this->folder);

@@ -2,6 +2,7 @@
 
 namespace App\Connections;
 
+use App\Enums\DatabaseDriver;
 use Symfony\Component\HttpFoundation\IpUtils;
 
 /**
@@ -12,31 +13,114 @@ use Symfony\Component\HttpFoundation\IpUtils;
  * zweites Auflösen könnte eine andere Adresse liefern (DNS-Rebinding).
  *
  * SQLite: Der Pfad wird mit realpath() aufgelöst (gegen «..» und Verknüpfungen nach draussen) und muss in einem
- * erlaubten Ordner liegen. Die App-Datenbank von phpdbadmin selbst ist nie erreichbar.
+ * erlaubten Ordner liegen. Die App-Datenbank von phpdbadmin selbst ist nie erreichbar (T-17) — als Datei wie auf einem
+ * Server (gleiche Adresse, gleicher Port, gleicher Datenbankname).
+ *
+ * Datenbanknamen: PDO baut den DSN als Text («host=…;dbname=…»). Ein Name mit «;», Anführungszeichen oder «=» hängt
+ * eigene Parameter an — etwa einen zweiten Host, der die geprüfte Adresse überschreibt (SSRF). Solche Namen gelten nie.
  */
 final class HostPolicy
 {
+    /** Zeichen, mit denen ein Datenbankname den DSN verändern könnte. */
+    private const string UNSAFE_DATABASE_NAME = '/[;\'"=\\\\\x00-\x1F\x7F]/';
+
     /**
      * @param  list<string>  $allowedHosts
      * @param  list<string>  $sqliteFolders
+     * @param  array{driver: DatabaseDriver, host: string, port: int, database: string}|null  $appServer
      */
     public function __construct(
         private readonly array $allowedHosts,
         private readonly array $sqliteFolders,
         private readonly ?string $appDatabase = null,
+        private readonly ?array $appServer = null,
     ) {}
 
     public static function fromConfig(): self
     {
-        $appDatabase = config('database.default') === 'sqlite'
-            ? (string) config('database.connections.sqlite.database')
+        $default = (string) config('database.default');
+        $appDriver = DatabaseDriver::tryFrom((string) config("database.connections.{$default}.driver"));
+
+        $appDatabase = $appDriver === DatabaseDriver::Sqlite
+            ? (string) config("database.connections.{$default}.database")
+            : null;
+
+        $appServer = $appDriver !== null && $appDriver->isServer()
+            ? [
+                'driver' => $appDriver,
+                'host' => (string) config("database.connections.{$default}.host"),
+                'port' => (int) (config("database.connections.{$default}.port") ?: $appDriver->defaultPort()),
+                'database' => (string) config("database.connections.{$default}.database"),
+            ]
             : null;
 
         return new self(
             array_values(array_map('strval', (array) config('phpdbadmin.connections.allowed_hosts', []))),
             array_values(array_map('strval', (array) config('phpdbadmin.connections.sqlite_paths', []))),
             $appDatabase,
+            $appServer,
         );
+    }
+
+    public static function isSafeDatabaseName(string $name): bool
+    {
+        // Nur ein sicheres «kein Treffer» gilt — scheitert das Muster (false), ist der Name nicht sicher.
+        return preg_match(self::UNSAFE_DATABASE_NAME, $name) === 0;
+    }
+
+    /**
+     * Datenbankname einer Server-Verbindung: nichts, was den DSN verändert, und nie die App-Datenbank auf demselben
+     * Server (gleiche Adresse, gleicher Port, gleiche Treiberfamilie).
+     *
+     * @param  string  $address  die geprüfte Adresse aus resolveHost()
+     *
+     * @throws ConnectionNotAllowed
+     */
+    public function guardDatabase(DatabaseDriver $driver, string $address, ?int $port, ?string $database): void
+    {
+        if ($database === null || $database === '') {
+            return;
+        }
+
+        if (! self::isSafeDatabaseName($database)) {
+            throw new ConnectionNotAllowed(ConnectionProblem::of(ConnectionProblemKind::DatabaseNotAllowed));
+        }
+
+        if ($this->appServer === null || $this->family($driver) !== $this->family($this->appServer['driver'])) {
+            return;
+        }
+
+        $samePort = ($port ?: $driver->defaultPort()) === $this->appServer['port'];
+        $sameDatabase = $driver === DatabaseDriver::Postgres
+            ? $database === $this->appServer['database']
+            : strtolower($database) === strtolower($this->appServer['database']);
+
+        if ($samePort && $sameDatabase && in_array($this->loopbackAware($address), $this->appServerAddresses(), true)) {
+            throw new ConnectionNotAllowed(ConnectionProblem::of(ConnectionProblemKind::DatabaseNotAllowed, ConnectionProblem::APP_DATABASE));
+        }
+    }
+
+    /** MySQL und MariaDB sprechen dasselbe Protokoll — ein MariaDB-Server ist auch über «MySQL» erreichbar. */
+    private function family(DatabaseDriver $driver): string
+    {
+        return $driver === DatabaseDriver::Postgres ? 'pgsql' : 'mysql';
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function appServerAddresses(): array
+    {
+        $host = strtolower(trim((string) $this->appServer['host'], '[]'));
+        $addresses = filter_var($host, FILTER_VALIDATE_IP) !== false ? [$host] : $this->lookup($host);
+
+        return array_values(array_unique(array_map($this->loopbackAware(...), $addresses)));
+    }
+
+    /** 127.0.0.1, ::1 und localhost sind derselbe Rechner. */
+    private function loopbackAware(string $address): string
+    {
+        return in_array($address, ['127.0.0.1', '::1', 'localhost'], true) || str_starts_with($address, '127.') ? 'loopback' : $address;
     }
 
     /**

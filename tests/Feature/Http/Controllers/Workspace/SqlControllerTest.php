@@ -74,6 +74,18 @@ class SqlControllerTest extends TestCase
         $this->assertSame(1, QueryHistoryEntry::query()->where('user_id', $this->user->id)->count());
     }
 
+    public function test_history_keeps_no_passwords(): void
+    {
+        $connection = $this->sqliteConnection();
+
+        // SQLite kennt PASSWORD() nicht — die Anweisung scheitert, steht aber im Verlauf.
+        $this->actingAs($this->user)
+            ->postJson(route('workspace.sql.run', $connection), ['sql' => "select password('geheim-4711')", 'mode' => 'all', 'run' => 'lauf-0009'])
+            ->assertOk();
+
+        $this->assertSame('select password(?)', QueryHistoryEntry::query()->where('user_id', $this->user->id)->sole()->sql);
+    }
+
     public function test_dangerous_statements_need_confirmation_and_are_logged_without_values(): void
     {
         $connection = $this->sqliteConnection();

@@ -107,9 +107,14 @@ final class ConnectionFactory
      */
     public function address(ConnectionSettings $settings): string
     {
-        return $settings->driver === DatabaseDriver::Sqlite
-            ? $this->policy->resolveSqlitePath((string) $settings->sqlitePath)
-            : $this->policy->resolveHost((string) $settings->host);
+        if ($settings->driver === DatabaseDriver::Sqlite) {
+            return $this->policy->resolveSqlitePath((string) $settings->sqlitePath);
+        }
+
+        $address = $this->policy->resolveHost((string) $settings->host);
+        $this->policy->guardDatabase($settings->driver, $address, $settings->port, $settings->database);
+
+        return $address;
     }
 
     public function release(Connection $connection): void

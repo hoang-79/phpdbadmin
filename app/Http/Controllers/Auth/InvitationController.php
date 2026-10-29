@@ -37,6 +37,14 @@ class InvitationController extends Controller
     {
         $invitation = Invitation::findByToken($token);
 
+        // Eine Einladung legt ein Konto an — sie meldet nie in ein bestehendes an (N-02): sonst wäre ein alter Link
+        // bis zum Ablauf ein zweiter Weg hinein, ohne Code und ohne Passkey.
+        if ($invitation !== null && User::query()->where('email', $invitation->email)->exists()) {
+            throw ValidationException::withMessages([
+                'name' => __('Zu dieser Adresse gibt es schon ein Konto. Melden Sie sich mit einem Code per Mail an.'),
+            ]);
+        }
+
         $user = $invitation === null ? null : DB::transaction(function () use ($invitation, $request): ?User {
             $claimed = Invitation::query()
                 ->whereKey($invitation->id)
@@ -48,10 +56,11 @@ class InvitationController extends Controller
                 return null;
             }
 
-            return User::query()->firstOrCreate(
-                ['email' => $invitation->email],
-                ['name' => $request->string('name')->trim()->toString(), 'role' => $invitation->role],
-            );
+            return User::query()->create([
+                'email' => $invitation->email,
+                'name' => $request->string('name')->trim()->toString(),
+                'role' => $invitation->role,
+            ]);
         });
 
         if ($user === null || $user->isDisabled()) {

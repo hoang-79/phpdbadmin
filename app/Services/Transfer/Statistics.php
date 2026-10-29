@@ -18,6 +18,10 @@ final class Statistics
     {
         $target = $this->targets->open($connection, $database);
 
+        // Die Sitzung wird gleich wieder beschreibbar — das nur, wenn die Verbindung es jetzt noch ist (T-06): zwischen
+        // Einreihen und Ausführen kann sie schreibgeschützt geworden sein.
+        $this->targets->assertWritable($connection);
+
         if ($connection->driver === DatabaseDriver::MySql || $connection->driver === DatabaseDriver::MariaDb) {
             // Ein früherer Lesezugriff im Wächter lässt die Sitzung schreibgeschützt zurück.
             $target->statement('set session transaction read write');

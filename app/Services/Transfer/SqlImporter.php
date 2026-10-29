@@ -61,6 +61,8 @@ final class SqlImporter
             return $result;
         }
 
+        // Vor dem ersten Schreiben: die Verbindung muss jetzt noch beschreibbar sein (T-06).
+        $this->targets->assertWritable($connection);
         $target = $this->targets->open($connection, $transfer->openDatabase());
         $this->prepare($target, $driver, (string) $transfer->option('schema'));
 

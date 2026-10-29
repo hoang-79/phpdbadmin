@@ -8,7 +8,9 @@ use App\Services\Catalog\Catalog;
 use Closure;
 use Illuminate\Contracts\Session\Session;
 use Illuminate\Database\Connection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Öffnet gespeicherte Verbindungen für die laufende Anfrage (ADR-002): Passwort aus der App-Datenbank oder — bei
@@ -21,6 +23,9 @@ final class TargetConnections
 
     /** @var array<string, Connection> */
     private array $open = [];
+
+    /** @var array<string, bool> Konto darf auf dieser Verbindung nur lesen — einmal je Anfrage geprüft. */
+    private array $readers = [];
 
     public function __construct(
         private readonly ConnectionFactory $factory,
@@ -38,7 +43,9 @@ final class TargetConnections
     {
         $settings = $this->settings($connection, $database);
 
-        $readOnly = $connection->read_only && ! $this->unlock->isActive($connection);
+        // Schreibgeschützt (V-04) — oder das angemeldete Konto darf hier nur lesen (A-07): dann ist auch die Sitzung nur
+        // lesend, als zweite Schicht hinter der Policy. Ohne angemeldetes Konto (Worker) hat der Auftrag selbst geprüft.
+        $readOnly = ($connection->read_only && ! $this->unlock->isActive($connection)) || $this->onlyReads($connection);
 
         // Eine Verbindung je tatsächlicher Datenbank: PostgreSQL ohne Namen ist dieselbe wie «postgres».
         $key = $connection->id.'#'.($settings->database ?? ($connection->driver === DatabaseDriver::Postgres ? Catalog::POSTGRES_MAINTENANCE_DATABASE : '')).($readOnly ? '#r' : '#w');
@@ -52,6 +59,30 @@ final class TargetConnections
             readOnly: $readOnly,
             statementTimeoutMs: (int) config('phpdbadmin.connections.statement_timeout_ms', 15000),
         );
+    }
+
+    private function onlyReads(DatabaseConnection $connection): bool
+    {
+        $user = Auth::user();
+
+        if ($user === null) {
+            return false;
+        }
+
+        return $this->readers[$connection->id] ??= Gate::forUser($user)->denies('write', $connection);
+    }
+
+    /**
+     * Darf über diese Verbindung gerade geschrieben werden? Schreibgeschützt nur mit Freigabe auf Zeit (V-11) — die gibt
+     * es nur in der Sitzung, nie im Hintergrund-Worker.
+     *
+     * @throws ReadOnlyConnection
+     */
+    public function assertWritable(DatabaseConnection $connection): void
+    {
+        if ($connection->read_only && ! $this->unlock->isActive($connection)) {
+            throw new ReadOnlyConnection($connection);
+        }
     }
 
     /**
@@ -71,9 +102,7 @@ final class TargetConnections
      */
     public function withWritable(DatabaseConnection $connection, Closure $action, ?string $database = null, ?int $statementTimeoutMs = null): mixed
     {
-        if ($connection->read_only && ! $this->unlock->isActive($connection)) {
-            throw new ReadOnlyConnection($connection);
-        }
+        $this->assertWritable($connection);
 
         $writable = $this->factory->make(
             $this->settings($connection, $database),

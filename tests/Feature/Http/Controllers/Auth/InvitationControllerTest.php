@@ -44,6 +44,18 @@ class InvitationControllerTest extends TestCase
         $this->assertSame(['method' => 'invitation'], AuditEntry::query()->where('action', 'auth.login')->sole()->context);
     }
 
+    public function test_an_invitation_never_signs_into_an_existing_account(): void
+    {
+        [, $token] = Invitation::issue('nina@example.com', UserRole::Member);
+        $existing = User::factory()->create(['email' => 'nina@example.com']);
+
+        $this->post(route('invitation.accept', $token), ['name' => 'Jemand'])
+            ->assertSessionHasErrors(['name' => 'Zu dieser Adresse gibt es schon ein Konto. Melden Sie sich mit einem Code per Mail an.']);
+
+        $this->assertGuest();
+        $this->assertSame($existing->name, $existing->fresh()?->name);
+    }
+
     public function test_rejects_expired_invitation(): void
     {
         [, $token] = Invitation::issue('nina@example.com', UserRole::Member);

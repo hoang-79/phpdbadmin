@@ -13,6 +13,7 @@ use App\Models\QueryHistoryEntry;
 use App\Models\SavedQuery;
 use App\Models\User;
 use App\Services\Audit\AuditLog;
+use App\Services\Audit\Masking;
 use App\Services\Catalog\Catalog;
 use App\Services\Sql\QueryRunner;
 use App\Services\Sql\StatementClassifier;
@@ -142,7 +143,8 @@ class SqlController extends WorkspaceController
             QueryHistoryEntry::query()->create([
                 'user_id' => $user->id,
                 'connection_id' => $connection->id,
-                'sql' => $result['sql'],
+                // Passwörter aus CREATE USER & Co. nicht 90 Tage im Klartext aufheben (T-11).
+                'sql' => Masking::secrets($result['sql']),
                 'status' => $result['status'],
                 'duration_ms' => (int) round($result['durationMs']),
                 'row_count' => $result['affected'] ?? ($result['columns'] === [] ? null : count($result['rows'])),

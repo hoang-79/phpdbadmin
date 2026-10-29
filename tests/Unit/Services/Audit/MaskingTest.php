@@ -93,4 +93,24 @@ class MaskingTest extends TestCase
         $this->assertStringNotContainsString('nina@kunde-shop.ch', $masked);
         $this->assertStringNotContainsString('geheim', $masked);
     }
+
+    /**
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function secretStatements(): array
+    {
+        return [
+            'MySQL CREATE USER' => ["CREATE USER 'anna'@'%' IDENTIFIED BY 'geheim';", "CREATE USER 'anna'@'%' IDENTIFIED BY ?;"],
+            'MySQL mit Plugin' => ['alter user anna identified with mysql_native_password by "g\'eh";', 'alter user anna identified with mysql_native_password by ?;'],
+            'SET PASSWORD' => ["SET PASSWORD FOR anna = 'x1';", 'SET PASSWORD FOR anna = ?;'],
+            'PostgreSQL' => ["ALTER ROLE anna WITH ENCRYPTED PASSWORD 'pg-geheim' VALID UNTIL '2027-01-01';", "ALTER ROLE anna WITH ENCRYPTED PASSWORD ? VALID UNTIL '2027-01-01';"],
+            'gewöhnliche Abfrage bleibt' => ["select * from users where name = 'Peter'", "select * from users where name = 'Peter'"],
+        ];
+    }
+
+    #[DataProvider('secretStatements')]
+    public function test_secrets_are_masked_and_the_rest_stays_readable(string $sql, string $expected): void
+    {
+        $this->assertSame($expected, Masking::secrets($sql));
+    }
 }

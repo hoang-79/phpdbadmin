@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Support\Fingerprint;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -45,9 +46,19 @@ class FortifyServiceProvider extends ServiceProvider
             ];
         });
 
-        // Code eingeben: zehn Versuche je Minute und Sitzung; der Code selbst sperrt nach fünf Fehlversuchen.
+        // Code eingeben: zehn Versuche je Minute und Sitzung; der Code selbst sperrt nach fünf Fehlversuchen. Dazu je
+        // Adresse (T-01): Eine neue Sitzung je Versuch hebt die erste Grenze auf — die zweite hält über alle Sitzungen
+        // und Adressen der Angreifer hinweg (höchstens zehn je Minute und dreissig je Stunde für dieselbe Adresse).
         RateLimiter::for('login-verify', function (Request $request) {
-            return Limit::perMinute(10)->by('login-verify:'.$request->session()->getId().'|'.$request->ip());
+            $limits = [Limit::perMinute(10)->by('login-verify:'.$request->session()->getId().'|'.$request->ip())];
+            $email = $request->session()->get('login.email');
+
+            if (is_string($email) && $email !== '') {
+                $limits[] = Limit::perMinute(10)->by('login-verify-email:'.Fingerprint::ofEmail($email));
+                $limits[] = Limit::perHour(30)->by('login-verify-email-hour:'.Fingerprint::ofEmail($email));
+            }
+
+            return $limits;
         });
 
         RateLimiter::for('passkeys', function (Request $request) {

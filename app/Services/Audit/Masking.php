@@ -48,6 +48,19 @@ final class Masking
     }
 
     /**
+     * Nur Geheimnisse ersetzen, der Rest bleibt lesbar — für den Verlauf im SQL-Editor (N-02): Passwörter nach
+     * `IDENTIFIED BY`, `IDENTIFIED WITH … BY`, `PASSWORD`, `PASSWORD(…)`, `SET PASSWORD FOR … = …` werden zu `?`.
+     */
+    public static function secrets(string $sql): string
+    {
+        return (string) preg_replace(
+            '/\b((?:IDENTIFIED(?:\s+WITH\s+\w+)?\s+(?:BY|AS)|PASSWORD(?:\s+FOR\s+\S+)?)\s*(?:=\s*|\(\s*)?)(?:\'(?:[^\'\\\\]|\\\\.|\'\')*\'|"(?:[^"\\\\]|\\\\.|"")*")/i',
+            '$1'.self::PLACEHOLDER,
+            $sql,
+        );
+    }
+
+    /**
      * Meldung eines Servers oder von Laravel: eingesetzte Bindungen, Zeichenketten in '…' und die Stellen, an denen
      * die Server Werte ohne Anführungszeichen zitieren, werden zu `?`.
      *

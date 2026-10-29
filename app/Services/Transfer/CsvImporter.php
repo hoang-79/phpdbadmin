@@ -152,6 +152,10 @@ final class CsvImporter
         $size = max(1, (int) filesize($path));
         $reader = new CsvReader($path, $transfer->option('delimiter', ',') ?? ',', $transfer->option('encoding', CsvReader::UTF8) ?? CsvReader::UTF8);
 
+        // Die Sitzung wird gleich wieder beschreibbar — das nur, wenn die Verbindung es jetzt noch ist (T-06): zwischen
+        // Einreihen und Ausführen kann sie schreibgeschützt geworden sein.
+        $this->targets->assertWritable($connection);
+
         if ($driver === DatabaseDriver::MySql || $driver === DatabaseDriver::MariaDb) {
             // Ein früherer Lesezugriff im Wächter lässt die Sitzung schreibgeschützt zurück.
             $target->statement('set session transaction read write');

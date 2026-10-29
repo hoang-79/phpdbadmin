@@ -9,6 +9,7 @@ use App\Enums\TransferFormat;
 use App\Enums\TransferKind;
 use App\Enums\TransferStatus;
 use App\Jobs\RunExport;
+use App\Jobs\RunImport;
 use App\Models\DatabaseConnection;
 use App\Models\Transfer;
 use App\Services\Transfer\TransferCancelled;
@@ -196,6 +197,48 @@ class TransferRunnerTest extends TestCase
         $this->assertSame(TransferStatus::Cancelled, $transfer->refresh()->status);
         $this->assertNull($transfer->file_path);
         $this->assertSame([], Storage::disk(Transfer::DISK)->allFiles($transfer->directory()));
+    }
+
+    /**
+     * T-06: Ein Import, eingereiht vor dem Sperren der Verbindung, schreibt nichts — auch nicht auf MariaDB, wo eine
+     * Sitzung sich mit «set session transaction read write» wieder öffnen liesse.
+     */
+    #[Group('target-databases')]
+    public function test_import_queued_before_the_connection_became_read_only_writes_nothing(): void
+    {
+        Storage::fake(Transfer::DISK);
+        config(['queue.default' => 'database']);
+        Queue::fake([RunImport::class]);
+        app(QueueHeartbeat::class)->beat();
+        $settings = $this->scratchSettings(DatabaseDriver::MariaDb, $this->folder);
+        $this->createTransferSamples(app(ConnectionFactory::class)->make($settings), DatabaseDriver::MariaDb);
+        $connection = $this->savedConnection($settings);
+        $before = app(ConnectionFactory::class)->make($settings)->table('kunden')->count();
+        file_put_contents($this->folder.'/nachtrag.sql', "insert into kunden (name) values ('nach dem Sperren');\n");
+
+        $transfer = $this->runTransfer($connection, TransferKind::Import, TransferFormat::Sql, ['schema' => $this->targetTestDatabase()], $this->folder.'/nachtrag.sql');
+        $this->assertSame(TransferStatus::Queued, $transfer->status);
+
+        $connection->update(['read_only' => true]);
+        (new RunImport($transfer->id))->handle(app(TransferRunner::class), app(TargetConnections::class));
+
+        $this->assertSame(TransferStatus::Failed, $transfer->refresh()->status);
+        $this->assertSame('Die Verbindung ist inzwischen schreibgeschützt — es wurde nichts importiert.', $transfer->error['text'] ?? null);
+        $this->assertSame($before, app(ConnectionFactory::class)->make($settings)->table('kunden')->count());
+    }
+
+    public function test_export_of_an_account_that_lost_access_does_not_run(): void
+    {
+        Storage::fake(Transfer::DISK);
+        $transfer = $this->exportOf($this->sqliteSamples());
+        $transfer->forceFill(['status' => TransferStatus::Queued])->save();
+        $transfer->user->forceFill(['disabled_at' => now()])->save();
+
+        app(TransferRunner::class)->execute($transfer);
+
+        $this->assertSame(TransferStatus::Failed, $transfer->refresh()->status);
+        $this->assertSame('Das Konto darf das auf dieser Verbindung nicht mehr.', $transfer->error['text'] ?? null);
+        $this->assertNull($transfer->file_path);
     }
 
     private function sqliteSamples(): DatabaseConnection
