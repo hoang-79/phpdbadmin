@@ -370,9 +370,7 @@ final class SchemaPlans
         }
 
         $rows = $this->rowEstimate($target, $connection, $schema, $table);
-        $losses = array_map(fn (string $column): string => $rows === null
-            ? __('Die Spalte :column wird mit allen Werten gelöscht.', ['column' => $column])
-            : trans_choice('Die Spalte :column wird mit allen Werten gelöscht (≈ :count Zeile).|Die Spalte :column wird mit allen Werten gelöscht (≈ :count Zeilen).', $rows, ['column' => $column, 'count' => number_format($rows, 0, '.', '’')]), $dropped);
+        $losses = array_map(fn (string $column): string => $this->columnLoss($column, $rows), $dropped);
 
         return new SchemaPlan(
             'schema.alter',
@@ -540,7 +538,7 @@ final class SchemaPlans
             : 'DROP DATABASE '.SchemaName::quote($driver, $name);
 
         return new SchemaPlan('database.drop', $name, $driver, ApplyMode::for($driver), [$sql], [], [
-            trans_choice('Gelöscht wird alles darin: :count Tabelle oder Sicht mit allen Daten.|Gelöscht wird alles darin: :count Tabellen und Sichten mit allen Daten.', $tables, ['count' => $tables]),
+            $this->schemaLoss($tables),
         ], $name, ['name' => $name, 'tables' => $tables]);
     }
 
@@ -956,13 +954,41 @@ final class SchemaPlans
         return null;
     }
 
+    /**
+     * Ein- und Mehrzahl als eigene Texte statt trans_choice(): Die deutschen Texte sind die Schlüssel und stehen in
+     * keiner de.json — trans_choice() fiele dann auf die Rückfallsprache Englisch zurück.
+     */
     private function rowsLoss(Connection $target, DatabaseConnection $connection, string $schema, string $table): string
     {
         $rows = $this->rowEstimate($target, $connection, $schema, $table);
 
-        return $rows === null
-            ? __('Alle Zeilen der Tabelle gehen verloren.')
-            : trans_choice('≈ :count Zeile geht verloren.|≈ :count Zeilen gehen verloren.', $rows, ['count' => number_format($rows, 0, '.', '’')]);
+        return match (true) {
+            $rows === null => __('Alle Zeilen der Tabelle gehen verloren.'),
+            $rows === 1 => __('≈ eine Zeile geht verloren.'),
+            default => __('≈ :count Zeilen gehen verloren.', ['count' => $this->number($rows)]),
+        };
+    }
+
+    private function columnLoss(string $column, ?int $rows): string
+    {
+        return match (true) {
+            $rows === null => __('Die Spalte :column wird mit allen Werten gelöscht.', ['column' => $column]),
+            $rows === 1 => __('Die Spalte :column wird mit allen Werten gelöscht (≈ eine Zeile).', ['column' => $column]),
+            default => __('Die Spalte :column wird mit allen Werten gelöscht (≈ :count Zeilen).', ['column' => $column, 'count' => $this->number($rows)]),
+        };
+    }
+
+    private function schemaLoss(int $tables): string
+    {
+        return $tables === 1
+            ? __('Gelöscht wird alles darin: eine Tabelle oder Sicht mit allen Daten.')
+            : __('Gelöscht wird alles darin: :count Tabellen und Sichten mit allen Daten.', ['count' => $tables]);
+    }
+
+    /** Zahl im Schweizer Format («12’406»). */
+    private function number(int $value): string
+    {
+        return number_format($value, 0, '.', '’');
     }
 
     /** Zeichenkette als SQL-Literal über PDO::quote der Zielverbindung. */

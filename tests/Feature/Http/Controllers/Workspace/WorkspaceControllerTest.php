@@ -3,6 +3,7 @@
 namespace Tests\Feature\Http\Controllers\Workspace;
 
 use App\Connections\ConnectionFactory;
+use App\Enums\ConnectionPermission;
 use App\Enums\DatabaseDriver;
 use App\Models\DatabaseConnection;
 use App\Models\User;
@@ -186,6 +187,20 @@ class WorkspaceControllerTest extends TestCase
                 ->component('workspace/Schema')
                 ->where('workspace.database', 'postgres')
                 ->where('workspace.schema', 'public'));
+    }
+
+    public function test_tells_the_page_whether_the_structure_may_be_changed(): void
+    {
+        $own = $this->sqliteConnection();
+        $readOnly = $this->sqliteConnection(environment: 'production');
+        $shared = $this->sqliteConnection(owner: User::factory()->create());
+        $shared->update(['shared' => true]);
+        $shared->members()->attach($this->user, ['permission' => ConnectionPermission::Read->value]);
+        $this->actingAs($this->user);
+
+        $this->get(route('workspace.schema', [$own, 'main']))->assertInertia(fn (Assert $page) => $page->where('workspace.connection.canWrite', true));
+        $this->get(route('workspace.schema', [$readOnly, 'main']))->assertInertia(fn (Assert $page) => $page->where('workspace.connection.canWrite', false));
+        $this->get(route('workspace.schema', [$shared, 'main']))->assertInertia(fn (Assert $page) => $page->where('workspace.connection.canWrite', false));
     }
 
     private function sqliteConnection(?User $owner = null, string $environment = 'local'): DatabaseConnection

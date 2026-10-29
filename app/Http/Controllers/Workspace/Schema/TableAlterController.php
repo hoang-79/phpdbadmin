@@ -104,10 +104,18 @@ class TableAlterController extends SchemaEditorController
                 return $plan;
             },
             function (SchemaPlan $plan) use ($connection, $schema, $object, $database): RedirectResponse {
-                $this->toast(trans_choice('Tabelle :table geändert (:count Anweisung).|Tabelle :table geändert (:count Anweisungen).', count($plan->statements), ['table' => $object]));
+                $this->toast($this->changedMessage($object, count($plan->statements)));
 
                 return to_route('workspace.object.structure', $this->withDatabase([$connection, $schema, $object], $database));
             },
         );
+    }
+
+    /** Ein- und Mehrzahl als eigene Texte — trans_choice() fiele bei deutschen Schlüsseln auf Englisch zurück. */
+    private function changedMessage(string $table, int $count): string
+    {
+        return $count === 1
+            ? __('Tabelle :table geändert (eine Anweisung).', ['table' => $table])
+            : __('Tabelle :table geändert (:count Anweisungen).', ['table' => $table, 'count' => $count]);
     }
 }

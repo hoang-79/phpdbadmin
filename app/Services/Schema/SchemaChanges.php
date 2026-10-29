@@ -116,11 +116,7 @@ final class SchemaChanges
                 $new = array_diff($this->violations($connection), $before);
 
                 if ($new !== []) {
-                    throw new RuntimeException(trans_choice(
-                        'Fremdschlüssel verletzt: :count Zeile verweist danach ins Leere (:tables) — nichts angewendet.|Fremdschlüssel verletzt: :count Zeilen verweisen danach ins Leere (:tables) — nichts angewendet.',
-                        count($new),
-                        ['tables' => implode(', ', array_unique(array_map(fn (string $violation): string => explode('#', $violation)[0], $new)))],
-                    ));
+                    throw new RuntimeException($this->violationMessage(count($new), implode(', ', array_unique(array_map(fn (string $violation): string => explode('#', $violation)[0], $new)))));
                 }
 
                 $connection->commit();
@@ -147,6 +143,14 @@ final class SchemaChanges
 
             return $values[0].'#'.$values[1].'#'.$values[3];
         }, $connection->select('PRAGMA foreign_key_check')));
+    }
+
+    /** Ein- und Mehrzahl als eigene Texte — trans_choice() fiele bei deutschen Schlüsseln auf Englisch zurück. */
+    private function violationMessage(int $count, string $tables): string
+    {
+        return $count === 1
+            ? __('Fremdschlüssel verletzt: eine Zeile verweist danach ins Leere (:tables) — nichts angewendet.', ['tables' => $tables])
+            : __('Fremdschlüssel verletzt: :count Zeilen verweisen danach ins Leere (:tables) — nichts angewendet.', ['count' => $count, 'tables' => $tables]);
     }
 
     /** S-05 bei SQLite: eine leere Datei, die SQLite als Datenbank erkennt (Kopf geschrieben). */
