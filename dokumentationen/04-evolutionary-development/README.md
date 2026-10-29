@@ -16,6 +16,7 @@ Timebox-Protokolle (`timebox-nn-titel.md`) und Architekturentscheide (`adr/ADR-n
 | [**06 Export und Import**](timebox-06-export-import.md) | Export als CSV, JSON oder SQL in Paketen über den Schlüssel; Import von CSV mit Zuordnung und Probelauf, SQL-Datei mit eigenem Zerleger; Statistik nach Importen und auf Knopfdruck; Aufträge im Hintergrund, ohne Worker in der Anfrage mit Grenze | E-01, E-02, E-06, B-07 | ✅ 29.10.2026 — offen: Export einer Abfrage und gefilterter Zeilen |
 | [**07 Konten, Rechte, Protokoll**](timebox-07-konten-rechte-protokoll.md) | Policy je Verbindung (`view`, `write`, `manage`, `share`); Teilen; Verwaltung der Konten und Einladungen; Protokoll mit Filtern, Maskierung und Frist; dazu Favoriten und «zuletzt geöffnet» (V-06) | B-04, A-07, V-09, A-05, A-06, V-06 | ✅ 29.10.2026 auf eigenem Zweig — offen: Browser-Durchlauf nach dem Zusammenführen |
 | [**09 Server-Verwaltung**](timebox-09-server-verwaltung.md) | Übersicht, Prozesse beenden, Variablen, Konten und Rechte mit Vorschau, Wartung — vier Treiber, Dialekt-Vertrag erweitert, jede Änderung genau ein Eintrag im Protokoll | W-01 bis W-05 | ✅ 29.10.2026 auf eigenem Zweig, vorgezogen — offen: Browser-Durchlauf |
+| [**11 Vergleich, Migration, Herd, SSH**](timebox-11-vergleich-migration-herd-ssh.md) | Schemavergleich mit Änderungsskript im Dialekt des Ziels, auch zwischen zwei Treibern; Laravel-Migration aus einer Tabelle, auf einem anderen Treiber geprüft; Vorschläge aus Laravel Herd ohne Passwörter im Browser; Verbindungen über SSH-Tunnel mit dem System-ssh (ADR-012) | S-08, S-09, V-07, V-08 | ✅ 29.10.2026 auf eigenem Zweig — offen: Browser-Durchlauf, V-07 auf Hoangs Mac |
 
 ## Architekturentscheide
 
@@ -34,5 +35,6 @@ Ausformuliert in der Foundation am 28.10.2026 (Kontext → Optionen → Entschei
 | [ADR-009](adr/ADR-009-app-datenbank-sqlite.md) | App-Datenbank SQLite als Vorgabe | angenommen |
 | [ADR-010](adr/ADR-010-lizenz-mit.md) | Lizenz MIT | angenommen |
 | [ADR-011](adr/ADR-011-php-85-mindestversion.md) | PHP 8.5 als Mindestversion | angenommen (Hoang 28.10.2026) |
+| [ADR-012](adr/ADR-012-ssh-tunnel-system-ssh.md) | SSH-Tunnel über das System-ssh | angenommen (TB 11, 29.10.2026) |
 
 **Übernahme aus der Feasibility (erledigt in TB 00):** Die Proben F-1, F-7 und Teile von F-2 sind Vertragstests der Dialekt-Schicht (`tests/Feature/Dialects`); die Probe-Seiten `routes/probe.php`, `resources/js/pages/probe/*` bleiben lokal hinter der Anmeldung, bis Raster und SQL-Editor sie ersetzen — die Raster-Probe ist seit TB 02 entfernt, die Editor-Probe folgt mit TB 03.
