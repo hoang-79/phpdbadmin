@@ -3,6 +3,7 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import { Keyboard, LockOpen, PanelLeft, Search } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import AccountMenu from '@/components/AccountMenu.vue';
+import HelpLink from '@/components/HelpLink.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -268,7 +269,8 @@ watch(
                         />
                         <InputError :message="unlockError ?? undefined" />
                     </label>
-                    <DialogFooter class="gap-2">
+                    <DialogFooter class="items-center gap-2">
+                        <HelpLink anchor="schreibschutz" class="sm:mr-auto" />
                         <Button
                             type="button"
                             variant="outline"

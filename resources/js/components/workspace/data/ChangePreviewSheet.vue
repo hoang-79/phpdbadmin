@@ -3,6 +3,7 @@ import { router } from '@inertiajs/vue3';
 import { Copy, Layers, TerminalSquare, TriangleAlert } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
+import HelpLink from '@/components/HelpLink.vue';
 import Notice from '@/components/Notice.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -266,12 +267,16 @@ async function apply(): Promise<void> {
                     <li class="px-3 py-2 text-text-secondary">COMMIT;</li>
                 </ol>
 
-                <p v-if="statements" class="text-[12px] text-text-secondary">
+                <p
+                    v-if="statements"
+                    class="flex flex-wrap items-center gap-x-2 text-[12px] text-text-secondary"
+                >
                     {{
                         t(
                             'Gezählt vor dem Anwenden. Werte stehen hier im Klartext, im Protokoll nur als Platzhalter.',
                         )
                     }}
+                    <HelpLink anchor="bearbeiten" />
                 </p>
 
                 <Notice v-if="failure" variant="danger">{{ failure }}</Notice>

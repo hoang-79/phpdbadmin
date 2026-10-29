@@ -2,6 +2,7 @@
 import { router } from '@inertiajs/vue3';
 import {
     ArrowRightLeft,
+    CircleHelp,
     Columns3,
     Database,
     Eye,
@@ -25,6 +26,7 @@ import { formatRows } from '@/lib/environment';
 import { t } from '@/lib/i18n';
 import { dataHref, structureHref } from '@/lib/workspace';
 import {
+    help,
     home,
     palette as paletteRoute,
     workspace as workspaceRoute,
@@ -265,6 +267,14 @@ const entries = computed<Entry[]>(() => {
             title: t('Alle Verbindungen'),
             detail: '',
             run: () => visit(home.url()),
+        },
+        {
+            key: 'aktion-hilfe',
+            section: t('Aktionen'),
+            icon: CircleHelp,
+            title: t('Hilfe'),
+            detail: '',
+            run: () => visit(help.url()),
         },
         {
             key: 'aktion-kuerzel',

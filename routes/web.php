@@ -10,6 +10,7 @@ use App\Http\Controllers\Connections\ConnectionController;
 use App\Http\Controllers\Connections\FavoriteController;
 use App\Http\Controllers\Connections\SharingController;
 use App\Http\Controllers\Connections\TestConnectionController;
+use App\Http\Controllers\HelpController;
 use App\Http\Controllers\PaletteController;
 use App\Http\Controllers\Workspace\ConnectionPasswordController;
 use App\Http\Controllers\Workspace\ImportController;
@@ -38,6 +39,9 @@ Route::middleware('auth')->group(function () {
 
     // Favorit je Konto (V-06).
     Route::put('connections/{connection}/favorite', FavoriteController::class)->name('connections.favorite');
+
+    // Kurze Hilfe (N-05).
+    Route::get('help', HelpController::class)->name('help');
 
     // Nach der ersten Anmeldung ohne Passkey: gleich einen anlegen.
     Route::get('welcome', [OnboardingController::class, 'show'])->name('onboarding');

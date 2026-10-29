@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/vue3';
 import { FileText, Send, Users } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import InviteDialog from '@/components/admin/InviteDialog.vue';
+import HelpLink from '@/components/HelpLink.vue';
 import { Button } from '@/components/ui/button';
 import { formatNumber, t } from '@/lib/i18n';
 import { index as accounts } from '@/routes/admin/accounts';
@@ -57,7 +58,8 @@ const links = computed(() => [
                         }}
                         ·
                     </span>
-                    {{ t('nur für Administratoren') }}
+                    {{ t('nur für Administratoren') }} ·
+                    <HelpLink anchor="konten" />
                 </p>
             </div>
             <Button

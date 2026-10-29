@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { ChevronDown, LogOut, Palette, ShieldCheck, Users } from '@lucide/vue';
+import {
+    ChevronDown,
+    CircleHelp,
+    LogOut,
+    Palette,
+    ShieldCheck,
+    Users,
+} from '@lucide/vue';
 import { computed } from 'vue';
 import {
     DropdownMenu,
@@ -12,7 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { getInitials } from '@/composables/useInitials';
 import { t } from '@/lib/i18n';
-import { account, logout } from '@/routes';
+import { account, help, logout } from '@/routes';
 import { index as adminAccounts } from '@/routes/admin/accounts';
 
 const page = usePage();
@@ -63,6 +70,11 @@ function signOut(): void {
                     </Link>
                 </DropdownMenuItem>
             </template>
+            <DropdownMenuItem as-child>
+                <Link :href="help()" class="gap-2.5">
+                    <CircleHelp class="size-4" />{{ t('Hilfe') }}
+                </Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem as-child>
                 <Link

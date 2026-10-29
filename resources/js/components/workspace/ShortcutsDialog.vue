@@ -6,6 +6,7 @@ import {
     DialogDescription,
     DialogTitle,
 } from '@/components/ui/dialog';
+import HelpLink from '@/components/HelpLink.vue';
 import { t } from '@/lib/i18n';
 
 /** Kürzel-Übersicht (O-05): alles, was sich mit der Tastatur bedienen lässt. */
@@ -103,6 +104,7 @@ const groups = computed(() => [
                     </dl>
                 </section>
             </div>
+            <HelpLink anchor="kuerzel" class="self-start" />
         </DialogContent>
     </Dialog>
 </template>

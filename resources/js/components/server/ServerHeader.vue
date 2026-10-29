@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { Lock, Server } from '@lucide/vue';
 import { computed } from 'vue';
+import HelpLink from '@/components/HelpLink.vue';
 import Notice from '@/components/Notice.vue';
 import { titlePrefix } from '@/lib/environment';
 import { t } from '@/lib/i18n';
@@ -89,6 +90,7 @@ const pageTitle = computed(
                 class="inline-flex items-center gap-1 rounded-full border border-destructive bg-destructive-soft px-2 py-px text-xs font-medium text-destructive"
                 ><Lock class="size-3" />{{ t('schreibgeschützt') }}</span
             >
+            <HelpLink anchor="server" class="ml-auto" />
         </div>
 
         <nav
