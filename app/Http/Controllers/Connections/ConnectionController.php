@@ -185,7 +185,6 @@ class ConnectionController extends Controller
             'ssh_host' => $this->usesSsh($request) ? $text('ssh_host') : null,
             'ssh_port' => $this->usesSsh($request) && $request->filled('ssh_port') ? $request->integer('ssh_port') : null,
             'ssh_username' => $this->usesSsh($request) ? $text('ssh_username') : null,
-            'ssh_key_path' => $this->usesSsh($request) ? $text('ssh_key_path') : null,
         ];
     }
 
@@ -217,27 +216,29 @@ class ConnectionController extends Controller
     }
 
     /**
-     * Schlüssel und Passphrase (V-08): eingefügt ersetzt, ein Pfad ersetzt den eingefügten Schlüssel, leer behält
-     * beim Bearbeiten den gespeicherten. Ohne Tunnel wird beides gelöscht.
+     * Schlüssel, Schlüsseldatei und Passphrase (V-08): ein eingefügter Schlüssel ersetzt Schlüssel und Datei, eine
+     * Datei ersetzt den eingefügten Schlüssel, beides leer behält beim Bearbeiten, was gespeichert ist. Ohne Tunnel
+     * wird alles gelöscht.
      *
-     * @return array{ssh_key?: string|null, ssh_passphrase?: string|null}
+     * @return array{ssh_key?: string|null, ssh_key_path?: string|null, ssh_passphrase?: string|null}
      */
     private function sshSecrets(ConnectionRequest $request, ?DatabaseConnection $existing): array
     {
         if (! $this->usesSsh($request)) {
-            return ['ssh_key' => null, 'ssh_passphrase' => null];
+            return ['ssh_key' => null, 'ssh_key_path' => null, 'ssh_passphrase' => null];
         }
 
         $passphrase = $request->filled('ssh_passphrase') ? $request->string('ssh_passphrase')->toString() : null;
 
         if ($request->filled('ssh_key')) {
-            return ['ssh_key' => $request->string('ssh_key')->toString(), 'ssh_passphrase' => $passphrase];
+            return ['ssh_key' => $request->string('ssh_key')->toString(), 'ssh_key_path' => null, 'ssh_passphrase' => $passphrase];
         }
 
         if ($request->filled('ssh_key_path')) {
-            $samePath = $existing !== null && $existing->ssh_key_path === trim($request->string('ssh_key_path')->toString());
+            $path = trim($request->string('ssh_key_path')->toString());
+            $samePath = $existing !== null && $existing->ssh_key_path === $path;
 
-            return ['ssh_key' => null, 'ssh_passphrase' => $passphrase ?? ($samePath ? $existing->ssh_passphrase : null)];
+            return ['ssh_key' => null, 'ssh_key_path' => $path, 'ssh_passphrase' => $passphrase ?? ($samePath ? $existing->ssh_passphrase : null)];
         }
 
         return $passphrase !== null ? ['ssh_passphrase' => $passphrase] : [];

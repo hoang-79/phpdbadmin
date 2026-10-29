@@ -370,6 +370,21 @@ class ConnectionControllerTest extends TestCase
         $this->assertSame('Geheim-Phrase-8', $connection->ssh_passphrase);
     }
 
+    public function test_update_with_neither_key_nor_file_keeps_the_stored_key_file(): void
+    {
+        $user = User::factory()->create();
+        $connection = DatabaseConnection::factory()->for($user, 'owner')->create([
+            'ssh_host' => '127.0.0.1', 'ssh_username' => 'deploy', 'ssh_key_path' => '/srv/keys/id_ed25519', 'ssh_passphrase' => 'Geheim-Phrase-10',
+        ]);
+
+        $this->actingAs($user)->put(route('connections.update', $connection), $this->sshPayload(['ssh_key' => '', 'ssh_key_path' => '']))
+            ->assertRedirect(route('home'));
+
+        $connection->refresh();
+        $this->assertSame('/srv/keys/id_ed25519', $connection->ssh_key_path);
+        $this->assertSame('Geheim-Phrase-10', $connection->ssh_passphrase);
+    }
+
     public function test_turning_ssh_off_forgets_key_and_passphrase(): void
     {
         $user = User::factory()->create();
