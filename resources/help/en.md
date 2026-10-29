@@ -43,6 +43,26 @@ A read-only connection can be unlocked for **15 minutes** — in the connection 
 
 The **history** keeps your queries for 90 days; saved queries stay until you delete them.
 
+**⌘E** explains the statement under the cursor: the plan appears as a tree with estimated rows and costs, plus hints such as «full scan of a large table». _Measure with ANALYZE_ actually runs a reading statement for this.
+
+With **Ask AI**, Claude writes a statement from your question — if the installation has turned it on and you have added your own key under _Account → AI help_. Only your question and the schema (tables, columns, types, keys) are sent, never data. The suggestion lands in the editor; it only runs when you run it.
+
+## Views, routines and diagram {#objekte}
+
+Besides tables, the navigator lists views, routines, triggers, events, sequences and types. You can view, copy and open their definition in the editor and — with the _write_ permission — change or drop them; with a preview first, as when changing data.
+
+The **relationship diagram** of a schema shows the tables with their foreign keys. Boxes can be moved and the view zoomed; _As SVG_ downloads the picture. With very many tables you choose which ones appear.
+
+## Changing structure {#struktur}
+
+_Alter table_ on the Structure page: add, change, rename and drop columns; indexes and foreign keys. The preview shows the SQL exactly as it will run. MySQL and MariaDB run structure changes statement by statement and cannot roll them back — the preview says so. Dropping, emptying and removing columns with data require the table name. _More actions_ renames, copies, empties or drops a table.
+
+## Comparing and migrations {#vergleich}
+
+_Compare schemas_ (in the connection overview) sets two schemas side by side — also between MySQL, MariaDB, PostgreSQL and SQLite — and creates a change script in the target's dialect. Nothing runs: you copy the script or open it in the target's SQL editor.
+
+_Laravel migration_ on the Structure page creates a migration file for a Laravel project from a table.
+
 ## Export and import {#export-import}
 
 From the connection menu or with _Export_ in a table's header: **CSV**, **JSON** or **SQL**. Large exports run in the background; the file is ready to download for 24 hours.
@@ -53,12 +73,20 @@ When **importing** a CSV file you map the columns and do a **dry run** first —
 
 In the connection menu under _Server_: overview, running **processes** (end them), **variables**, **accounts and privileges** and **maintenance** (e.g. `ANALYZE`, `OPTIMIZE`, `VACUUM`). Every change shows its SQL first and is recorded in the audit log afterwards. Changes need the _manage_ permission and a connection that is not read-only.
 
+## Connections over SSH {#ssh}
+
+A database server that can only be reached through an SSH server: turn on _SSH tunnel_ in the connection form and enter the SSH host, user and private key (pasted and stored encrypted, or as a file in an allowed folder). On the first connection phpdbadmin remembers the host key and shows its fingerprint; if it changes later, phpdbadmin no longer connects.
+
+If phpdbadmin runs locally with Laravel Herd, the form suggests the Herd services and the databases of your Herd sites.
+
 ## Accounts, permissions and audit log {#konten}
 
 Each connection has three permissions that build on each other: **read**, **write**, **manage**. Personal connections are visible only to their owner; administrators share connections with other accounts.
 
 The **audit log** (administration) records every writing action — who, when, on which connection, with which SQL. Values appear there only as placeholders.
 
+Under _Account → Sessions_ you see where your account is signed in and end other sessions — for example on a lost device.
+
 ## Keyboard shortcuts {#kuerzel}
 
-**?** shows all shortcuts. The most important: **⌘K** command palette, **/** filter the navigator, **⌘↩** run statement, **Enter** or **F2** edit a cell, **Esc** cancel.
+**?** shows all shortcuts. The most important: **⌘K** command palette, **/** filter the navigator, **⌘↩** run statement, **⌘E** explain statement, **Enter** or **F2** edit a cell, **Esc** cancel.

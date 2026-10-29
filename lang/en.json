@@ -141,6 +141,7 @@
     "Anweisung :number (Zeile :line) ist fehlgeschlagen. Nichts wurde geändert.": "Statement :number (line :line) failed. Nothing was changed.",
     "Anweisung abbrechen": "Cancel statement",
     "Anweisung an der Schreibmarke oder Auswahl ausführen": "Run the statement at the cursor or the selection",
+    "Anweisung erklären (EXPLAIN)": "Explain statement (EXPLAIN)",
     "Anweisung für Anweisung: Scheitert eine, bleiben die vorherigen bestehen.": "One statement at a time: if one fails, the previous ones stay in effect.",
     "Anweisung für Anweisung; bei einem Fehler bleibt, was davor lief.": "Statement by statement; on an error, what ran before stays.",
     "Anweisung in Sitzung :id abbrechen?": "Cancel the statement in session :id?",

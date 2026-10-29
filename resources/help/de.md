@@ -43,6 +43,26 @@ Eine schreibgeschützte Verbindung lässt sich für **15 Minuten** freigeben —
 
 Der **Verlauf** speichert Ihre Abfragen 90 Tage; gespeicherte Abfragen bleiben, bis Sie sie löschen.
 
+**⌘E** erklärt die Anweisung unter dem Cursor: Der Plan erscheint als Baum mit geschätzten Zeilen und Kosten, dazu Hinweise wie «vollständiger Durchlauf einer grossen Tabelle». _Mit ANALYZE messen_ führt eine lesende Anweisung dafür wirklich aus.
+
+Mit **KI fragen** schreibt Claude eine Anweisung aus Ihrer Frage — wenn die Installation es eingeschaltet hat und Sie unter _Konto → KI-Hilfe_ Ihren eigenen Schlüssel hinterlegt haben. Gesendet werden nur Ihre Frage und das Schema (Tabellen, Spalten, Typen, Schlüssel), nie Daten. Der Vorschlag landet im Editor; ausgeführt wird er erst, wenn Sie es tun.
+
+## Sichten, Routinen und Diagramm {#objekte}
+
+Im Navigator stehen neben den Tabellen auch Sichten, Routinen, Trigger, Ereignisse, Sequenzen und Typen. Ihre Definition lässt sich ansehen, kopieren, im Editor öffnen und — mit dem Recht _schreiben_ — ändern oder löschen; wie beim Bearbeiten von Daten mit Vorschau zuerst.
+
+Das **Beziehungsdiagramm** eines Schemas zeigt die Tabellen mit ihren Fremdschlüsseln. Kästen lassen sich verschieben, die Ansicht zoomen; _Als SVG_ lädt das Bild herunter. Bei sehr vielen Tabellen wählen Sie, welche erscheinen.
+
+## Struktur ändern {#struktur}
+
+_Tabelle ändern_ auf der Seite Struktur: Spalten hinzufügen, ändern, umbenennen, löschen; Indizes und Fremdschlüssel. Die Vorschau zeigt das SQL, das genau so ausgeführt wird. MySQL und MariaDB führen Strukturänderungen Anweisung für Anweisung aus und können sie nicht zurückrollen — die Vorschau sagt es. Löschen, Leeren und Spalten mit Daten entfernen verlangen den Namen der Tabelle. _Weitere Aktionen_ benennt um, kopiert, leert oder löscht eine Tabelle.
+
+## Vergleichen und Migration {#vergleich}
+
+_Schemas vergleichen_ (in der Verbindungsübersicht) stellt zwei Schemas gegenüber — auch zwischen MySQL, MariaDB, PostgreSQL und SQLite — und erzeugt ein Änderungsskript im Dialekt des Ziels. Ausgeführt wird nichts: Sie kopieren das Skript oder öffnen es im SQL-Editor des Ziels.
+
+_Laravel-Migration_ auf der Seite Struktur erzeugt aus einer Tabelle eine Migrationsdatei für ein Laravel-Projekt.
+
 ## Export und Import {#export-import}
 
 Im Menü der Verbindung oder mit _Exportieren_ im Kopf einer Tabelle: **CSV**, **JSON** oder **SQL**. Grosse Exporte laufen im Hintergrund; die Datei liegt 24 Stunden zum Herunterladen bereit.
@@ -53,12 +73,20 @@ Beim **Import** einer CSV-Datei ordnen Sie die Spalten zu und machen zuerst eine
 
 Im Menü der Verbindung unter _Server_: Übersicht, laufende **Prozesse** (beenden), **Variablen**, **Konten und Rechte** und **Wartung** (z. B. `ANALYZE`, `OPTIMIZE`, `VACUUM`). Jede Änderung zeigt zuerst ihr SQL und steht danach im Protokoll. Ändern verlangt das Recht _verwalten_ und eine Verbindung ohne Schreibschutz.
 
+## Verbindungen über SSH {#ssh}
+
+Ein Datenbank-Server, der nur über einen SSH-Server erreichbar ist: im Formular der Verbindung _SSH-Tunnel_ einschalten, SSH-Host, Benutzer und privaten Schlüssel angeben (eingefügt und verschlüsselt gespeichert oder als Datei in einem erlaubten Ordner). Beim ersten Verbinden merkt sich phpdbadmin den Host-Schlüssel und zeigt seinen Fingerabdruck; ändert er sich später, verbindet phpdbadmin nicht mehr.
+
+Läuft phpdbadmin lokal mit Laravel Herd, schlägt das Formular die Herd-Dienste und die Datenbanken Ihrer Herd-Sites vor.
+
 ## Konten, Rechte und Protokoll {#konten}
 
 Je Verbindung gibt es drei Rechte, die aufeinander aufbauen: **lesen**, **schreiben**, **verwalten**. Persönliche Verbindungen sieht nur ihr Besitzer; Administratoren teilen Verbindungen mit anderen Konten.
 
 Das **Protokoll** (Verwaltung) hält jede schreibende Aktion fest — wer, wann, auf welcher Verbindung, mit welchem SQL. Werte stehen dort nur als Platzhalter.
 
+Unter _Konto → Sitzungen_ sehen Sie, wo Ihr Konto angemeldet ist, und beenden fremde Sitzungen — etwa auf einem verlorenen Gerät.
+
 ## Tastenkürzel {#kuerzel}
 
-**?** zeigt alle Tastenkürzel. Die wichtigsten: **⌘K** Befehlspalette, **/** Navigator filtern, **⌘↩** Anweisung ausführen, **Eingabe** bzw. **F2** Zelle bearbeiten, **Esc** abbrechen.
+**?** zeigt alle Tastenkürzel. Die wichtigsten: **⌘K** Befehlspalette, **/** Navigator filtern, **⌘↩** Anweisung ausführen, **⌘E** Anweisung erklären, **Eingabe** bzw. **F2** Zelle bearbeiten, **Esc** abbrechen.

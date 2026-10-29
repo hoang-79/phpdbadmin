@@ -63,6 +63,7 @@ const groups = computed(() => [
                 keys: [t('Umschalt'), command, '↵'],
                 label: t('Alles ausführen'),
             },
+            { keys: [command, 'E'], label: t('Anweisung erklären (EXPLAIN)') },
             { keys: ['Ctrl', t('Leertaste')], label: t('Vervollständigen') },
         ],
     },
