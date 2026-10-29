@@ -12,9 +12,23 @@
 
 ## Installation beim Anwender
 
-Die Anleitung steht im [README des Repositorys](../../README.md). Kurz:
+Die Anleitung steht im [README des Repositorys](../../README.md).
 
-1. `git clone …` (später `composer create-project nguyen-development/phpdbadmin`)
+**Web-Installer (seit v1.3.0):** `phpdbadmin-installer.php` aus dem Release in den leeren Ordner einer eigenen (Sub-)Domain legen und öffnen. Eine Datei ohne Abhängigkeiten (PHP-7.3-Syntax, damit ein zu altes PHP eine Erklärung zeigt); Quelle `resources/installer/phpdbadmin-installer.php`, Tests `tests/Feature/Installer/WebInstallerTest.php` (echter PHP-Server: Einrichten, verändertes Archiv, falsche und fehlende Signatur, Pfad aus dem Archiv hinaus, zweiter Browser, Reihenfolge der Schritte, fremde Dateien). Ablauf:
+
+| Schritt | Was geschieht |
+|---|---|
+| Prüfen | Tatsachen messen (PHP, Erweiterungen, Treiber, Speicher, Platz, HTTPS, Webserver, Ordner, Unterordner-Adresse), Hoster erkennen (Rechnername, Pfad, Kennzeichen; Profile aus der Recherche für Basalto, Stand 28.10.2026), Befunde mit Schritten beim Hoster und Support-Nachricht |
+| Selbsthilfe | PHP per `.htaccess` (Testordner, vom Browser abgefragt, erst dann übernommen, Sicherung `.htaccess.phpdbadmin-vorher`), fremde Dateien nach `.phpdbadmin-vorher-<zeit>`, Datenbank-Server durchprobieren (`localhost` ↔ `127.0.0.1`, Hoster-Namen), Datenbank anlegen, Test-Mail per SMTP |
+| Herunterladen | `latest.json` und ZIP von GitHub (`releases/latest/download`) oder aus dem Ordner; Grösse, SHA-256 und Ed25519 über `phpdbadmin-release:1\nversion\ndatei\ngrösse\nsha256` |
+| Einrichten | Entpacken mit Pfadprüfung, `.env` (Schlüssel neu, Adresse aus dem Browser, Datenbank, Mail, erlaubte Hosts; Rechte 600), Programm nach `~/phpdbadmin-app/<host>` (sonst `.phpdbadmin` im Webordner, gesperrt), Inhalt von `public/` in den Webordner, `index.php` mit `usePublicPath`, `.htaccess` mit Sperre für Punkt-Dateien, Brücke `bootstrap/phpdbadmin-install.php` (Migrationen, erstes Konto, Einrichtungslink, Systemprüfung) |
+| Abschliessen | vom Browser aus `/up` und (Programm im Webordner) die Sperre prüfen; Zwischenstände, Zustand und Installer löschen; Einrichtungslink und Cron-Zeilen zeigen |
+
+Nur ein Browser bedient den Installer (Token im Cookie und im Formular, frei nach 30 Minuten ohne Aktivität). phpdbadmin läuft nur direkt auf einer (Sub-)Domain, nicht in einem Unterordner (Pfade der Oberfläche sind absolut).
+
+**Mit Konsole:**
+
+1. `git clone https://github.com/hoang-79/phpdbadmin.git` (später `composer create-project nguyen-development/phpdbadmin`)
 2. `composer setup` — Abhängigkeiten, `.env`, Oberfläche bauen, App-Datenbank, Systemprüfung, erstes Konto mit Einrichtungslink
 3. `.env`: `APP_URL` (HTTPS für Passkeys), `APP_ENV=production`, `APP_DEBUG=false`, `MAIL_*`, `PHPDBADMIN_ALLOWED_HOSTS`, `PHPDBADMIN_SQLITE_PATHS`, `SESSION_SECURE_COOKIE=true`
 4. Cron `* * * * * php artisan schedule:run` (Aufräumen: Protokoll, Exporte, Codes, Einladungen) und ein Worker `php artisan queue:work --tries=1 --timeout=3600` als Dienst
@@ -30,6 +44,18 @@ Aktualisieren: `git pull && composer upgrade` (Abhängigkeiten, Oberfläche, Mig
 - **Erlaubte Hosts:** Zielverbindungen nur zu `PHPDBADMIN_ALLOWED_HOSTS`; Datenbanknamen, die den DSN verändern würden, und die App-Datenbank selbst sind nie erreichbar ([Sicherheitsbericht](../04-evolutionary-development/sicherheitspruefung-n02.md)).
 - **App-Datenbank:** am besten SQLite oder ein eigener Server bzw. ein eigenes Konto mit Passwort, das niemand für Zielverbindungen kennt — `phpdbadmin:check` warnt sonst.
 - **KI-Hilfe (Q-08):** aus, bis `PHPDBADMIN_AI=true`; jedes Konto braucht dann seinen eigenen Schlüssel; gesendet werden nur Frage und Schema an `api.anthropic.com`.
+
+## Release veröffentlichen
+
+Releases baut Hoang lokal (spart Actions-Minuten, der Signaturschlüssel verlässt den Mac nie):
+
+```bash
+npm run build
+php artisan phpdbadmin:release --key=~/.ssh/phpdbadmin/release-ed25519.key
+gh release create v1.3.0 storage/app/release/* --title "phpdbadmin 1.3.0" --notes-file …
+```
+
+Version in `config/phpdbadmin.php` (`version`). Das Archiv enthält nur, was zur Laufzeit nötig ist (`vendor` ohne Entwicklungspakete, gebaute Oberfläche), dazu `latest.json` (Grösse, SHA-256, Ed25519-Signatur, Mindest-PHP, Erweiterungen) und den Installer mit eingesetztem öffentlichem Schlüssel und Repository. Geheimschlüssel: `~/.ssh/phpdbadmin/release-ed25519.key` (Rechte 600, nie ins Repository); öffentlicher Schlüssel `2wyjL2KumyQ6vlmUvcv4NydLkoxJXr8U8OG9B+iYz/M=`. Neuer Schlüssel nur mit `phpdbadmin:release --keygen=<pfad>` — ältere Installer prüfen dann nicht mehr gegen neue Releases.
 
 ## Pipeline
 

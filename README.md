@@ -26,8 +26,20 @@ Datenbanken im Browser verwalten — **MariaDB, MySQL, PostgreSQL und SQLite** i
 
 ## Installation
 
+### Mit dem Web-Installer (Webhosting ohne Konsole)
+
+1. [`phpdbadmin-installer.php`](https://github.com/hoang-79/phpdbadmin/releases/latest/download/phpdbadmin-installer.php) aus dem [neuesten Release](https://github.com/hoang-79/phpdbadmin/releases/latest) herunterladen.
+2. Eine eigene (Sub-)Domain anlegen, z. B. `db.ihre-domain.ch`, ein Zertifikat einschalten (Passkeys brauchen HTTPS) und die Datei in deren leeren Ordner hochladen.
+3. `https://db.ihre-domain.ch/phpdbadmin-installer.php` öffnen.
+
+Der Installer prüft den Server (PHP-Version und Erweiterungen, Datenbanktreiber, Speicher, Platz, HTTPS, Webserver, Inhalt des Ordners), erkennt rund 20 Hoster und Verwaltungsoberflächen und erklärt jeden Befund in Klartext. Was er selbst lösen kann, löst er nach Rückfrage: die PHP-Version per `.htaccess` (erst in einem Testordner ausprobiert, mit Sicherung), fremde Dateien beiseitelegen, den Namen des Datenbank-Servers finden, eine fehlende Datenbank anlegen. Für den Rest zeigt er die Schritte im Verwaltungsbereich des Hosters und eine fertige Nachricht an dessen Support. Danach lädt er das Release, prüft Grösse, SHA-256 und die Ed25519-Signatur, legt das Programm wenn möglich ausserhalb des Webordners ab, richtet App-Datenbank (SQLite, MariaDB/MySQL oder PostgreSQL), Mail (mit Test-Mail) und das erste Konto ein, prüft die Installation von aussen und löscht sich selbst. Am Ende steht der Einrichtungslink (Passkey) und die Zeile für den Cronjob.
+
+Öffentlicher Schlüssel der Releases (Ed25519): `2wyjL2KumyQ6vlmUvcv4NydLkoxJXr8U8OG9B+iYz/M=`
+
+### Mit Konsole
+
 ```bash
-git clone <Adresse des Repositorys> phpdbadmin
+git clone https://github.com/hoang-79/phpdbadmin.git phpdbadmin
 cd phpdbadmin
 composer setup
 ```
@@ -36,7 +48,7 @@ composer setup
 
 Mit Composer geht es ebenso, sobald das Paket veröffentlicht ist: `composer create-project nguyen-development/phpdbadmin` und danach im neuen Ordner `composer setup`.
 
-**Ohne Konsole auf dem Server** (Hosting mit Dateimanager): Code hochladen, Webserver auf `public/` zeigen lassen und die Seite öffnen. Die Ersteinrichtung im Browser verlangt einen Einrichtungsschlüssel, den phpdbadmin in `storage/app/private/einrichtungsschluessel.txt` ablegt — nur wer Zugriff auf die Dateien hat, kann das erste Konto anlegen.
+**Ohne Konsole und ohne Web-Installer** (Hosting mit Dateimanager): Code hochladen, Webserver auf `public/` zeigen lassen und die Seite öffnen. Die Ersteinrichtung im Browser verlangt einen Einrichtungsschlüssel, den phpdbadmin in `storage/app/private/einrichtungsschluessel.txt` ablegt — nur wer Zugriff auf die Dateien hat, kann das erste Konto anlegen.
 
 ### Danach einstellen (`.env`)
 
