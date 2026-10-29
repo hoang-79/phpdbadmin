@@ -67,8 +67,17 @@ jobs:
           key: composer-${{ hashFiles('composer.lock') }}
           restore-keys: composer-
 
+      # Wie `composer setup`, aber ohne erstes Konto: `phpdbadmin:install` fragt nach Name und Mail und bricht
+      # nicht-interaktiv ohne Angaben bewusst ab — die Prüfkette braucht kein Konto. `npm run build` erzeugt dabei die
+      # Wayfinder-Dateien, die vue-tsc braucht.
       - name: Setup Application
-        run: composer setup
+        run: |
+          composer install --no-interaction --no-progress
+          cp .env.example .env
+          php artisan key:generate
+          touch database/database.sqlite
+          npm ci
+          npm run build
 
       - name: Run CI Checks
         run: composer ci:check

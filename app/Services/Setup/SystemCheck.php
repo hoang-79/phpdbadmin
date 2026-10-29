@@ -21,7 +21,7 @@ class SystemCheck
     public const string SCHEDULE_HEARTBEAT = 'phpdbadmin:schedule-heartbeat';
 
     /** Ohne diese Erweiterungen startet Laravel nicht oder phpdbadmin kann nicht verschlüsseln. */
-    private const array REQUIRED_EXTENSIONS = ['pdo', 'mbstring', 'openssl', 'ctype', 'fileinfo', 'tokenizer'];
+    public const array REQUIRED_EXTENSIONS = ['pdo', 'mbstring', 'openssl', 'ctype', 'fileinfo', 'tokenizer'];
 
     /** Erweiterung → was ohne sie nicht geht. */
     private const array DRIVER_EXTENSIONS = [

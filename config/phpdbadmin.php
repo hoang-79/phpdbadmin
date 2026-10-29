@@ -4,6 +4,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Version und Releases
+    |--------------------------------------------------------------------------
+    |
+    | Version dieses Stands — `phpdbadmin:release` baut daraus `phpdbadmin-<version>.zip` mit `latest.json` (Tag
+    | `v<version>`). Der Web-Installer lädt das neueste Release aus diesem GitHub-Repository.
+    |
+    */
+
+    'version' => '1.3.0',
+
+    'release' => [
+        'repository' => env('PHPDBADMIN_RELEASE_REPOSITORY', 'hoang-79/phpdbadmin'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Anmeldung (ADR-008)
     |--------------------------------------------------------------------------
     |
