@@ -168,6 +168,42 @@ class DatabaseConnection extends Model
         return Gate::forUser($user)->allows('manage', $this);
     }
 
+    /** Favorit des Kontos setzen oder entfernen (V-06). */
+    public function markFavorite(User $user, bool $favorite): void
+    {
+        $this->remember($user, ['favorite' => $favorite]);
+    }
+
+    /** Arbeitsbildschirm geöffnet: Grundlage für «zuletzt geöffnet» (V-06). */
+    public function markOpenedBy(User $user): void
+    {
+        $this->remember($user, ['last_opened_at' => now()]);
+    }
+
+    /**
+     * Persönliche Merker in `connection_user`. Mitglieder haben dort schon ihre Zeile; Besitzer und Administratoren
+     * bekommen eine mit ihrem wirksamen Recht «verwalten» — so gibt eine Merker-Zeile nie mehr Recht, als das Konto
+     * ohnehin hat. Verliert ein Administrator die Rolle, verschwinden diese Zeilen (Verwaltung, Rolle ändern).
+     *
+     * @param  array{favorite?: bool, last_opened_at?: CarbonImmutable}  $markers
+     */
+    private function remember(User $user, array $markers): void
+    {
+        $permission = $this->permissionFor($user);
+
+        if ($permission === null) {
+            return;
+        }
+
+        ConnectionMembership::query()->upsert(
+            [['connection_id' => $this->id, 'user_id' => $user->id, 'permission' => $permission->value, ...$markers]],
+            ['connection_id', 'user_id'],
+            array_keys($markers),
+        );
+
+        $this->unsetRelation('memberships');
+    }
+
     public function sslMode(): SslMode
     {
         return SslMode::tryFrom((string) ($this->options['sslmode'] ?? '')) ?? SslMode::Disable;

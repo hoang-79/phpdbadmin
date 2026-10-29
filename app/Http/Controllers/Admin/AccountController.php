@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Admin\Concerns\AdminPage;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateAccountRequest;
+use App\Models\ConnectionMembership;
 use App\Models\DatabaseConnection;
 use App\Models\User;
 use App\Services\Access\ConnectionAccess;
@@ -60,6 +61,10 @@ class AccountController extends Controller
         return back();
     }
 
+    /**
+     * Rolle ändern. Wer die Rolle Administrator verliert, startet ohne Rechte an fremden Verbindungen — auch die
+     * Zeilen, die nur Favorit und «zuletzt geöffnet» trugen, gehen; Rechte vergibt danach die Verwaltung.
+     */
     public function updateRole(Request $request, User $account): RedirectResponse
     {
         Gate::authorize('changeRole', $account);
@@ -69,8 +74,22 @@ class AccountController extends Controller
 
         if ($account->role !== $role) {
             $from = $account->role;
-            $account->forceFill(['role' => $role])->save();
-            $this->audit->record('account.role', $this->actor($request), $account->email, ['from' => $from->value, 'to' => $role->value]);
+            $removed = DB::transaction(function () use ($account, $role, $from): int {
+                $account->forceFill(['role' => $role])->save();
+
+                return $from === UserRole::Admin
+                    ? ConnectionMembership::query()
+                        ->where('user_id', $account->id)
+                        ->whereNotIn('connection_id', $account->ownedConnections()->select('id'))
+                        ->delete()
+                    : 0;
+            });
+
+            $this->audit->record('account.role', $this->actor($request), $account->email, [
+                'from' => $from->value,
+                'to' => $role->value,
+                ...($removed > 0 ? ['permissions_removed' => $removed] : []),
+            ]);
         }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __(':name ist jetzt :role.', ['name' => $account->name, 'role' => $role->label()])]);

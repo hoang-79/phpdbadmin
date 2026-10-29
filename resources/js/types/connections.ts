@@ -24,6 +24,8 @@ export type ConnectionSummary = {
     readOnly: boolean;
     lastTestedAt: string | null;
     accountWarnings: AccountWarning[];
+    favorite: boolean;
+    lastOpenedAt: string | null;
     shared: boolean;
     isOwner: boolean;
     permission: ConnectionPermission | null;

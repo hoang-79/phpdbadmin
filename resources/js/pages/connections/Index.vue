@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import {
+    ArrowUpDown,
     Clock,
     Database,
     Folder,
@@ -9,11 +10,12 @@ import {
     Pencil,
     Plus,
     Search,
+    Star,
     Trash2,
     TriangleAlert,
     Users,
 } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import EnvironmentMark from '@/components/connections/EnvironmentMark.vue';
 import ShareDialog from '@/components/connections/ShareDialog.vue';
 import Interpolate from '@/components/Interpolate.vue';
@@ -35,16 +37,19 @@ import {
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { formatRecent } from '@/lib/format';
-import { t, tc } from '@/lib/i18n';
+import { intlLocale, t, tc } from '@/lib/i18n';
 import { workspace } from '@/routes';
-import { create, destroy, edit } from '@/routes/connections';
+import { create, destroy, edit, favorite } from '@/routes/connections';
 import type {
     ConnectionEnvironment,
     ConnectionPermission,
     ConnectionSummary,
 } from '@/types';
 
-/** Startseite = Verbindungsübersicht (A-04, Wireframe 03): nach Gruppe, Umgebung sichtbar. */
+/**
+ * Startseite = Verbindungsübersicht (A-04, Wireframe 03): nach Gruppe, Umgebung sichtbar; Favoriten oben, Sortierung
+ * nach Gruppe, Name oder «zuletzt geöffnet» (V-06) — die Wahl merkt sich der Browser.
+ */
 const props = defineProps<{
     connections: ConnectionSummary[];
 }>();
@@ -54,6 +59,53 @@ const environmentFilter = ref<ConnectionEnvironment | null>(null);
 const removing = ref<ConnectionSummary | null>(null);
 const sharing = ref<ConnectionSummary | null>(null);
 const isRemoving = ref(false);
+const onlyFavorites = ref(false);
+
+type SortMode = 'group' | 'name' | 'recent';
+
+const sortStorageKey = 'phpdbadmin.verbindungen.sortierung';
+const sortMode = ref<SortMode>(storedSortMode());
+
+watch(sortMode, (mode) => window.localStorage.setItem(sortStorageKey, mode));
+
+function storedSortMode(): SortMode {
+    const stored =
+        typeof window === 'undefined'
+            ? null
+            : window.localStorage.getItem(sortStorageKey);
+
+    return stored === 'name' || stored === 'recent' ? stored : 'group';
+}
+
+const sortOptions = computed<{ value: SortMode; label: string }[]>(() => [
+    { value: 'group', label: t('Nach Gruppe, dann zuletzt geöffnet') },
+    { value: 'name', label: t('Nach Name') },
+    { value: 'recent', label: t('Zuletzt geöffnet zuerst') },
+]);
+
+const collator = computed(
+    () =>
+        new Intl.Collator(intlLocale(), { numeric: true, sensitivity: 'base' }),
+);
+
+/** Favoriten oben; danach je nach Wahl zuletzt geöffnet oder Name. */
+function compare(a: ConnectionSummary, b: ConnectionSummary): number {
+    if (a.favorite !== b.favorite) {
+        return a.favorite ? -1 : 1;
+    }
+
+    if (sortMode.value !== 'name') {
+        const opened =
+            (b.lastOpenedAt ? Date.parse(b.lastOpenedAt) : 0) -
+            (a.lastOpenedAt ? Date.parse(a.lastOpenedAt) : 0);
+
+        if (opened !== 0) {
+            return opened;
+        }
+    }
+
+    return collator.value.compare(a.name, b.name);
+}
 
 const filtered = computed(() => {
     const term = search.value.trim().toLowerCase();
@@ -62,6 +114,7 @@ const filtered = computed(() => {
         (connection) =>
             (environmentFilter.value === null ||
                 connection.environment === environmentFilter.value) &&
+            (!onlyFavorites.value || connection.favorite) &&
             (term === '' ||
                 [
                     connection.name,
@@ -73,7 +126,14 @@ const filtered = computed(() => {
     );
 });
 
-const groups = computed(() => {
+/** Abschnitte: nach Gruppe (Reihenfolge vom Server) oder eine Liste ohne Überschrift. */
+const groups = computed<[string | null, ConnectionSummary[]][]>(() => {
+    if (sortMode.value !== 'group') {
+        return filtered.value.length
+            ? [[null, [...filtered.value].sort(compare)]]
+            : [];
+    }
+
     const map = new Map<string, ConnectionSummary[]>();
 
     for (const connection of filtered.value) {
@@ -81,8 +141,23 @@ const groups = computed(() => {
         map.set(key, [...(map.get(key) ?? []), connection]);
     }
 
-    return [...map.entries()];
+    return [...map.entries()].map(([group, items]) => [
+        group,
+        [...items].sort(compare),
+    ]);
 });
+
+const favoriteCount = computed(
+    () => props.connections.filter((c) => c.favorite).length,
+);
+
+function toggleFavorite(connection: ConnectionSummary): void {
+    router.put(
+        favorite.url(connection.id),
+        { favorite: !connection.favorite },
+        { preserveScroll: true, preserveState: true },
+    );
+}
 
 const productionCount = computed(
     () =>
@@ -170,10 +245,28 @@ function remove(connection: ConnectionSummary): void {
                             ? 'border-primary bg-accent font-semibold'
                             : 'bg-muted',
                     ]"
-                    :aria-pressed="environmentFilter === null"
-                    @click="environmentFilter = null"
+                    :aria-pressed="environmentFilter === null && !onlyFavorites"
+                    @click="
+                        environmentFilter = null;
+                        onlyFavorites = false;
+                    "
                 >
                     {{ t('Alle :count', { count: connections.length }) }}
+                </button>
+                <button
+                    v-if="favoriteCount"
+                    type="button"
+                    :class="[
+                        'inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[13px]',
+                        onlyFavorites
+                            ? 'border-primary bg-accent font-semibold'
+                            : 'bg-muted',
+                    ]"
+                    :aria-pressed="onlyFavorites"
+                    @click="onlyFavorites = !onlyFavorites"
+                >
+                    <Star class="size-3.5" />
+                    {{ t('Favoriten :count', { count: favoriteCount }) }}
                 </button>
                 <button
                     v-if="productionCount"
@@ -190,10 +283,29 @@ function remove(connection: ConnectionSummary): void {
                     <EnvironmentMark environment="production" />
                     {{ productionCount }}
                 </button>
+                <label
+                    class="inline-flex items-center gap-1.5 text-[13px] text-text-secondary sm:ml-auto"
+                >
+                    <ArrowUpDown class="size-3.5" />
+                    <span class="sr-only">{{ t('Sortierung') }}</span>
+                    <select
+                        v-model="sortMode"
+                        class="rounded-md bg-transparent py-1 pr-1 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                        <option
+                            v-for="option in sortOptions"
+                            :key="option.value"
+                            :value="option.value"
+                        >
+                            {{ option.label }}
+                        </option>
+                    </select>
+                </label>
             </div>
 
-            <section v-for="[group, items] in groups" :key="group">
+            <section v-for="[group, items] in groups" :key="group ?? ''">
                 <h2
+                    v-if="group !== null"
                     class="mb-2.5 flex items-center gap-2 text-[13px] font-semibold text-text-secondary"
                 >
                     <Folder class="size-3.5" />{{ group }}
@@ -247,9 +359,32 @@ function remove(connection: ConnectionSummary): void {
                                           })
                                 }}</span
                             >
+                            <button
+                                type="button"
+                                class="relative z-10 ml-auto inline-grid size-7 shrink-0 place-items-center rounded-md text-text-secondary outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+                                :aria-pressed="connection.favorite"
+                                :aria-label="
+                                    connection.favorite
+                                        ? t('«:name» ist Favorit — entfernen', {
+                                              name: connection.name,
+                                          })
+                                        : t('«:name» als Favorit markieren', {
+                                              name: connection.name,
+                                          })
+                                "
+                                @click="toggleFavorite(connection)"
+                            >
+                                <Star
+                                    :class="[
+                                        'size-4',
+                                        connection.favorite &&
+                                            'fill-current text-warning',
+                                    ]"
+                                />
+                            </button>
                             <DropdownMenu v-if="connection.canManage">
                                 <DropdownMenuTrigger
-                                    class="relative z-10 ml-auto inline-grid size-7 place-items-center rounded-md text-text-secondary outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+                                    class="relative z-10 inline-grid size-7 shrink-0 place-items-center rounded-md text-text-secondary outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
                                     :aria-label="
                                         t('Aktionen für :name', {
                                             name: connection.name,
@@ -351,13 +486,19 @@ function remove(connection: ConnectionSummary): void {
                         >
                             <Clock class="size-3.5" />
                             {{
-                                connection.lastTestedAt
-                                    ? t('zuletzt getestet :time', {
+                                connection.lastOpenedAt
+                                    ? t('zuletzt geöffnet :time', {
                                           time: formatRecent(
-                                              connection.lastTestedAt,
+                                              connection.lastOpenedAt,
                                           ),
                                       })
-                                    : t('noch nicht getestet')
+                                    : connection.lastTestedAt
+                                      ? t('zuletzt getestet :time', {
+                                            time: formatRecent(
+                                                connection.lastTestedAt,
+                                            ),
+                                        })
+                                      : t('noch nicht getestet')
                             }}
                         </div>
                     </article>

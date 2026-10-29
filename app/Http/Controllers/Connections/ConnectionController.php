@@ -34,6 +34,7 @@ class ConnectionController extends Controller
         $user = $this->user($request);
 
         // Sortiert nach Gruppe (ohne Gruppe zuletzt), dann Name — in PHP, weil «group» je Treiber anders zu quoten wäre.
+        // Die Übersicht sortiert um (Favoriten oben, Name, zuletzt geöffnet); die Zeile des Kontos trägt Recht und Merker.
         $connections = DatabaseConnection::query()
             ->visibleTo($user)
             ->with(['memberships' => fn (HasMany $memberships) => $memberships->where('user_id', $user->id)])
@@ -200,6 +201,8 @@ class ConnectionController extends Controller
             'readOnly' => $connection->read_only,
             'lastTestedAt' => $connection->last_tested_at?->toIso8601String(),
             'accountWarnings' => Translations::accountWarnings($connection->account_warnings ?? []),
+            'favorite' => $connection->membershipOf($user)->favorite ?? false,
+            'lastOpenedAt' => $connection->membershipOf($user)?->last_opened_at?->toIso8601String(),
             'shared' => $connection->shared,
             'isOwner' => $connection->owner_id === $user->id,
             'permission' => $connection->permissionFor($user)?->value,

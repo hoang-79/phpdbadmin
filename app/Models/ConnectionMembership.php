@@ -9,11 +9,12 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 
 /**
  * Zeile in `connection_user`: Recht eines Kontos an einer geteilten Verbindung (A-07, V-09) und seine persönlichen
- * Merker (Favorit, zuletzt geöffnet — V-06).
+ * Merker (Favorit, zuletzt geöffnet — V-06). Besitzer und Administratoren haben eine Zeile nur für ihre Merker; sie
+ * trägt ihr wirksames Recht «verwalten».
  *
  * @property string $connection_id
  * @property int $user_id
- * @property ConnectionPermission|null $permission
+ * @property ConnectionPermission $permission
  * @property bool $favorite
  * @property CarbonImmutable|null $last_opened_at
  * @property-read User $user

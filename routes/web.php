@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AccountController as AdminAccountController;
 use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\InvitationController as AdminInvitationController;
 use App\Http\Controllers\Connections\ConnectionController;
+use App\Http\Controllers\Connections\FavoriteController;
 use App\Http\Controllers\Connections\SharingController;
 use App\Http\Controllers\Connections\TestConnectionController;
 use App\Http\Controllers\Workspace\ConnectionPasswordController;
@@ -27,6 +28,9 @@ Route::middleware('auth')->group(function () {
     // Teilen (V-09): nur Administratoren — die Policy antwortet 403, eine fremde persönliche Verbindung bleibt 404.
     Route::get('connections/{connection}/sharing', [SharingController::class, 'show'])->name('connections.sharing.show');
     Route::put('connections/{connection}/sharing', [SharingController::class, 'update'])->name('connections.sharing.update');
+
+    // Favorit je Konto (V-06).
+    Route::put('connections/{connection}/favorite', FavoriteController::class)->name('connections.favorite');
 
     // Nach der ersten Anmeldung ohne Passkey: gleich einen anlegen.
     Route::get('welcome', [OnboardingController::class, 'show'])->name('onboarding');

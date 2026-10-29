@@ -31,6 +31,9 @@ class WorkspaceController extends Controller
 
     public function show(Request $request, DatabaseConnection $connection): Response|RedirectResponse
     {
+        // «zuletzt geöffnet» in der Übersicht (V-06)
+        $connection->markOpenedBy($this->user($request));
+
         return $this->guarded($request, $connection, function () use ($request, $connection): Response|RedirectResponse {
             $database = $this->database($request, $connection);
             $schema = $this->catalog->defaultSchema($connection, $database);

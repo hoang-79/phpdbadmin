@@ -102,6 +102,23 @@ class AccountControllerTest extends TestCase
         $this->assertDatabaseHas('audit_log', ['action' => 'account.role', 'target' => $this->member->email]);
     }
 
+    public function test_demoted_admin_keeps_no_rights_on_connections_of_others(): void
+    {
+        $formerAdmin = User::factory()->admin()->create();
+        $shared = DatabaseConnection::factory()->create(['shared' => true]);
+        $own = DatabaseConnection::factory()->for($formerAdmin, 'owner')->create(['shared' => true]);
+        $shared->markFavorite($formerAdmin, true);
+        $own->markFavorite($formerAdmin, true);
+
+        $this->actingAs($this->admin)->put(route('admin.accounts.role', $formerAdmin), ['role' => 'member'])
+            ->assertRedirect();
+
+        $this->assertNull($shared->permissionFor($formerAdmin->refresh()));
+        $this->assertNull($shared->membershipOf($formerAdmin));
+        $this->assertTrue($own->membershipOf($formerAdmin)?->favorite);
+        $this->assertDatabaseHas('audit_log', ['action' => 'account.role', 'target' => $formerAdmin->email]);
+    }
+
     public function test_own_role_status_and_account_cannot_be_changed(): void
     {
         $this->actingAs($this->admin);
