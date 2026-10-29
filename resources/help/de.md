@@ -15,7 +15,7 @@ Eine Verbindung führt zu einem Datenbank-Server (MariaDB, MySQL, PostgreSQL) od
 
 ## Arbeitsbildschirm {#arbeitsbildschirm}
 
-Links der **Navigator** mit Datenbanken bzw. Schemas, Tabellen und Sichten — `/` setzt den Fokus in seinen Filter. Oben die **Reiter** der offenen Objekte und Abfragen. Mit **⌘K** (Windows/Linux: Strg+K) öffnet die Befehlspalette: Objekte, Verbindungen und Aktionen suchen.
+Links der **Navigator** mit Datenbanken bzw. Schemas, Tabellen und Sichten — `/` setzt den Fokus in seinen Filter. Fahren Sie mit der Maus über eine Datenbank oder ein Schema, erscheint rechts ein Papierkorb: Damit löschen Sie es samt allem darin — nach einer Vorschau und erst, wenn Sie den Namen eintippen. Oben die **Reiter** der offenen Objekte und Abfragen. Mit **⌘K** (Windows/Linux: Strg+K) öffnet die Befehlspalette: Objekte, Verbindungen und Aktionen suchen.
 
 ## Daten ansehen {#daten}
 
