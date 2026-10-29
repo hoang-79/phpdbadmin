@@ -1,5 +1,11 @@
-export type TransferKind = 'export' | 'import';
-export type TransferFormat = 'csv' | 'json' | 'sql' | 'xlsx';
+export type TransferKind = 'export' | 'import' | 'backup' | 'restore';
+export type TransferFormat =
+    | 'csv'
+    | 'json'
+    | 'sql'
+    | 'xlsx'
+    | 'pgdump'
+    | 'sqlite';
 export type TransferStatus =
     | 'draft'
     | 'queued'
@@ -108,4 +114,22 @@ export type ImportTransfer = TransferSummary & {
     result: (CsvResult | SqlImportResult) | null;
     imported: boolean;
     statusUrl: string;
+};
+
+/** Ein Werkzeug des Servers für Sicherung und Wiederherstellung (E-03). */
+export type BackupTool = {
+    name: string;
+    found: boolean;
+    version: string | null;
+    environmentKey: string;
+};
+
+/** Was sich an dieser Verbindung sichern und wiederherstellen lässt (BackupRunner::status). */
+export type BackupStatus = {
+    backup: BackupTool[];
+    restore: BackupTool[];
+    canBackup: boolean;
+    canRestore: boolean;
+    safeClient: boolean;
+    plainRestore: boolean;
 };

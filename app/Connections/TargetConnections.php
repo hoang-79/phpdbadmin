@@ -110,6 +110,22 @@ final class TargetConnections
         }
     }
 
+    /**
+     * Zugangsdaten für die Werkzeuge des Servers (E-03: mysqldump, pg_dump …) — wie für open(), dazu die geprüfte
+     * Adresse (V-05) bzw. der aufgelöste Pfad der SQLite-Datei. Das Passwort geht nie auf eine Kommandozeile.
+     *
+     * @return array{settings: ConnectionSettings, address: string}
+     *
+     * @throws PasswordRequired
+     * @throws ConnectionNotAllowed
+     */
+    public function credentials(DatabaseConnection $connection, ?string $database = null): array
+    {
+        $settings = $this->settings($connection, $database);
+
+        return ['settings' => $settings, 'address' => $this->factory->address($settings)];
+    }
+
     /** Passwort für «in jeder Sitzung fragen» merken — verschlüsselt, nur in dieser Sitzung. */
     public function rememberPassword(DatabaseConnection $connection, string $password): void
     {

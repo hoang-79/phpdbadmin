@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import {
     ArrowDownToLine,
+    ArrowRight,
     ArrowUpFromLine,
     BarChart3,
     Check,
     Database,
+    HardDriveDownload,
 } from '@lucide/vue';
 import { computed, watch } from 'vue';
 import InputError from '@/components/InputError.vue';
@@ -20,6 +22,7 @@ import { formatNumber, t, tc } from '@/lib/i18n';
 import { databaseQuery, transfersHref } from '@/lib/transfers';
 import {
     analyze,
+    backup,
     exportMethod,
     importMethod,
     status,
@@ -232,6 +235,19 @@ const selectClass =
                 <p class="text-sm text-text-secondary">
                     {{ tc(':count Tabelle|:count Tabellen', tables.length) }}
                     · {{ tc(':count Sicht|:count Sichten', views.length) }}
+                    ·
+                    <Link
+                        :href="
+                            backup.url(
+                                workspace.connection.id,
+                                databaseQuery(workspace),
+                            )
+                        "
+                        class="inline-flex items-center gap-1 text-primary hover:underline"
+                        ><HardDriveDownload class="size-3.5" />{{
+                            t('Sicherung und Wiederherstellung')
+                        }}<ArrowRight class="size-3.5"
+                    /></Link>
                 </p>
             </div>
             <div

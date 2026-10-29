@@ -133,4 +133,40 @@ return [
         'statement_timeout_ms' => (int) env('PHPDBADMIN_TRANSFERS_STATEMENT_TIMEOUT_MS', 600000),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Sicherung und Wiederherstellung über die Server-Werkzeuge (E-03)
+    |--------------------------------------------------------------------------
+    |
+    | Pfade der Werkzeuge: ein Name wird im PATH gesucht, danach in den Ordnern unten (PHP-FPM hat oft einen schmalen
+    | PATH; «~» ist das Heimverzeichnis, «*» nimmt die neueste Version). Ein absoluter Pfad gilt genau so. Ohne
+    | Werkzeug sagt die Seite «Sicherung», was fehlt. SQLite sichert ohne Werkzeug (VACUUM INTO) und stellt mit
+    | sqlite3 wieder her. Sicherungen laufen als Aufträge wie Exporte (Frist, Download, Warteschlange).
+    |
+    */
+
+    'backup' => [
+        'tools' => [
+            'mysqldump' => env('PHPDBADMIN_TOOL_MYSQLDUMP', 'mysqldump'),
+            'mysql' => env('PHPDBADMIN_TOOL_MYSQL', 'mysql'),
+            'mariadb-dump' => env('PHPDBADMIN_TOOL_MARIADB_DUMP', 'mariadb-dump'),
+            'mariadb' => env('PHPDBADMIN_TOOL_MARIADB', 'mariadb'),
+            'pg_dump' => env('PHPDBADMIN_TOOL_PG_DUMP', 'pg_dump'),
+            'pg_restore' => env('PHPDBADMIN_TOOL_PG_RESTORE', 'pg_restore'),
+            'psql' => env('PHPDBADMIN_TOOL_PSQL', 'psql'),
+            'sqlite3' => env('PHPDBADMIN_TOOL_SQLITE3', 'sqlite3'),
+        ],
+        'directories' => array_values(array_filter(explode(PATH_SEPARATOR, (string) (env('PHPDBADMIN_TOOL_DIRECTORIES') ?: implode(PATH_SEPARATOR, [
+            '~/Library/Application Support/Herd/bin',
+            '/Users/Shared/Herd/services/postgresql/*/bin',
+            '/opt/homebrew/bin',
+            '/opt/homebrew/opt/libpq/bin',
+            '/usr/local/bin',
+            '/Applications/Postgres.app/Contents/Versions/latest/bin',
+            '/usr/bin',
+        ]))))),
+        // Höchstdauer eines Werkzeugs im Hintergrund; in der Anfrage (ohne Worker) höchstens 280 Sekunden.
+        'timeout_seconds' => (int) env('PHPDBADMIN_BACKUP_TIMEOUT', 3600),
+    ],
+
 ];

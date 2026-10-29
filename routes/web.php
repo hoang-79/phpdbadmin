@@ -11,6 +11,7 @@ use App\Http\Controllers\Connections\FavoriteController;
 use App\Http\Controllers\Connections\SharingController;
 use App\Http\Controllers\Connections\TestConnectionController;
 use App\Http\Controllers\PaletteController;
+use App\Http\Controllers\Workspace\BackupController;
 use App\Http\Controllers\Workspace\ConnectionPasswordController;
 use App\Http\Controllers\Workspace\ImportController;
 use App\Http\Controllers\Workspace\ObjectController;
@@ -99,6 +100,10 @@ Route::middleware('auth')->group(function () {
             Route::get('status', [TransferController::class, 'status'])->name('status');
             Route::post('export', [TransferController::class, 'export'])->name('export');
             Route::post('analyze', [TransferController::class, 'analyze'])->name('analyze');
+            // Sicherung und Wiederherstellung über die Werkzeuge des Servers (E-03).
+            Route::get('backup', [BackupController::class, 'index'])->name('backup');
+            Route::post('backup', [BackupController::class, 'store'])->name('backup.store');
+            Route::post('restore', [BackupController::class, 'restore'])->name('restore');
             Route::post('import', [ImportController::class, 'store'])->name('import');
             Route::get('{transfer}', [ImportController::class, 'edit'])->whereUlid('transfer')->name('edit');
             Route::patch('{transfer}', [ImportController::class, 'update'])->whereUlid('transfer')->name('update');

@@ -174,6 +174,7 @@ final class Exporter
                 Storage::disk(Transfer::DISK)->path($transfer->directory().'/excel-'.bin2hex(random_bytes(4))),
                 skipBinary: $transfer->option('binary') === 'skip',
             ),
+            TransferFormat::PgDump, TransferFormat::SqliteFile => throw new RuntimeException('Not an export format'),
             TransferFormat::Sql => new SqlWriter(
                 $stream,
                 $target,
