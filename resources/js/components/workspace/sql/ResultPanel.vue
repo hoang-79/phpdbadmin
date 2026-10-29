@@ -159,8 +159,27 @@ const keys = computed(() =>
     editable.value ? (current.value?.rows ?? []).map(keyOf) : [],
 );
 
+/**
+ * Wahrheitswerte wie im Raster: MySQL, MariaDB und SQLite liefern im Ergebnis 1/0 — für eine Spalte, die in der
+ * Tabelle ein Wahrheitswert ist, als true/false zeigen und umschalten.
+ */
+function normalized(cell: Cell, index: number): Cell {
+    return source.value?.columns[index]?.kind === 'boolean' &&
+        (cell === 0 || cell === 1 || cell === '0' || cell === '1')
+        ? cell === 1 || cell === '1'
+        : cell;
+}
+
+const baseRows = computed<Cell[][]>(() =>
+    editable.value
+        ? (current.value?.rows ?? []).map((row) =>
+              row.map((cell, index) => normalized(cell, index)),
+          )
+        : (current.value?.rows ?? []),
+);
+
 const displayRows = computed<Cell[][]>(() => {
-    const rows = current.value?.rows ?? [];
+    const rows = baseRows.value;
 
     if (!editable.value || changes.total.value === 0) {
         return rows;
@@ -209,7 +228,7 @@ function onEdit(
     index: number,
 ): void {
     const origin = source.value?.columns[index];
-    const cell = current.value?.rows[position]?.[index] ?? null;
+    const cell = baseRows.value[position]?.[index] ?? null;
 
     if (!origin || !editable.value) {
         return;

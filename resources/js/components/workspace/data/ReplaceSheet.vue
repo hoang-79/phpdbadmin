@@ -89,10 +89,14 @@ watch(
 );
 
 // Jede Änderung an der Eingabe macht die Vorschau ungültig.
-watch([chosen, search, replacement, matchCase, wholeValue], () => {
-    preview.value = null;
-    withoutUndo.value = false;
-});
+watch(
+    [chosen, search, replacement, matchCase, wholeValue],
+    () => {
+        preview.value = null;
+        withoutUndo.value = false;
+    },
+    { deep: true },
+);
 
 const args = computed(
     () =>
