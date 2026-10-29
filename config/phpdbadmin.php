@@ -67,6 +67,11 @@ return [
 
     'data' => [
         'exact_count_limit' => (int) env('PHPDBADMIN_EXACT_COUNT_LIMIT', 50000),
+        // Rückgängig (D-09): bis zu so vielen Zeilen je Änderung werden Vorher-Werte gesichert, so lange.
+        'undo_rows' => (int) env('PHPDBADMIN_UNDO_ROWS', 1000),
+        'undo_days' => (int) env('PHPDBADMIN_UNDO_DAYS', 7),
+        // Schreibschutz auf Zeit aufheben (V-11).
+        'unlock_minutes' => (int) env('PHPDBADMIN_UNLOCK_MINUTES', 15),
     ],
 
     /*

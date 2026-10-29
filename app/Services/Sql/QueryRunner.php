@@ -5,6 +5,7 @@ namespace App\Services\Sql;
 use App\Connections\ConnectionFactory;
 use App\Connections\ConnectionSettings;
 use App\Connections\TargetConnections;
+use App\Connections\WriteUnlock;
 use App\Enums\DatabaseDriver;
 use App\Models\DatabaseConnection;
 use App\Services\Data\Cells;
@@ -41,6 +42,7 @@ final class QueryRunner
         private readonly ConnectionFactory $factory,
         private readonly StatementClassifier $classifier,
         private readonly Cache $cache,
+        private readonly WriteUnlock $unlock,
     ) {}
 
     /**
@@ -50,7 +52,7 @@ final class QueryRunner
     public function run(DatabaseConnection $connection, ?string $database, array $statements, string $runId, bool $mayWrite, int $limit, int $userId, ?string $searchPath = null): array
     {
         $timeoutMs = (int) config('phpdbadmin.editor.timeout_seconds', 30) * 1000;
-        $mayWrite = $mayWrite && ! $connection->read_only;
+        $mayWrite = $mayWrite && (! $connection->read_only || $this->unlock->isActive($connection));
 
         if ($connection->driver === DatabaseDriver::Sqlite) {
             return $this->runInWorker($connection, $statements, $runId, $mayWrite, $limit, $timeoutMs);

@@ -73,7 +73,7 @@ final class Structure
         }
 
         $checks = $isView ? [] : $dialect->checkConstraints($target, $schema, $object);
-        $jsonColumns = $this->jsonCheckedColumns($checks);
+        $jsonColumns = self::jsonCheckedColumns($checks);
         $enumTypes = $connection->driver === DatabaseDriver::Postgres ? $this->enumTypes($builder->getTypes()) : [];
 
         $columns = [];
@@ -157,7 +157,7 @@ final class Structure
      * @param  list<array{name: string, definition: string}>  $checks
      * @return list<string>
      */
-    private function jsonCheckedColumns(array $checks): array
+    public static function jsonCheckedColumns(array $checks): array
     {
         $columns = [];
 

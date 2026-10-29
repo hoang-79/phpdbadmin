@@ -9,6 +9,7 @@ use App\Enums\ColumnKind;
 use App\Enums\DatabaseDriver;
 use App\Enums\FilterOperator;
 use App\Models\DatabaseConnection;
+use App\Services\Catalog\Structure;
 use App\Support\TrustedSql;
 use Closure;
 use Illuminate\Database\Connection;
@@ -66,9 +67,14 @@ final class TableData
             }
         }
 
+        // MariaDB kennt JSON nur als longtext mit json_valid-Check — die Art folgt dem Check (wie in der Struktur).
+        $jsonColumns = $connection->driver === DatabaseDriver::MariaDb && ! $isView
+            ? Structure::jsonCheckedColumns($connection->driver->dialect()->checkConstraints($target, $schema, $object))
+            : [];
+
         $columns = [];
         foreach ($raw as $column) {
-            $kind = ColumnKind::of((string) $column['type_name'], (string) $column['type']);
+            $kind = in_array($column['name'], $jsonColumns, true) ? ColumnKind::Json : ColumnKind::of((string) $column['type_name'], (string) $column['type']);
             $columns[] = [
                 'name' => (string) $column['name'],
                 'type' => (string) $column['type'],

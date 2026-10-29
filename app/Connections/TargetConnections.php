@@ -22,7 +22,11 @@ final class TargetConnections
     /** @var array<string, Connection> */
     private array $open = [];
 
-    public function __construct(private readonly ConnectionFactory $factory, private readonly Session $session) {}
+    public function __construct(
+        private readonly ConnectionFactory $factory,
+        private readonly Session $session,
+        private readonly WriteUnlock $unlock,
+    ) {}
 
     /**
      * @param  string|null  $database  andere Datenbank auf demselben Server — nur PostgreSQL mit «alle Datenbanken»
@@ -34,8 +38,10 @@ final class TargetConnections
     {
         $settings = $this->settings($connection, $database);
 
+        $readOnly = $connection->read_only && ! $this->unlock->isActive($connection);
+
         // Eine Verbindung je tatsächlicher Datenbank: PostgreSQL ohne Namen ist dieselbe wie «postgres».
-        $key = $connection->id.'#'.($settings->database ?? ($connection->driver === DatabaseDriver::Postgres ? Catalog::POSTGRES_MAINTENANCE_DATABASE : ''));
+        $key = $connection->id.'#'.($settings->database ?? ($connection->driver === DatabaseDriver::Postgres ? Catalog::POSTGRES_MAINTENANCE_DATABASE : '')).($readOnly ? '#r' : '#w');
 
         if (isset($this->open[$key])) {
             return $this->open[$key];
@@ -43,7 +49,7 @@ final class TargetConnections
 
         return $this->open[$key] = $this->factory->make(
             $settings,
-            readOnly: $connection->read_only,
+            readOnly: $readOnly,
             statementTimeoutMs: (int) config('phpdbadmin.connections.statement_timeout_ms', 15000),
         );
     }
@@ -65,7 +71,7 @@ final class TargetConnections
      */
     public function withWritable(DatabaseConnection $connection, Closure $action, ?string $database = null, ?int $statementTimeoutMs = null): mixed
     {
-        if ($connection->read_only) {
+        if ($connection->read_only && ! $this->unlock->isActive($connection)) {
             throw new ReadOnlyConnection($connection);
         }
 
@@ -95,7 +101,7 @@ final class TargetConnections
      */
     public function separate(DatabaseConnection $connection, Closure $action, ?string $database = null): mixed
     {
-        $separate = $this->factory->make($this->settings($connection, $database), readOnly: $connection->read_only);
+        $separate = $this->factory->make($this->settings($connection, $database), readOnly: $connection->read_only && ! $this->unlock->isActive($connection));
 
         try {
             return $action($separate);

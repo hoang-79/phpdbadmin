@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Workspace;
 
 use App\Connections\ConnectionNotAllowed;
 use App\Connections\PasswordRequired;
+use App\Connections\WriteUnlock;
 use App\Enums\ConnectionEnvironment;
 use App\Enums\DatabaseDriver;
 use App\Http\Requests\Workspace\RunSqlRequest;
@@ -62,7 +63,7 @@ class SqlController extends WorkspaceController
                     'timeoutSeconds' => (int) config('phpdbadmin.editor.timeout_seconds', 30),
                     'rowLimit' => (int) config('phpdbadmin.editor.row_limit', 1000),
                     'maxRowLimit' => (int) config('phpdbadmin.editor.max_row_limit', 10000),
-                    'canWrite' => ! $connection->read_only && Gate::forUser($user)->allows('write', $connection),
+                    'canWrite' => (! $connection->read_only || app(WriteUnlock::class)->isActive($connection)) && Gate::forUser($user)->allows('write', $connection),
                 ],
                 'saved' => SavedQuery::query()
                     ->where('user_id', $user->id)
