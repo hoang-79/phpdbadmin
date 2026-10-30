@@ -21,13 +21,14 @@ fi
 cd "$(dirname "$0")/.."
 python3 website/bauen.py --basis "$url"
 
-# Nur leer (ausser der Zertifikatsprüfung in .well-known) oder schon von hier befüllt — sonst nichts löschen.
-if ! ssh "$host" "mkdir -p -- '$ordner' && cd -- '$ordner' && { [ -f .phpdbadmin-website ] || [ -z \"\$(ls -A | grep -v '^\.well-known\$')\" ]; }"; then
+# Nur leer oder schon von hier befüllt — sonst nichts löschen. Als leer gilt auch ein Ordner mit .well-known
+# (Zertifikatsprüfung) und dem leeren cgi-bin, den cPanel für jede neue Domain anlegt.
+if ! ssh "$host" "mkdir -p -- '$ordner' && cd -- '$ordner' && { [ -f .phpdbadmin-website ] || { [ -z \"\$(ls -A | grep -v -x -e '.well-known' -e 'cgi-bin')\" ] && { [ ! -e cgi-bin ] || [ -z \"\$(ls -A cgi-bin)\" ]; }; }; }"; then
     echo "Im Ziel $ziel liegen fremde Dateien. Prüfen und leeren (oder einen eigenen Ordner wählen), dann erneut." >&2
     exit 1
 fi
 
-rsync -az --delete --chmod=Dgo+rx,Fgo+r --exclude '.well-known/' website/dist/ "$host:$ordner/"
+rsync -az --delete --chmod=Dgo+rx,Fgo+r --exclude '.well-known/' --exclude 'cgi-bin/' website/dist/ "$host:$ordner/"
 echo "Hochgeladen nach $ziel."
 
 # Gegenprobe: Antwortet die Startseite, und greifen die Regeln der .htaccess?

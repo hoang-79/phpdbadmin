@@ -2,14 +2,14 @@
 
 > **PDF der Phase:** [deployment.pdf](deployment.pdf) — bei jeder Änderung neu gebaut (`python3 dokumentationen/werkzeuge/pdf-bauen.py --nur 05`).
 
-**Stand 30.10.2026:** v1.3.0 veröffentlicht, mit Web-Installer; Landingpage gebaut, für `phpdbadmin.net` bei cyon vorbereitet, noch nicht online; v1.0 ist installierbar (B-05, [TB 08](../04-evolutionary-development/timebox-08-sicherheit-v1.md)). Zielbild nach R-11 (lokal und selbst gehostet) und R-30:
+**Stand 30.10.2026:** v1.3.0 veröffentlicht, mit Web-Installer; Landingpage online unter [phpdbadmin.net](https://phpdbadmin.net); v1.0 ist installierbar (B-05, [TB 08](../04-evolutionary-development/timebox-08-sicherheit-v1.md)). Zielbild nach R-11 (lokal und selbst gehostet) und R-30:
 
 | Stufe | Ort | Bemerkung |
 |---|---|---|
 | Dev | `https://phpdbadmin.test` | Laravel Herd (macOS), PHP 8.5; MySQL 8.4 :3307, MariaDB 10.11 :3306, PostgreSQL 18 :5432 |
 | Demo | offen | öffentliche Demo mit SQLite-Beispieldatenbanken (cyon oder Laravel Cloud) — Entscheid Hoang |
 | Produktion | beim Anwender | selbst gehostet neben den eigenen Datenbanken |
-| Website | `https://phpdbadmin.net` | statische Landingpage aus `website/` (Deutsch, Englisch) bei cyon im Webhosting `hegodidy` (`s116.cyon.net`), Ordner `public_html/phpdbadmin.net` — Entscheid Hoang 30.10.2026: eigene Domain, registriert bei cyon (`.com` ist fremd vergeben) |
+| Website | [`https://phpdbadmin.net`](https://phpdbadmin.net) (online seit 30.10.2026) | statische Landingpage aus `website/` (Deutsch, Englisch) bei cyon im Webhosting `hegodidy` (`s116.cyon.net`), Ordner `public_html/phpdbadmin.net` — Entscheid Hoang 30.10.2026: eigene Domain, registriert bei cyon (`.com` ist fremd vergeben) |
 
 ## Installation beim Anwender
 
@@ -80,11 +80,13 @@ Platzhalter in den Seiten: `{{ version }}` (aus `config/phpdbadmin.php`), `{{ li
 
 Zum Bau gehört `dist/.htaccess` aus `website/vorlagen/htaccess` (LiteSpeed bei cyon, ebenso Apache): 404-Seite, `www.` → ohne, Seiten 5 Minuten im Cache, CSS/JS/Bilder (Prüfsumme in der URL) und Schriften ein Jahr, Sicherheits-Header mit einer CSP ohne `unsafe-inline` — das eine Inline-Skript ist per SHA-256 erlaubt, die Prüfsumme rechnet `bauen.py` aus. HTTPS-Weiterleitung ist eine Einstellung der Site bei cyon, keine Regel in der Datei. Geprüft 30.10.2026 mit einem PHP-Router, der die Header der Datei nachspielt: alle sieben Seiten ohne CSP-Verletzung, Eichung mit falscher Prüfsumme meldet die Verletzung.
 
-Veröffentlichen (cyon, sobald Domain und Site eingerichtet sind):
+Veröffentlichen und aktualisieren (cyon, Hosting `hegodidy`, Addon-Domain `phpdbadmin.net`, Ordner `public_html/phpdbadmin.net`; TLS Let's Encrypt und HTTPS-Weiterleitung sind Einstellungen der Site bei cyon):
 
-1. `phpdbadmin.net` im Webhosting als Domain mit eigenem, leerem Ordner `public_html/phpdbadmin.net` anlegen (wie die übrigen Domains des Kontos); SSH über den Alias `cyon-krelora` (gleiches Konto).
-2. `PHPDBADMIN_WEBSITE_ZIEL=cyon-krelora:public_html/phpdbadmin.net website/hochladen.sh` — baut, prüft das Ziel, lädt mit `rsync --delete` hoch und zeigt die Antwort-Header. Das Skript lädt nur in einen leeren Ordner oder einen, den es schon befüllt hat (Merkmal `.phpdbadmin-website`), lässt `.well-known/` stehen und setzt die Rechte 755/644.
-3. Bei cyon HTTPS einschalten (Let's Encrypt), danach die Weiterleitung auf HTTPS; mit `curl -sI https://phpdbadmin.net/` prüfen, dass Cache- und Sicherheits-Header ankommen.
+```bash
+PHPDBADMIN_WEBSITE_ZIEL=cyon-krelora:public_html/phpdbadmin.net website/hochladen.sh
+```
+
+Das Skript baut, prüft das Ziel, lädt mit `rsync --delete` hoch und zeigt die Antwort-Header. Es lädt nur in einen leeren Ordner (erlaubt: `.well-known/` und der leere `cgi-bin/`, den cPanel anlegt — beide bleiben unberührt) oder einen, den es schon befüllt hat (Merkmal `.phpdbadmin-website`), und setzt die Rechte 755/644. Was auf dem Server geschah, steht in `.cyon/journal.md`. Erste Veröffentlichung 30.10.2026: alle Seiten 200, 404 mit eigener Seite, `http://` und `www.` per 301 auf `https://phpdbadmin.net/`, Header aus der `.htaccess` kommen an, keine Anfragen an Dritte.
 
 Impressum und Datenschutz nennen cyon AG (Basel, Server in der Schweiz) als Hoster; GitHub erscheint nur bei den Links auf Quellcode und Releases. Kontakt-Mail im Impressum fehlt noch.
 

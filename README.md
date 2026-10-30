@@ -2,6 +2,8 @@
 
 Datenbanken im Browser verwalten — **MariaDB, MySQL, PostgreSQL und SQLite** in einer Oberfläche. Selbst gehostet, Anmeldung ohne Passwort (Code per Mail und Passkey), Deutsch und Englisch.
 
+Website: **[phpdbadmin.net](https://phpdbadmin.net)**
+
 - **Ansehen:** Navigator über Datenbanken, Schemas und Objekte (Tabellen, Sichten, Routinen, Trigger, Sequenzen, Typen); Datenraster mit Filtern, Suche, Fremdschlüsseln in beide Richtungen und Zeilen-Detail; Struktur mit Indizes, Fremdschlüsseln, Triggern und DDL; Beziehungsdiagramm als SVG; Suche über ein ganzes Schema.
 - **Ändern ohne Angst:** jede Änderung zuerst als SQL-Vorschau (mit den Zeilen, die `ON DELETE CASCADE` mitlöscht), dann in einer Transaktion angewendet und rückgängig zu machen — im Raster, in Ergebnissen des SQL-Editors und beim Suchen und Ersetzen. Verbindungen sind nach Umgebung markiert (lokal, Test, Produktion); Produktion verlangt den Namen der Verbindung, schreibgeschützte Verbindungen lassen sich mit Grund für 15 Minuten freigeben.
 - **Struktur ändern:** Tabellen anlegen und ändern, Sichten und Routinen bearbeiten — je Treiber richtig angewendet (SQLite nach dem Umbauverfahren, PostgreSQL in einer Transaktion), mit Vorschau des genauen SQL.
