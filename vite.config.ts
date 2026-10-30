@@ -77,6 +77,11 @@ export default defineConfig({
             'dokumentationen/**',
             'resources/js/components/ui/*',
             'resources/views/mail/*',
+            // Website: Vorlagen mit Kopfblock und {{ … }}-Platzhaltern von Hand gesetzt, Bildmasse vom Skript
+            'website/seiten/**',
+            'website/vorlagen/**',
+            'website/assets/img/**',
+            'website/dist/**',
         ],
         sortTailwindcss: {
             functions: ['clsx', 'cn', 'cva'],

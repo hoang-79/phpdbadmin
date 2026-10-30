@@ -49,3 +49,4 @@ yarn-error.log
 !/dokumentationen/00-change_request/00_sources/.gitkeep
 !/dokumentationen/00-change_request/00_sources/README.md
 /dokumentationen/werkzeuge/__pycache__
+/website/dist

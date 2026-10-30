@@ -1,0 +1,12 @@
+{
+  "aendern": {"gross": [2368, 1696], "klein": [1200, 859]},
+  "diagramm": {"gross": [2400, 1500], "klein": [1200, 750]},
+  "explain": {"gross": [1792, 1696], "klein": [1200, 1136]},
+  "mobil": {"gross": [780, 1688], "klein": [390, 844]},
+  "mobil-sql": {"gross": [780, 1688], "klein": [390, 844]},
+  "palette": {"gross": [1472, 1374], "klein": [1200, 1120]},
+  "raster-dark": {"gross": [2400, 1500], "klein": [1200, 750]},
+  "raster-light": {"gross": [2400, 1500], "klein": [1200, 750]},
+  "sql": {"gross": [1792, 1696], "klein": [1200, 1136]},
+  "vergleich": {"gross": [2400, 1500], "klein": [1200, 750]}
+}

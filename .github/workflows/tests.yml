@@ -11,6 +11,7 @@ on:
       - 'v*'
     paths-ignore:
       - 'dokumentationen/**'
+      - 'website/**'
       - '**/*.md'
       - '**/*.pdf'
       - '**/*.png'
@@ -18,6 +19,7 @@ on:
   pull_request:
     paths-ignore:
       - 'dokumentationen/**'
+      - 'website/**'
       - '**/*.md'
       - '**/*.pdf'
       - '**/*.png'

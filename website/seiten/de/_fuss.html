@@ -1,0 +1,38 @@
+<footer class="fuss">
+    <div class="rahmen fuss-innen">
+        <div class="fuss-marke">
+            <a class="logo" href="{{ link:/ }}" aria-label="phpdbadmin — Startseite">{{ marke }}<span class="schriftzug">php<b>db</b>admin</span></a>
+            <p>Datenbanken im Browser verwalten — selbst gehostet, kostenlos und offen unter der MIT-Lizenz.</p>
+        </div>
+        <nav aria-labelledby="fuss-projekt">
+            <h2 id="fuss-projekt">Projekt</h2>
+            <ul>
+                <li><a href="{{ repository }}">Quellcode auf GitHub</a></li>
+                <li><a href="{{ repository }}/releases">Releases</a></li>
+                <li><a href="{{ repository }}/issues">Fehler melden</a></li>
+                <li><a href="{{ repository }}/blob/main/LICENSE">Lizenz (MIT)</a></li>
+            </ul>
+        </nav>
+        <nav aria-labelledby="fuss-seite">
+            <h2 id="fuss-seite">Auf dieser Seite</h2>
+            <ul>
+                <li><a href="{{ link:/ }}#funktionen">Funktionen</a></li>
+                <li><a href="{{ link:/ }}#sicherheit">Sicherheit</a></li>
+                <li><a href="{{ link:/ }}#installation">Installation</a></li>
+                <li><a href="{{ link:/ }}#fragen">Fragen</a></li>
+            </ul>
+        </nav>
+        <nav aria-labelledby="fuss-recht">
+            <h2 id="fuss-recht">Rechtliches</h2>
+            <ul>
+                <li><a href="{{ link:/impressum/ }}">Impressum</a></li>
+                <li><a href="{{ link:/datenschutz/ }}">Datenschutz</a></li>
+                <li><a href="{{ gegenstueck_link }}" hreflang="en" lang="en">English version</a></li>
+            </ul>
+        </nav>
+    </div>
+    <div class="rahmen fuss-unten">
+        <p>© {{ jahr }} Nguyen Development, Winterthur · Version {{ version }}</p>
+        <p>Symbole: <a href="https://lucide.dev">Lucide</a> (ISC) · Schriften: Inter, JetBrains Mono (SIL OFL)</p>
+    </div>
+</footer>

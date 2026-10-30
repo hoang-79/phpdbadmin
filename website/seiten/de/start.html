@@ -1,0 +1,362 @@
+---
+titel: phpdbadmin — Datenbanken im Browser verwalten, ohne Angst vor dem falschen Klick
+beschreibung: MariaDB, MySQL, PostgreSQL und SQLite in einer Oberfläche. Jede Änderung zuerst als SQL-Vorschau, dann in einer Transaktion und rückgängig zu machen. Selbst gehostet, kostenlos, Open Source.
+pfad: /
+gegenstueck: /en/
+jsonld: ja
+---
+<section class="held" aria-labelledby="held-titel">
+    <div class="rahmen held-text">
+        <p class="kennzeichen"><span>Open Source</span> MIT-Lizenz · Version {{ version }}</p>
+        <h1 id="held-titel">Datenbanken im Browser verwalten — <span class="akzent">ohne Angst vor dem falschen Klick.</span></h1>
+        <p class="einleitung">MariaDB, MySQL, PostgreSQL und SQLite in einer Oberfläche. Jede Änderung erscheint zuerst als SQL, läuft dann in einer Transaktion und lässt sich rückgängig machen. Auf Ihrem eigenen Server, kostenlos, auf Deutsch und Englisch.</p>
+        <div class="knoepfe">
+            <a class="knopf knopf-haupt" href="{{ installer }}">{{ symbol:download }} Installer herunterladen</a>
+            <a class="knopf" href="{{ repository }}">{{ symbol:github }} Quellcode auf GitHub</a>
+        </div>
+        <p class="held-hinweis">Eine PHP-Datei hochladen, im Browser öffnen, den Schritten folgen. Braucht PHP 8.5 und eine eigene (Sub-)Domain.</p>
+    </div>
+    <div class="rahmen held-bild">
+        <figure class="fenster">
+            <div class="fenster-leiste" aria-hidden="true"><span></span><span></span><span></span><span class="fenster-adresse">{{ symbol:lock }} db.ihre-domain.ch</span></div>
+            {{ foto-schema:raster | phpdbadmin mit geöffneter Tabelle order_items: links der Navigator mit Tabellen, Sichten und Routinen, rechts das Datenraster mit Fremdschlüsseln als Links }}
+        </figure>
+    </div>
+</section>
+
+<section class="treiber" aria-label="Unterstützte Datenbanken">
+    <div class="rahmen">
+        <div class="treiber-innen">
+            <p>Eine Oberfläche für</p>
+            <ul>
+                <li>{{ symbol:database }}<span><strong>MariaDB</strong><small>ab 10.6</small></span></li>
+                <li>{{ symbol:database }}<span><strong>MySQL</strong><small>ab 8.0</small></span></li>
+                <li>{{ symbol:database }}<span><strong>PostgreSQL</strong><small>ab 14</small></span></li>
+                <li>{{ symbol:database }}<span><strong>SQLite</strong><small>Dateien auf dem Server</small></span></li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section class="abschnitt" id="sicher-aendern" aria-labelledby="sicher-titel">
+    <div class="rahmen">
+        <div class="abschnitt-kopf" data-einblenden>
+            <p class="kennzeichen">{{ symbol:shield-check }} Ändern ohne Angst</p>
+            <h2 id="sicher-titel">Sie sehen, was passiert — bevor es passiert.</h2>
+            <p>Ein Klick im Raster, ein Suchen-und-Ersetzen, ein Ergebnis im SQL-Editor: phpdbadmin zeigt jede Änderung als genaues SQL, führt sie gemeinsam aus und hebt die alten Werte auf.</p>
+        </div>
+        <ol class="schritte">
+            <li class="schritt" data-einblenden>
+                <h3>Erst die Vorschau</h3>
+                <p>Das SQL, das gleich läuft — mit den Zeilen, die <code>ON DELETE CASCADE</code> in anderen Tabellen mitlöscht.</p>
+                <div class="attrappe" aria-hidden="true">
+                    <div class="attrappe-kopf">{{ symbol:file-code }} Vorschau <small>wird genau so ausgeführt</small></div>
+                    <pre><span class="k">DELETE FROM</span> customers
+<span class="k">WHERE</span> id = <span class="z">7</span>;</pre>
+                    <p class="attrappe-hinweis">{{ symbol:triangle-alert }} <span>Löscht mit: 3 Zeilen in <b>orders</b>, 8 in <b>order_items</b></span></p>
+                </div>
+            </li>
+            <li class="schritt" data-einblenden>
+                <h3>Dann alles oder nichts</h3>
+                <p>Alle Anweisungen laufen in einer Transaktion. Schlägt eine fehl, bleibt die Datenbank, wie sie war.</p>
+                <div class="attrappe" aria-hidden="true">
+                    <div class="attrappe-kopf">{{ symbol:layers }} Transaktion</div>
+                    <ul class="attrappe-liste">
+                        <li>{{ symbol:check }} UPDATE orders … (3)</li>
+                        <li>{{ symbol:check }} DELETE FROM customers … (1)</li>
+                        <li class="ende">{{ symbol:circle-check }} COMMIT</li>
+                    </ul>
+                </div>
+            </li>
+            <li class="schritt" data-einblenden>
+                <h3>Und zurück, wenn nötig</h3>
+                <p>phpdbadmin sichert die Werte vorher. Ein Klick stellt sie wieder her — auch Tage später.</p>
+                <div class="attrappe" aria-hidden="true">
+                    <div class="attrappe-meldung">{{ symbol:circle-check }} <span>4 Zeilen geändert</span><span class="attrappe-knopf">{{ symbol:undo-2 }} Rückgängig</span></div>
+                    <div class="attrappe-meldung">{{ symbol:scroll-text }} <span>Im Protokoll, ohne Werte</span></div>
+                </div>
+            </li>
+        </ol>
+        <div class="paar">
+            <div class="karte" data-einblenden>
+                <h3>Produktion sieht man sofort</h3>
+                <p>Jede Verbindung trägt ihre Umgebung — lokal, Test oder Produktion — in Farbe, überall in der Oberfläche. Wer auf Produktion schreibt, tippt zuerst den Namen der Verbindung.</p>
+                <div class="attrappe" aria-hidden="true">
+                    <div class="umgebungen">
+                        <span class="chip lokal">lokal</span>
+                        <span class="chip test">Test</span>
+                        <span class="chip produktion">Produktion</span>
+                    </div>
+                    <p class="bestaetigen">Zum Bestätigen den Namen eingeben<span>shop · MySQL</span></p>
+                </div>
+            </div>
+            <div class="karte" data-einblenden>
+                <h3>Schreibschutz mit Begründung</h3>
+                <p>Schreibgeschützte Verbindungen öffnen sich nur für 15 Minuten — und nur mit einem Grund, der im Protokoll steht. Danach sind sie wieder zu.</p>
+                <div class="attrappe" aria-hidden="true">
+                    <div class="umgebungen"><span class="chip produktion">Produktion</span><span class="chip schutz">{{ symbol:lock }} schreibgeschützt</span></div>
+                    <div class="freigabe">
+                        <label>Grund</label>
+                        <span>Ticket 482: falsche Adresse korrigieren</span>
+                        <small>{{ symbol:timer }} wieder geschützt in 15 Minuten</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="abschnitt" id="funktionen" aria-labelledby="funktionen-titel">
+    <div class="rahmen">
+        <div class="abschnitt-kopf" data-einblenden>
+            <p class="kennzeichen">{{ symbol:layout-grid }} Funktionen</p>
+            <h2 id="funktionen-titel">Alles für den Alltag mit Datenbanken. In einem Tab.</h2>
+            <p>Vom schnellen Blick in eine Tabelle bis zum Vergleich zweier Schemas: Was Sie sonst über drei Werkzeuge verteilen, steht in einer Oberfläche — für alle vier Datenbanken gleich.</p>
+        </div>
+
+        <div class="vorzeigen" data-einblenden>
+            <div class="vorzeigen-text">
+                <p class="kennzeichen">SQL-Editor</p>
+                <h3>Schreiben, ausführen, verstehen.</h3>
+                <p>Der Editor kennt Ihr Schema und schlägt Tabellen und Spalten vor. Jede Abfrage hat eine Zeit- und eine Zeilengrenze — und lässt sich auf dem Server abbrechen.</p>
+                <ul class="punkte">
+                    <li>{{ symbol:check }} Vervollständigung aus dem Katalog, Formatieren, mehrere Tabs</li>
+                    <li>{{ symbol:check }} Ergebnisse aus einer Tabelle direkt bearbeiten — mit Vorschau</li>
+                    <li>{{ symbol:check }} Verlauf je Konto und gespeicherte Abfragen</li>
+                </ul>
+            </div>
+            <figure class="fenster">{{ foto:sql | SQL-Editor mit einer Abfrage über customers und orders, darunter das Ergebnis mit Umsatz je Kunde }}</figure>
+        </div>
+
+        <div class="vorzeigen gespiegelt" data-einblenden>
+            <div class="vorzeigen-text">
+                <p class="kennzeichen">EXPLAIN</p>
+                <h3>Langsame Abfragen sehen, nicht raten.</h3>
+                <p>Der Ausführungsplan erscheint als Baum mit Kosten und Zeilen — und mit Hinweisen, wo ein Index fehlt. Auf Wunsch misst phpdbadmin mit ANALYZE.</p>
+                <ul class="punkte">
+                    <li>{{ symbol:check }} Pläne von MariaDB, MySQL, PostgreSQL und SQLite im selben Format</li>
+                    <li>{{ symbol:sparkles }} SQL-Hilfe mit KI, wenn Sie sie einschalten: eigener Schlüssel, gesendet werden nur Frage und Schema — nie Daten</li>
+                </ul>
+            </div>
+            <figure class="fenster">{{ foto:explain | Ausführungsplan einer Abfrage als Baum: Hash Join über einen Seq Scan auf orders, mit geschätzten Zeilen und Kosten }}</figure>
+        </div>
+
+        <div class="vorzeigen" data-einblenden>
+            <div class="vorzeigen-text">
+                <p class="kennzeichen">Struktur</p>
+                <h3>Tabellen ändern, wie es die Datenbank verlangt.</h3>
+                <p>Spalten, Indizes und Fremdschlüssel bearbeiten Sie in einer Maske; daneben entsteht das SQL. phpdbadmin wendet es je Datenbank richtig an — und sagt, was sich nicht zurückrollen lässt.</p>
+                <ul class="punkte">
+                    <li>{{ symbol:check }} SQLite nach dem Umbauverfahren, PostgreSQL in einer Transaktion</li>
+                    <li>{{ symbol:check }} Tabellen anlegen, Sichten und Routinen bearbeiten</li>
+                    <li>{{ symbol:check }} Laravel-Migration aus einer bestehenden Tabelle</li>
+                </ul>
+            </div>
+            <figure class="fenster">{{ foto:aendern | Tabelle orders in Bearbeitung: Spalten mit Typ, Länge und Vorgabe, rechts das erzeugte SQL mit dem Hinweis, was nicht rückrollbar ist }}</figure>
+        </div>
+
+        <div class="doppel">
+            <div class="karte" data-einblenden>
+                <div class="karte-text">
+                    <h3>Schemas vergleichen — auch über Datenbankgrenzen</h3>
+                    <p>MariaDB gegen PostgreSQL? Kein Problem. Sie bekommen ein Änderungsskript im Dialekt des Ziels.</p>
+                </div>
+                {{ foto:vergleich | Schemavergleich zwischen MariaDB als Quelle und PostgreSQL als Ziel mit Tabellen, die nur in der Quelle stehen }}
+            </div>
+            <div class="karte" data-einblenden>
+                <div class="karte-text">
+                    <h3>Beziehungen auf einen Blick</h3>
+                    <p>Das Diagramm zeichnet Tabellen und Fremdschlüssel — zum Anordnen, Zoomen und als SVG zum Mitnehmen.</p>
+                </div>
+                {{ foto:diagramm | Beziehungsdiagramm mit den Tabellen customers, orders, order_items und products und ihren Fremdschlüsseln }}
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="abschnitt" aria-labelledby="mehr-titel">
+    <div class="rahmen">
+        <div class="abschnitt-kopf" data-einblenden>
+            <p class="kennzeichen">{{ symbol:package }} Und alles, was dazugehört</p>
+            <h2 id="mehr-titel">Vom Export bis zum Team.</h2>
+        </div>
+        <ul class="funktionen" data-einblenden>
+            <li>{{ symbol:download }}<h3>Export und Import</h3><p>CSV, JSON, SQL und Excel. Grosse Mengen laufen im Hintergrund, mit Statistik nach dem Import.</p></li>
+            <li>{{ symbol:archive }}<h3>Sichern und wiederherstellen</h3><p>Über <code>mysqldump</code>, <code>pg_dump</code> und <code>sqlite3</code> — die bewährten Werkzeuge der Datenbanken.</p></li>
+            <li>{{ symbol:search }}<h3>Suchen und Ersetzen</h3><p>Einen Wert in allen Tabellen eines Schemas finden. Ersetzen mit Vorschau — rückgängig wie jede Änderung.</p></li>
+            <li>{{ symbol:cable }}<h3>Direkt oder per SSH-Tunnel</h3><p>Zu Servern im internen Netz über einen SSH-Tunnel. Lokal mit Laravel Herd schlägt das Formular Dienste und Sites vor.</p></li>
+            <li>{{ symbol:server }}<h3>Server-Verwaltung</h3><p>Prozesse beenden, Variablen lesen, Konten und Rechte pflegen, Tabellen warten.</p></li>
+            <li>{{ symbol:layout-grid }}<h3>Übersicht, die mitdenkt</h3><p>Karten, Liste oder kompakt; sortieren, filtern, blättern. Ihr Konto merkt sich die Einstellungen.</p></li>
+            <li>{{ symbol:users }}<h3>Für Teams</h3><p>Einladungen per Mail, Verbindungen teilen und Rechte je Verbindung vergeben: lesen, schreiben oder verwalten.</p></li>
+            <li>{{ symbol:scroll-text }}<h3>Protokoll</h3><p>Jede schreibende Aktion mit Konto, Zeit und Verbindung — ohne die Werte selbst.</p></li>
+            <li>{{ symbol:eye }}<h3>Lesen ohne Risiko</h3><p>Fremdschlüssel in beide Richtungen, Zeilen-Detail, Filter ohne SQL. Wer nur lesen darf, bekommt eine Sitzung, die nur liest.</p></li>
+        </ul>
+    </div>
+</section>
+
+<section class="band" id="sicherheit" aria-labelledby="sicherheit-titel">
+    <div class="rahmen">
+        <div class="abschnitt-kopf" data-einblenden>
+            <p class="kennzeichen">{{ symbol:shield }} Sicherheit</p>
+            <h2 id="sicherheit-titel">Ein Werkzeug mit Zugang zu Ihren Daten muss streng sein.</h2>
+            <p>phpdbadmin ist von Anfang an mit einem Bedrohungsmodell gebaut und nach OWASP geprüft — in zwei Durchgängen, ohne offenen hohen Befund.</p>
+        </div>
+        <ul class="sicherheit">
+            <li data-einblenden>{{ symbol:key-round }}<h3>Anmelden ohne Passwort</h3><p>Mit Passkey oder einem Code per Mail. Es gibt keine Kontopasswörter, die man erraten oder stehlen könnte.</p></li>
+            <li data-einblenden>{{ symbol:lock }}<h3>Zugangsdaten verschlüsselt</h3><p>Passwörter der Verbindungen liegen verschlüsselt in der App-Datenbank — oder gar nicht, wenn Sie sie nur für die Sitzung angeben.</p></li>
+            <li data-einblenden>{{ symbol:network }}<h3>Nur erlaubte Server</h3><p>Sie legen fest, zu welchen Servern phpdbadmin verbinden darf. Das schützt Ihr internes Netz vor Umwegen.</p></li>
+            <li data-einblenden>{{ symbol:users }}<h3>Rechte je Verbindung</h3><p>Lesen, schreiben, verwalten — je Konto und Verbindung. phpdbadmin warnt, wenn ein Datenbankkonto alle Rechte auf dem Server hat.</p></li>
+            <li data-einblenden>{{ symbol:shield-check }}<h3>Gehärtet</h3><p>Content-Security-Policy mit Nonce, Schutz vor CSRF, gedrosselte Code-Prüfung, keine Telemetrie. Nichts meldet nach Hause.</p></li>
+            <li data-einblenden>{{ symbol:signature }}<h3>Signierte Releases</h3><p>Der Installer prüft Grösse, SHA-256 und die Ed25519-Signatur jedes Releases, bevor er etwas entpackt.</p></li>
+        </ul>
+    </div>
+</section>
+
+<section class="abschnitt" id="ueberall" aria-labelledby="ueberall-titel">
+    <div class="rahmen">
+        <div class="abschnitt-kopf mittig" data-einblenden>
+            <p class="kennzeichen">{{ symbol:monitor-smartphone }} Überall zu Hause</p>
+            <h2 id="ueberall-titel">Schnell mit der Tastatur. Brauchbar auf dem Handy.</h2>
+            <p>Die Befehlspalette findet jede Tabelle, Abfrage und Aktion. Und wenn es unterwegs brennt, passen sich Raster und Editor dem kleinen Bildschirm an.</p>
+        </div>
+        <div class="ueberall">
+            <figure class="fenster" data-einblenden>{{ foto:palette | Befehlspalette über dem Datenraster: zuletzt geöffnete Tabellen, andere Verbindungen und Aktionen }}</figure>
+            <div class="handys" data-einblenden>
+                <figure class="handy">{{ handy:mobil | phpdbadmin auf dem Handy: die Tabelle customers im Raster }}</figure>
+                <figure class="handy">{{ handy:mobil-sql | phpdbadmin auf dem Handy: der SQL-Editor mit einer Abfrage }}</figure>
+            </div>
+        </div>
+        <ul class="eigenschaften">
+            <li><kbd>⌘</kbd><kbd>K</kbd> Befehlspalette</li>
+            <li>{{ symbol:smartphone }} Handy und Tablet</li>
+            <li>{{ symbol:sun-moon }} Hell und dunkel</li>
+            <li>{{ symbol:languages }} Deutsch und Englisch</li>
+            <li>{{ symbol:keyboard }} Tastenkürzel</li>
+        </ul>
+    </div>
+</section>
+
+<section class="abschnitt" id="installation" aria-labelledby="installation-titel">
+    <div class="rahmen">
+        <div class="abschnitt-kopf" data-einblenden>
+            <p class="kennzeichen">{{ symbol:zap }} Installation</p>
+            <h2 id="installation-titel">In wenigen Minuten auf Ihrem Server.</h2>
+            <p>Auf Webhosting ohne Konsole mit dem Web-Installer, auf dem eigenen Server mit drei Befehlen. Beides ohne Konto bei uns — es gibt keines.</p>
+        </div>
+        <div class="installation">
+            <div class="karte" data-einblenden>
+                <h3>{{ symbol:globe }} Mit dem Web-Installer</h3>
+                <p class="unter">Für Webhosting ohne Konsole — eine einzige PHP-Datei.</p>
+                <ol class="nummern">
+                    <li><span>Eine eigene (Sub-)Domain anlegen, z. B. <code>db.ihre-domain.ch</code>, und HTTPS einschalten.</span></li>
+                    <li><span><code>phpdbadmin-installer.php</code> in deren leeren Ordner hochladen.</span></li>
+                    <li><span>Die Datei im Browser öffnen und den Schritten folgen.</span></li>
+                </ol>
+                <p class="kleingedruckt">Der Installer prüft den Server und erklärt jeden Befund in Klartext, erkennt rund 20 Hoster, löst nach Rückfrage, was er selbst lösen kann, prüft die Signatur des Releases, legt das Programm wenn möglich ausserhalb des Webordners ab, richtet App-Datenbank, Mail und Ihr Konto ein — und löscht sich am Ende selbst.</p>
+                <div class="knoepfe"><a class="knopf knopf-haupt" href="{{ installer }}">{{ symbol:download }} Installer herunterladen</a></div>
+            </div>
+            <div class="karte" data-einblenden>
+                <h3>{{ symbol:terminal }} Mit der Konsole</h3>
+                <p class="unter">Für den eigenen Server, eine VM oder Laravel Herd.</p>
+                <div class="code">
+                    <button class="kopieren" type="button" data-kopieren="Kopiert">{{ symbol:copy }} <span>Kopieren</span></button>
+                    <pre><code><span class="p">$ </span><span data-zeile>git clone {{ repository }}.git</span>
+<span class="p">$ </span><span data-zeile>cd phpdbadmin</span>
+<span class="p">$ </span><span data-zeile>composer setup</span></code></pre>
+                </div>
+                <p class="kleingedruckt"><code>composer setup</code> installiert die Abhängigkeiten, baut die Oberfläche, richtet die App-Datenbank ein, prüft das System und fragt nach Ihrem Namen und Ihrer Mail-Adresse. Am Ende steht ein Einrichtungslink, der Sie anmeldet und Ihren Passkey anlegt.</p>
+                <p class="kleingedruckt">Aktualisieren: <code>git pull</code> und <code>composer upgrade</code>.</p>
+            </div>
+        </div>
+        <div class="voraussetzungen" data-einblenden>
+            <h3>Voraussetzungen</h3>
+            <dl>
+                <dt>PHP</dt><dd>8.5 mit <code>pdo</code>, <code>mbstring</code>, <code>openssl</code> — dazu der Treiber je Datenbank (<code>pdo_mysql</code>, <code>pdo_pgsql</code>, <code>pdo_sqlite</code>)</dd>
+                <dt>Webserver</dt><dd>Apache, nginx, LiteSpeed oder Caddy mit PHP-FPM — oder Laravel Herd, Valet, <code>php artisan serve</code></dd>
+                <dt>App-Datenbank</dt><dd>SQLite (Vorgabe), MariaDB, MySQL oder PostgreSQL — getrennt von den Datenbanken, die Sie verwalten</dd>
+                <dt>HTTPS</dt><dd>für Passkeys nötig (ausser auf <code>localhost</code>)</dd>
+                <dt>Optional</dt><dd><code>ssh</code> für Tunnel; <code>mysqldump</code>, <code>pg_dump</code>, <code>sqlite3</code> für Sicherungen; ein Worker für grosse Exporte</dd>
+            </dl>
+        </div>
+    </div>
+</section>
+
+<section class="abschnitt" id="open-source" aria-labelledby="offen-titel">
+    <div class="rahmen">
+        <div class="offen" data-einblenden>
+            <div>
+                <p class="kennzeichen">{{ symbol:heart }} Open Source</p>
+                <h2 id="offen-titel">Offen, kostenlos und ohne Haken.</h2>
+                <p>phpdbadmin steht unter der MIT-Lizenz: verwenden, anpassen, weitergeben — auch in Firmen. Kein Abo, keine Pro-Version, keine gehostete Fassung, die Ihre Daten sehen müsste.</p>
+                <div class="knoepfe">
+                    <a class="knopf knopf-haupt" href="{{ repository }}">{{ symbol:github }} Zum Repository</a>
+                    <a class="knopf" href="{{ repository }}/releases">{{ symbol:package }} Releases</a>
+                </div>
+            </div>
+            <div class="schluessel">
+                <p>Öffentlicher Schlüssel der Releases (Ed25519) — damit prüft der Installer jede Version:</p>
+                <div class="code"><pre><code>2wyjL2KumyQ6vlmUvcv4NydLkoxJXr8U8OG9B+iYz/M=</code></pre></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="abschnitt" id="fragen" aria-labelledby="fragen-titel">
+    <div class="rahmen">
+        <div class="abschnitt-kopf mittig" data-einblenden>
+            <p class="kennzeichen">{{ symbol:circle-alert }} Fragen</p>
+            <h2 id="fragen-titel">Häufige Fragen</h2>
+        </div>
+        <div class="fragen">
+            <details>
+                <summary>Was kostet phpdbadmin? {{ symbol:chevron-down }}</summary>
+                <div><p>Nichts. phpdbadmin ist Open Source unter der MIT-Lizenz, auch für den Einsatz in Firmen. Sie betreiben es auf Ihrem eigenen Server oder Webhosting.</p></div>
+            </details>
+            <details>
+                <summary>Hat phpdbadmin etwas mit phpMyAdmin zu tun? {{ symbol:chevron-down }}</summary>
+                <div><p>Nein. phpdbadmin ist ein eigenständiges Projekt mit eigenem Code und gehört weder zu phpMyAdmin noch zu phpPgAdmin. Anders als diese arbeitet es mit vier Datenbanken in einer Oberfläche.</p></div>
+            </details>
+            <details>
+                <summary>Verlassen meine Daten den Server? {{ symbol:chevron-down }}</summary>
+                <div><p>Nein. phpdbadmin läuft bei Ihnen und meldet nichts nach Hause — keine Telemetrie, keine Statistik.</p><p>Die einzige Ausnahme ist die SQL-Hilfe mit KI: Sie ist ausgeschaltet, bis Ihre Installation sie einschaltet, und braucht dann je Konto einen eigenen Schlüssel. Gesendet werden nur Ihre Frage und das Schema (Tabellen, Spalten, Typen, Schlüssel) — nie Daten.</p></div>
+            </details>
+            <details>
+                <summary>Welche Datenbanken und Versionen werden unterstützt? {{ symbol:chevron-down }}</summary>
+                <div><p>MariaDB ab 10.6, MySQL ab 8.0, PostgreSQL ab 14 und SQLite. Die Tests laufen gegen die aktuellen Versionen und gegen diese Untergrenzen.</p></div>
+            </details>
+            <details>
+                <summary>Brauche ich HTTPS? {{ symbol:chevron-down }}</summary>
+                <div><p>Für Passkeys ja — Browser erlauben sie nur über HTTPS (ausser auf <code>localhost</code>). Für ein Werkzeug mit Zugang zu Ihren Datenbanken ist HTTPS ohnehin Pflicht; die meisten Hoster schalten ein kostenloses Zertifikat mit einem Klick ein.</p></div>
+            </details>
+            <details>
+                <summary>Können mehrere Personen damit arbeiten? {{ symbol:chevron-down }}</summary>
+                <div><p>Ja. Sie laden Kolleginnen und Kollegen per Mail ein und vergeben Rechte je Verbindung: lesen, schreiben oder verwalten. Jede schreibende Aktion steht im Protokoll, und die aktiven Sitzungen lassen sich jederzeit beenden.</p></div>
+            </details>
+            <details>
+                <summary>Warum braucht der Installer eine eigene (Sub-)Domain? {{ symbol:chevron-down }}</summary>
+                <div><p>Damit das Programm ausserhalb des Webordners liegen kann und nur der öffentliche Teil erreichbar ist. In einem Unterordner einer bestehenden Website wäre das nicht sicher möglich — deshalb richtet der Installer phpdbadmin nur auf einer eigenen (Sub-)Domain ein.</p></div>
+            </details>
+            <details>
+                <summary>Wie aktualisiere ich? {{ symbol:chevron-down }}</summary>
+                <div><p>Mit Konsole: <code>git pull</code> und danach <code>composer upgrade</code> — das holt die Abhängigkeiten, baut die Oberfläche, führt die Migrationen aus und prüft das System. Neue Versionen stehen unter <a href="{{ repository }}/releases">Releases</a>.</p></div>
+            </details>
+            <details>
+                <summary>Gibt es phpdbadmin auch gehostet? {{ symbol:chevron-down }}</summary>
+                <div><p>Nein, bewusst nicht. Ein Werkzeug, das Ihre Datenbanken öffnet, gehört auf Ihren Server — neben die Datenbanken, nicht zu einem Anbieter dazwischen.</p></div>
+            </details>
+        </div>
+    </div>
+</section>
+
+<section class="schluss" aria-labelledby="schluss-titel">
+    <div class="rahmen">
+        <div class="schluss-innen" data-einblenden>
+            <h2 id="schluss-titel">Bereit für Datenbanken ohne Herzklopfen?</h2>
+            <p>Laden Sie den Installer herunter, oder sehen Sie sich zuerst den Code an. Beides kostet nichts.</p>
+            <div class="knoepfe">
+                <a class="knopf knopf-haupt" href="{{ installer }}">{{ symbol:download }} Installer herunterladen</a>
+                <a class="knopf" href="{{ repository }}">{{ symbol:github }} Quellcode auf GitHub</a>
+            </div>
+        </div>
+    </div>
+</section>
