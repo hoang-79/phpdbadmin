@@ -2,14 +2,14 @@
 
 > **PDF der Phase:** [deployment.pdf](deployment.pdf) — bei jeder Änderung neu gebaut (`python3 dokumentationen/werkzeuge/pdf-bauen.py --nur 05`).
 
-**Stand 30.10.2026:** v1.3.0 veröffentlicht, mit Web-Installer; Landingpage gebaut, für `phpdbadmin.ch` bei cyon vorbereitet, noch nicht online; v1.0 ist installierbar (B-05, [TB 08](../04-evolutionary-development/timebox-08-sicherheit-v1.md)). Zielbild nach R-11 (lokal und selbst gehostet) und R-30:
+**Stand 30.10.2026:** v1.3.0 veröffentlicht, mit Web-Installer; Landingpage gebaut, für `phpdbadmin.net` bei cyon vorbereitet, noch nicht online; v1.0 ist installierbar (B-05, [TB 08](../04-evolutionary-development/timebox-08-sicherheit-v1.md)). Zielbild nach R-11 (lokal und selbst gehostet) und R-30:
 
 | Stufe | Ort | Bemerkung |
 |---|---|---|
 | Dev | `https://phpdbadmin.test` | Laravel Herd (macOS), PHP 8.5; MySQL 8.4 :3307, MariaDB 10.11 :3306, PostgreSQL 18 :5432 |
 | Demo | offen | öffentliche Demo mit SQLite-Beispieldatenbanken (cyon oder Laravel Cloud) — Entscheid Hoang |
 | Produktion | beim Anwender | selbst gehostet neben den eigenen Datenbanken |
-| Website | `https://phpdbadmin.ch` (geplant) | statische Landingpage aus `website/` (Deutsch, Englisch) bei cyon — Entscheid Hoang 30.10.2026: eigene Domain; `phpdbadmin.ch` ist noch zu registrieren (`.com` ist vergeben) |
+| Website | `https://phpdbadmin.net` | statische Landingpage aus `website/` (Deutsch, Englisch) bei cyon im Webhosting `hegodidy` (`s116.cyon.net`), Ordner `public_html/phpdbadmin.net` — Entscheid Hoang 30.10.2026: eigene Domain, registriert bei cyon (`.com` ist fremd vergeben) |
 
 ## Installation beim Anwender
 
@@ -63,7 +63,7 @@ Version in `config/phpdbadmin.php` (`version`). Das Archiv enthält nur, was zur
 Die Landingpage liegt in `website/` und ist rein statisch: keine Cookies, kein Tracking, nichts von Dritten (Schriften, Bilder, Symbole liegen mit auf dem Server). Ein Python-Skript ohne Abhängigkeiten baut sie nach `website/dist/` (nicht im Repository):
 
 ```bash
-python3 website/bauen.py                                   # Basis: https://phpdbadmin.ch/
+python3 website/bauen.py                                   # Basis: https://phpdbadmin.net/
 python3 website/bauen.py --basis https://example.org/      # andere Adresse (canonical, hreflang, Sitemap, Link-Vorschau)
 php -S 127.0.0.1:8765 -t website/dist                      # ansehen
 ```
@@ -82,9 +82,9 @@ Zum Bau gehört `dist/.htaccess` aus `website/vorlagen/htaccess` (LiteSpeed bei 
 
 Veröffentlichen (cyon, sobald Domain und Site eingerichtet sind):
 
-1. `phpdbadmin.ch` registrieren und im Webhosting als eigene Domain mit eigenem, leerem Ordner anlegen (z. B. `public_html/phpdbadmin.ch`); SSH-Zugang wie bei `cyon-krelora` als Alias in `~/.ssh/config`.
-2. `PHPDBADMIN_WEBSITE_ZIEL=<ssh-alias>:public_html/phpdbadmin.ch website/hochladen.sh` — baut, prüft das Ziel, lädt mit `rsync --delete` hoch und zeigt die Antwort-Header. Das Skript lädt nur in einen leeren Ordner oder einen, den es schon befüllt hat (Merkmal `.phpdbadmin-website`), lässt `.well-known/` stehen und setzt die Rechte 755/644.
-3. Bei cyon HTTPS einschalten (Let's Encrypt), danach die Weiterleitung auf HTTPS; mit `curl -sI https://phpdbadmin.ch/` prüfen, dass Cache- und Sicherheits-Header ankommen.
+1. `phpdbadmin.net` im Webhosting als Domain mit eigenem, leerem Ordner `public_html/phpdbadmin.net` anlegen (wie die übrigen Domains des Kontos); SSH über den Alias `cyon-krelora` (gleiches Konto).
+2. `PHPDBADMIN_WEBSITE_ZIEL=cyon-krelora:public_html/phpdbadmin.net website/hochladen.sh` — baut, prüft das Ziel, lädt mit `rsync --delete` hoch und zeigt die Antwort-Header. Das Skript lädt nur in einen leeren Ordner oder einen, den es schon befüllt hat (Merkmal `.phpdbadmin-website`), lässt `.well-known/` stehen und setzt die Rechte 755/644.
+3. Bei cyon HTTPS einschalten (Let's Encrypt), danach die Weiterleitung auf HTTPS; mit `curl -sI https://phpdbadmin.net/` prüfen, dass Cache- und Sicherheits-Header ankommen.
 
 Impressum und Datenschutz nennen cyon AG (Basel, Server in der Schweiz) als Hoster; GitHub erscheint nur bei den Links auf Quellcode und Releases. Kontakt-Mail im Impressum fehlt noch.
 

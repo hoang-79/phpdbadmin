@@ -5,7 +5,7 @@ Website von phpdbadmin bauen: statische Seiten auf Deutsch und Englisch aus vorl
     python3 website/bauen.py [--basis https://example.org/pfad/]
 
 --basis ist die öffentliche Adresse der Website (für canonical, hreflang, Sitemap und Link-Vorschauen); ohne Angabe
-gilt PHPDBADMIN_WEBSITE_URL oder https://phpdbadmin.ch/. Alle übrigen Links sind relativ — dist/ lässt sich also auch
+gilt PHPDBADMIN_WEBSITE_URL oder https://phpdbadmin.net/. Alle übrigen Links sind relativ — dist/ lässt sich also auch
 aus einem Unterordner oder mit `php -S` ansehen. Dazu entsteht dist/.htaccess (404, Caching, Sicherheits-Header) aus
 vorlagen/htaccess; hochladen mit hochladen.sh.
 
@@ -39,7 +39,7 @@ REPO = WEBSITE.parent
 DIST = WEBSITE / 'dist'
 ASSETS = WEBSITE / 'assets'
 LUCIDE = REPO / 'node_modules' / '@lucide' / 'vue' / 'dist' / 'esm' / 'icons'
-BASIS = 'https://phpdbadmin.ch/'
+BASIS = 'https://phpdbadmin.net/'
 REPOSITORY = 'https://github.com/hoang-79/phpdbadmin'
 
 

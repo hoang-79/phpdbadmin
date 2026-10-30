@@ -2,15 +2,15 @@
 #
 # Website von phpdbadmin bauen und hochladen — per SSH und rsync, z. B. zu cyon.
 #
-#   PHPDBADMIN_WEBSITE_ZIEL=cyon-phpdbadmin:public_html/phpdbadmin.ch website/hochladen.sh
+#   PHPDBADMIN_WEBSITE_ZIEL=cyon-krelora:public_html/phpdbadmin.net website/hochladen.sh
 #
 # Das Ziel ist «SSH-Host:Ordner», der Ordner relativ zum Home des Kontos (ohne ~). Er gehört allein der Website:
 # rsync --delete ersetzt alles darin. Deshalb lädt das Skript nur in einen leeren Ordner oder in einen, den es schon
-# einmal befüllt hat (Merkmal .phpdbadmin-website). Andere Adresse als https://phpdbadmin.ch/: PHPDBADMIN_WEBSITE_URL.
+# einmal befüllt hat (Merkmal .phpdbadmin-website). Andere Adresse als https://phpdbadmin.net/: PHPDBADMIN_WEBSITE_URL.
 set -euo pipefail
 
-ziel="${PHPDBADMIN_WEBSITE_ZIEL:?PHPDBADMIN_WEBSITE_ZIEL fehlt, z. B. cyon-phpdbadmin:public_html/phpdbadmin.ch}"
-url="${PHPDBADMIN_WEBSITE_URL:-https://phpdbadmin.ch/}"
+ziel="${PHPDBADMIN_WEBSITE_ZIEL:?PHPDBADMIN_WEBSITE_ZIEL fehlt, z. B. cyon-krelora:public_html/phpdbadmin.net}"
+url="${PHPDBADMIN_WEBSITE_URL:-https://phpdbadmin.net/}"
 host="${ziel%%:*}"
 ordner="${ziel#*:}"
 if [[ "$host" == "$ziel" || ! "$ordner" =~ ^[A-Za-z0-9._-][A-Za-z0-9._/-]*$ || "$ordner" == *..* ]]; then
