@@ -5,8 +5,9 @@ Website von phpdbadmin bauen: statische Seiten auf Deutsch und Englisch aus vorl
     python3 website/bauen.py [--basis https://example.org/pfad/]
 
 --basis ist die öffentliche Adresse der Website (für canonical, hreflang, Sitemap und Link-Vorschauen); ohne Angabe
-gilt PHPDBADMIN_WEBSITE_URL oder GitHub Pages des Repositorys. Alle übrigen Links sind relativ — dist/ lässt sich
-also auch aus einem Unterordner oder mit `php -S` ansehen.
+gilt PHPDBADMIN_WEBSITE_URL oder https://phpdbadmin.ch/. Alle übrigen Links sind relativ — dist/ lässt sich also auch
+aus einem Unterordner oder mit `php -S` ansehen. Dazu entsteht dist/.htaccess (404, Caching, Sicherheits-Header) aus
+vorlagen/htaccess; hochladen mit hochladen.sh.
 
 Seiten: seiten/<sprache>/<name>.html mit Kopf zwischen zwei Zeilen «---» (titel, beschreibung, pfad, gegenstueck,
 optional robots, jsonld). Dateien mit «_» vorne sind Bausteine derselben Sprache (_kopf, _fuss). Platzhalter:
@@ -22,6 +23,7 @@ Keine Abhängigkeiten ausser Python 3 (Pillow nur in werkzeuge/bilder.py).
 """
 
 import argparse
+import base64
 import hashlib
 import html
 import json
@@ -37,7 +39,7 @@ REPO = WEBSITE.parent
 DIST = WEBSITE / 'dist'
 ASSETS = WEBSITE / 'assets'
 LUCIDE = REPO / 'node_modules' / '@lucide' / 'vue' / 'dist' / 'esm' / 'icons'
-BASIS = 'https://hoang-79.github.io/phpdbadmin/'
+BASIS = 'https://phpdbadmin.ch/'
 REPOSITORY = 'https://github.com/hoang-79/phpdbadmin'
 
 
@@ -183,6 +185,14 @@ def kennung(datei: Path) -> str:
     return hashlib.sha256(datei.read_bytes()).hexdigest()[:10]
 
 
+def skript_hash(vorlage: str) -> str:
+    """Prüfsumme des einzigen Inline-Skripts der Vorlage für die Content-Security-Policy."""
+    skripte = re.findall(r'<script>(.*?)</script>', vorlage, re.S)
+    if len(skripte) != 1:
+        raise SystemExit(f'Die Vorlage soll genau ein Inline-Skript haben, gefunden: {len(skripte)}')
+    return 'sha256-' + base64.b64encode(hashlib.sha256(skripte[0].encode('utf-8')).digest()).decode('ascii')
+
+
 def jsonld(werte: dict[str, str]) -> str:
     daten = {
         '@context': 'https://schema.org',
@@ -213,9 +223,16 @@ def bauen(basis: str) -> None:
     shutil.copy(REPO / 'resources' / 'brand' / 'png' / 'og-bild.png', DIST / 'assets' / 'og-bild.png')
     for datei in ('favicon.svg', 'favicon.ico', 'apple-touch-icon.png'):
         shutil.copy(REPO / 'public' / datei, DIST / datei)
-    (DIST / '.nojekyll').write_text('', encoding='utf-8')
+    # Merkmal für hochladen.sh: Dieser Ordner gehört der Website und darf beim nächsten Hochladen ersetzt werden.
+    (DIST / '.phpdbadmin-website').write_text('Website von phpdbadmin — wird bei jedem Hochladen ersetzt.\n', encoding='utf-8')
 
     vorlage = (WEBSITE / 'vorlagen' / 'seite.html').read_text(encoding='utf-8')
+    htaccess = (WEBSITE / 'vorlagen' / 'htaccess').read_text(encoding='utf-8')
+    (DIST / '.htaccess').write_text(ersetzen(htaccess, {
+        'root': '',
+        'basis_pfad': basis_pfad,
+        'skript_hash': skript_hash(vorlage),
+    }), encoding='utf-8')
     gemeinsam = {
         'version': version(),
         'jahr': str(date.today().year),

@@ -2,14 +2,14 @@
 
 > **PDF der Phase:** [deployment.pdf](deployment.pdf) — bei jeder Änderung neu gebaut (`python3 dokumentationen/werkzeuge/pdf-bauen.py --nur 05`).
 
-**Stand 30.10.2026:** v1.3.0 veröffentlicht, mit Web-Installer; Landingpage gebaut, noch nicht veröffentlicht; v1.0 ist installierbar (B-05, [TB 08](../04-evolutionary-development/timebox-08-sicherheit-v1.md)). Zielbild nach R-11 (lokal und selbst gehostet) und R-30:
+**Stand 30.10.2026:** v1.3.0 veröffentlicht, mit Web-Installer; Landingpage gebaut, für `phpdbadmin.ch` bei cyon vorbereitet, noch nicht online; v1.0 ist installierbar (B-05, [TB 08](../04-evolutionary-development/timebox-08-sicherheit-v1.md)). Zielbild nach R-11 (lokal und selbst gehostet) und R-30:
 
 | Stufe | Ort | Bemerkung |
 |---|---|---|
 | Dev | `https://phpdbadmin.test` | Laravel Herd (macOS), PHP 8.5; MySQL 8.4 :3307, MariaDB 10.11 :3306, PostgreSQL 18 :5432 |
 | Demo | offen | öffentliche Demo mit SQLite-Beispieldatenbanken (cyon oder Laravel Cloud) — Entscheid Hoang |
 | Produktion | beim Anwender | selbst gehostet neben den eigenen Datenbanken |
-| Website | noch nicht veröffentlicht | statische Landingpage aus `website/` (Deutsch, Englisch) — Ort offen: GitHub Pages des Repositorys oder eigene Domain, Entscheid Hoang |
+| Website | `https://phpdbadmin.ch` (geplant) | statische Landingpage aus `website/` (Deutsch, Englisch) bei cyon — Entscheid Hoang 30.10.2026: eigene Domain; `phpdbadmin.ch` ist noch zu registrieren (`.com` ist vergeben) |
 
 ## Installation beim Anwender
 
@@ -63,7 +63,7 @@ Version in `config/phpdbadmin.php` (`version`). Das Archiv enthält nur, was zur
 Die Landingpage liegt in `website/` und ist rein statisch: keine Cookies, kein Tracking, nichts von Dritten (Schriften, Bilder, Symbole liegen mit auf dem Server). Ein Python-Skript ohne Abhängigkeiten baut sie nach `website/dist/` (nicht im Repository):
 
 ```bash
-python3 website/bauen.py                                   # Basis: GitHub Pages des Repositorys
+python3 website/bauen.py                                   # Basis: https://phpdbadmin.ch/
 python3 website/bauen.py --basis https://example.org/      # andere Adresse (canonical, hreflang, Sitemap, Link-Vorschau)
 php -S 127.0.0.1:8765 -t website/dist                      # ansehen
 ```
@@ -73,11 +73,20 @@ php -S 127.0.0.1:8765 -t website/dist                      # ansehen
 | `website/seiten/de`, `…/en` | Startseite, Impressum bzw. Legal notice, Datenschutz bzw. Privacy, 404 (zweisprachig); Kopfblock mit `titel`, `beschreibung`, `pfad`, `gegenstueck`; `_kopf`/`_fuss` als Bausteine je Sprache |
 | `website/vorlagen/seite.html` | Rahmen mit Meta-Angaben, Open Graph, hreflang, JSON-LD (`SoftwareApplication`) auf den Startseiten |
 | `website/assets` | `site.css` (Farben aus dem Logo-Kit, hell und dunkel nach Systemeinstellung), `site.js` (Menü, Kopieren, Einblenden), Schriften, Fotos als WebP mit `masse.json` |
+| `website/vorlagen/htaccess`, `website/hochladen.sh` | Server-Regeln (siehe unten) und Hochladen per SSH/rsync |
 | `website/werkzeuge` | `fotos.mjs` nimmt die Bildschirmfotos in der Sichtprüfung auf (Chrome ohne Fenster), `bilder.py` macht daraus WebP in zwei Grössen und schneidet SQL-Editor, EXPLAIN, Struktur und Befehlspalette zu |
 
 Platzhalter in den Seiten: `{{ version }}` (aus `config/phpdbadmin.php`), `{{ link:/pfad/ }}`, `{{ symbol:name }}` (Lucide aus `node_modules`), `{{ foto:name | Alt-Text }}`, `{{ foto-schema:name | … }}` (hell/dunkel), `{{ handy:name | … }}`. Die Vorlagen sind vom Formatierer ausgenommen (`vite.config.ts`), `website/**` löst keinen CI-Lauf aus. Fotos neu aufnehmen: Sitzungs-Cookie eines Kontos der Sichtprüfung als JSON nach `FOTO_SITZUNG`, dann `node website/werkzeuge/fotos.mjs` und `python3 website/werkzeuge/bilder.py /tmp/phpdbadmin-werkzeug/fotos`. Fotos mit lokalen Pfaden oder fremden Datenbanknamen (Verbindungsliste, Server-Übersicht) bleiben bewusst draussen.
 
-Veröffentlichen: Inhalt von `website/dist/` hochladen (enthält `.nojekyll`, `404.html`, `robots.txt`, `sitemap.xml`). Impressum und Datenschutz nennen GitHub Pages als Hoster — bei einem anderen Ort beide Fassungen anpassen.
+Zum Bau gehört `dist/.htaccess` aus `website/vorlagen/htaccess` (LiteSpeed bei cyon, ebenso Apache): 404-Seite, `www.` → ohne, Seiten 5 Minuten im Cache, CSS/JS/Bilder (Prüfsumme in der URL) und Schriften ein Jahr, Sicherheits-Header mit einer CSP ohne `unsafe-inline` — das eine Inline-Skript ist per SHA-256 erlaubt, die Prüfsumme rechnet `bauen.py` aus. HTTPS-Weiterleitung ist eine Einstellung der Site bei cyon, keine Regel in der Datei. Geprüft 30.10.2026 mit einem PHP-Router, der die Header der Datei nachspielt: alle sieben Seiten ohne CSP-Verletzung, Eichung mit falscher Prüfsumme meldet die Verletzung.
+
+Veröffentlichen (cyon, sobald Domain und Site eingerichtet sind):
+
+1. `phpdbadmin.ch` registrieren und im Webhosting als eigene Domain mit eigenem, leerem Ordner anlegen (z. B. `public_html/phpdbadmin.ch`); SSH-Zugang wie bei `cyon-krelora` als Alias in `~/.ssh/config`.
+2. `PHPDBADMIN_WEBSITE_ZIEL=<ssh-alias>:public_html/phpdbadmin.ch website/hochladen.sh` — baut, prüft das Ziel, lädt mit `rsync --delete` hoch und zeigt die Antwort-Header. Das Skript lädt nur in einen leeren Ordner oder einen, den es schon befüllt hat (Merkmal `.phpdbadmin-website`), lässt `.well-known/` stehen und setzt die Rechte 755/644.
+3. Bei cyon HTTPS einschalten (Let's Encrypt), danach die Weiterleitung auf HTTPS; mit `curl -sI https://phpdbadmin.ch/` prüfen, dass Cache- und Sicherheits-Header ankommen.
+
+Impressum und Datenschutz nennen cyon AG (Basel, Server in der Schweiz) als Hoster; GitHub erscheint nur bei den Links auf Quellcode und Releases. Kontakt-Mail im Impressum fehlt noch.
 
 ## Pipeline
 

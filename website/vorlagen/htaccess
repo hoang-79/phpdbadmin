@@ -1,0 +1,38 @@
+# Website von phpdbadmin — erzeugt von website/bauen.py, wird bei jedem Hochladen ersetzt.
+# Für LiteSpeed (cyon) und Apache. Die Weiterleitung auf HTTPS ist eine Einstellung der Site beim Hoster, nicht hier.
+
+AddDefaultCharset UTF-8
+AddType image/webp .webp
+AddType font/woff2 .woff2
+Options -Indexes
+ErrorDocument 404 {{ basis_pfad }}404.html
+
+# Eine Adresse für alle: www. leitet auf die Domain ohne www.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+    RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    # Seiten kurz cachen: Nach einem Update zeigt keine alte Seite auf gelöschte Bilder.
+    <FilesMatch "\.(html|xml|txt)$">
+        Header set Cache-Control "public, max-age=300, must-revalidate"
+    </FilesMatch>
+    # CSS, JS und Bilder tragen eine Prüfsumme in der URL, Schriften ändern sich nie: ein Jahr.
+    <FilesMatch "\.(css|js|webp|woff2)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    <FilesMatch "\.(png|ico|svg)$">
+        Header set Cache-Control "public, max-age=86400"
+    </FilesMatch>
+
+    # Nur eigene Dateien; das einzige Inline-Skript (Klasse «js» am Wurzelelement) per Prüfsumme erlaubt.
+    Header always set Content-Security-Policy "default-src 'none'; script-src 'self' '{{ skript_hash }}'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests"
+    Header always set Strict-Transport-Security "max-age=31536000"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+</IfModule>
