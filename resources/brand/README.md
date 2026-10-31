@@ -50,6 +50,10 @@ benutzt. In der App zeichnet `resources/js/components/Wordmark.vue` das Logo mit
 `bauen.py` kopiert `favicon.svg`, `favicon.ico` und `apple-touch-icon.png` nach `public/` und schreibt die Pfade der
 Bildmarke nach `resources/js/lib/brand.ts`. Es braucht `rsvg-convert` (Homebrew `librsvg`) und Pillow.
 
+`favicon-produktion.svg` und `png/favicon-produktion.ico` sind dieselbe Bildmarke auf Rot (`gefahr`, #b3261e): Die
+App zeigt sie im Tab, solange eine Verbindung der Umgebung Produktion offen ist (Gestaltung § 3). `bauen.py` legt beide
+mit den übrigen Favicons nach `public/`.
+
 Browser halten Favicons lange fest. Die App (`resources/views/app.blade.php`) und die Website (`website/bauen.py`)
 hängen deshalb die Prüfsumme der Datei an die Adresse (`/favicon.svg?v=…`) — ein neues Symbol erscheint sofort. Der
 Web-Installer trägt `favicon.svg` eingebettet (`data:`-Adresse), weil neben ihm noch keine Datei liegt: nach einer

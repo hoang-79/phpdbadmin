@@ -75,6 +75,29 @@ class WorkspaceControllerTest extends TestCase
                 ->missing('workspace.connection.password'));
     }
 
+    /**
+     * Gestaltung § 3: Mit einer Verbindung der Umgebung Produktion ist das Favicon rot — schon auf der ersten Seite;
+     * beide Fassungen stehen an den Links, damit die App beim Wechsel tauschen kann.
+     */
+    public function test_production_connection_shows_the_red_favicon_and_other_environments_the_usual_one(): void
+    {
+        $icon = static fn (string $file): string => '/'.$file.'?v='.substr((string) md5_file(public_path($file)), 0, 8);
+        $page = fn (string $environment): string => (string) $this->actingAs($this->user)
+            ->get(route('workspace.schema', [$this->sqliteConnection(environment: $environment), 'main']))
+            ->assertOk()->getContent();
+
+        $production = $page('production');
+        $this->assertStringContainsString('href="'.$icon('favicon-produktion.svg').'" type="image/svg+xml"', $production);
+        $this->assertStringContainsString('href="'.$icon('favicon-produktion.ico').'" sizes="any"', $production);
+        foreach (['test', 'local'] as $environment) {
+            $html = $page($environment);
+            $this->assertStringContainsString('href="'.$icon('favicon.svg').'" type="image/svg+xml"', $html, $environment);
+            $this->assertStringContainsString('data-default="'.$icon('favicon.svg').'" data-production="'.$icon('favicon-produktion.svg').'"', $html, $environment);
+        }
+        $this->assertFileEquals(resource_path('brand/favicon-produktion.svg'), public_path('favicon-produktion.svg'));
+        $this->assertFileEquals(resource_path('brand/png/favicon-produktion.ico'), public_path('favicon-produktion.ico'));
+    }
+
     public function test_schema_page_brings_the_saved_overview_settings_and_the_filter_of_this_schema(): void
     {
         $connection = $this->sqliteConnection();

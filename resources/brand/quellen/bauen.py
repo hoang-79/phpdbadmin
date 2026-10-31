@@ -33,6 +33,7 @@ AKZENT_TEXT_DUNKEL = '#062a33'
 TEXT = '#1c2534'
 TEXT_DUNKEL = '#e5e9f0'
 GRUND_DUNKEL = '#0b1120'
+GEFAHR = '#b3261e'  # Umgebung Produktion (§ 3)
 WEISS = '#ffffff'
 SCHWARZ = '#000000'
 
@@ -228,6 +229,17 @@ def main() -> None:
     bilder = [Image.open(PNG / f'favicon-{g}.png').convert('RGBA') for g in (16, 32, 48)]
     bilder[2].save(ico, format='ICO', sizes=[(16, 16), (32, 32), (48, 48)], append_images=bilder[:2])
 
+    # Favicon der Umgebung Produktion (gestaltung.md § 3): dieselbe Marke auf Rot — der Tab warnt, solange eine
+    # Verbindung dieser Umgebung offen ist (die App tauscht es, resources/js/composables/useEnvironmentIcon.ts).
+    produktion = schreiben('favicon-produktion.svg', svg(MARKE, MARKE, marke(GEFAHR, WEISS,
+                                                                            anteil=GLYPHE_FAVICON / MARKE),
+                                                         'phpdbadmin · Produktion'))
+    for groesse in (16, 32, 48):
+        rastern(produktion, PNG / f'favicon-produktion-{groesse}.png', breite=groesse)
+    ico_produktion = PNG / 'favicon-produktion.ico'
+    bilder = [Image.open(PNG / f'favicon-produktion-{g}.png').convert('RGBA') for g in (16, 32, 48)]
+    bilder[2].save(ico_produktion, format='ICO', sizes=[(16, 16), (32, 32), (48, 48)], append_images=bilder[:2])
+
     # Vorschaubild für Links (1200 × 630): dunkler Grund, Logo mittig.
     og = KIT / 'quellen' / 'og.svg'
     flaeche, glyphe, text, akzent = VARIANTEN['-dunkel']
@@ -250,6 +262,8 @@ def main() -> None:
     public = PROJEKT / 'public'
     shutil.copy(favicon, public / 'favicon.svg')
     shutil.copy(ico, public / 'favicon.ico')
+    shutil.copy(produktion, public / 'favicon-produktion.svg')
+    shutil.copy(ico_produktion, public / 'favicon-produktion.ico')
     shutil.copy(PNG / 'apple-touch-icon.png', public / 'apple-touch-icon.png')
 
     # Für die Oberfläche: Pfade der Ligatur und ihre Lage in der 64er-Marke.

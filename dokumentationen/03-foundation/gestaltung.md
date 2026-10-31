@@ -80,6 +80,14 @@ Die Namen werden als CSS-Variablen auf die Variablen des Starter-Kits gelegt (`-
 | Wert **NULL** | `NULL` kursiv in `text-leise` — nie leer, damit NULL und leerer Text unterscheidbar bleiben | überall |
 | Fremdschlüssel | Pfeil → vor dem Wert, Klick folgt dem Verweis | Datenraster |
 
+**Favicon je Umgebung (umgesetzt 31.10.2026):** Ist eine Verbindung der Umgebung Produktion offen, zeigt der Tab die
+Bildmarke auf Rot (`favicon-produktion.svg`/`.ico` aus dem [Logo-Kit](../../resources/brand/README.md), Fläche
+`gefahr` #b3261e) — schon beim ersten Laden (`app.blade.php` liest die Umgebung der Seite), beim Wechsel in der App
+über `useEnvironmentIcon`; beim Verlassen des Arbeitsbereichs springt es zurück. **Entscheid:** Test bekommt kein eigenes
+Favicon. Rot bleibt allein der Produktion (§ 2: Gefahr nur für Zerstörendes, Fehler und Produktion), ein drittes
+Symbol im Tab müsste man lernen; Test erkennt man an Bernstein und «TEST» im Verbindungs-Chip. **Noch offen:** das
+Präfix «PROD ·» bzw. «TEST ·» im Seitentitel (der Titel lautet heute «Seite · phpdbadmin»).
+
 ## 4. Typografie
 
 | Rolle | Schrift | Grösse / Zeile | Hinweis |

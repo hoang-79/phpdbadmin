@@ -27,6 +27,7 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Toaster } from '@/components/ui/sonner';
+import { useEnvironmentIcon } from '@/composables/useEnvironmentIcon';
 import { useResizableWidth } from '@/composables/useResizableWidth';
 import { formatTime } from '@/lib/format';
 import { t } from '@/lib/i18n';
@@ -37,10 +38,12 @@ import type { Workspace } from '@/types';
 
 /**
  * Arbeitsbildschirm (Wireframe 05): Kopf mit Verbindung und Umgebung, Navigator links; auf dem Telefon als Schublade.
- * Produktion trägt oben einen roten Streifen (V-04, G-03). Das gewählte Objekt kommt als Seiten-Prop `selected`.
+ * Produktion trägt oben einen roten Streifen (V-04, G-03) und ein rotes Favicon. Das gewählte Objekt kommt als
+ * Seiten-Prop `selected`.
  */
 const page = usePage<{ workspace?: Workspace; selected?: string | null }>();
 const workspace = computed(() => page.props.workspace ?? null);
+useEnvironmentIcon(computed(() => workspace.value?.connection.environment));
 const selected = computed(() => page.props.selected ?? null);
 const navigatorOpen = ref(false);
 /** Breite des Navigators am Desktop — am rechten Rand ziehen, Pfeiltasten, Doppelklick setzt zurück. */

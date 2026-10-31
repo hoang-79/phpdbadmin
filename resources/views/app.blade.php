@@ -30,10 +30,13 @@
             }
         </style>
 
-        {{-- Prüfsumme in der Adresse: Browser halten Favicons lange fest — so holen sie nach jeder Änderung das neue. --}}
+        {{-- Prüfsumme in der Adresse: Browser halten Favicons lange fest — so holen sie nach jeder Änderung das neue.
+             Ist eine Verbindung der Umgebung Produktion offen, ist das Favicon rot (Gestaltung § 3); beim Wechsel in
+             der App tauscht es useEnvironmentIcon über data-default und data-production. --}}
         @php($icon = fn (string $file): string => '/'.$file.'?v='.substr((string) md5_file(public_path($file)), 0, 8))
-        <link rel="icon" href="{{ $icon('favicon.ico') }}" sizes="any">
-        <link rel="icon" href="{{ $icon('favicon.svg') }}" type="image/svg+xml">
+        @php($production = data_get($page, 'props.workspace.connection.environment') === 'production')
+        <link rel="icon" href="{{ $icon($production ? 'favicon-produktion.ico' : 'favicon.ico') }}" sizes="any" data-default="{{ $icon('favicon.ico') }}" data-production="{{ $icon('favicon-produktion.ico') }}">
+        <link rel="icon" href="{{ $icon($production ? 'favicon-produktion.svg' : 'favicon.svg') }}" type="image/svg+xml" data-default="{{ $icon('favicon.svg') }}" data-production="{{ $icon('favicon-produktion.svg') }}">
         <link rel="apple-touch-icon" href="{{ $icon('apple-touch-icon.png') }}">
 
         @fonts
