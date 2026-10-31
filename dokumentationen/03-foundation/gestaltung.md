@@ -85,8 +85,10 @@ Bildmarke auf Rot (`favicon-produktion.svg`/`.ico` aus dem [Logo-Kit](../../reso
 `gefahr` #b3261e) — schon beim ersten Laden (`app.blade.php` liest die Umgebung der Seite), beim Wechsel in der App
 über `useEnvironmentIcon`; beim Verlassen des Arbeitsbereichs springt es zurück. **Entscheid:** Test bekommt kein eigenes
 Favicon. Rot bleibt allein der Produktion (§ 2: Gefahr nur für Zerstörendes, Fehler und Produktion), ein drittes
-Symbol im Tab müsste man lernen; Test erkennt man an Bernstein und «TEST» im Verbindungs-Chip. **Noch offen:** das
-Präfix «PROD ·» bzw. «TEST ·» im Seitentitel (der Titel lautet heute «Seite · phpdbadmin»).
+Symbol im Tab müsste man lernen; Test erkennt man an Bernstein und «TEST» im Verbindungs-Chip und im Seitentitel. Das
+Präfix «PROD ·» bzw. «TEST ·» im Seitentitel setzt jede Seite des Arbeitsbereichs seit V-04 selbst (`titlePrefix` in
+`resources/js/lib/environment.ts`; Server-Seiten über `ServerHeader`) — geprüft 31.10.2026 im Browser: «PROD · customers
+· shop · MySQL · phpdbadmin», lokal ohne Präfix.
 
 ## 4. Typografie
 
