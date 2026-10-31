@@ -30,9 +30,11 @@
             }
         </style>
 
-        <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        {{-- Prüfsumme in der Adresse: Browser halten Favicons lange fest — so holen sie nach jeder Änderung das neue. --}}
+        @php($icon = fn (string $file): string => '/'.$file.'?v='.substr((string) md5_file(public_path($file)), 0, 8))
+        <link rel="icon" href="{{ $icon('favicon.ico') }}" sizes="any">
+        <link rel="icon" href="{{ $icon('favicon.svg') }}" type="image/svg+xml">
+        <link rel="apple-touch-icon" href="{{ $icon('apple-touch-icon.png') }}">
 
         @fonts
 

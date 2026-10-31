@@ -180,6 +180,13 @@ class WebInstallerTest extends TestCase
         }
     }
 
+    public function test_page_carries_the_favicon_of_the_brand_kit(): void
+    {
+        $favicon = 'data:image/svg+xml;base64,'.base64_encode((string) file_get_contents(resource_path('brand/favicon.svg')));
+
+        $this->assertStringContainsString('<link rel="icon" type="image/svg+xml" href="'.$favicon.'">', $this->open()->body());
+    }
+
     public function test_altered_archive_is_refused_before_anything_is_unpacked(): void
     {
         $this->release(tamperZip: 'verändert');

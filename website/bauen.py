@@ -242,6 +242,10 @@ def bauen(basis: str) -> None:
         'marke': marke(),
         'css': kennung(ASSETS / 'site.css'),
         'js': kennung(ASSETS / 'site.js'),
+        # Prüfsumme auch an den Favicons: Browser halten sie lange fest und holen sonst kein neues Symbol
+        'favicon_ico': kennung(REPO / 'public' / 'favicon.ico'),
+        'favicon_svg': kennung(REPO / 'public' / 'favicon.svg'),
+        'apple_touch_icon': kennung(REPO / 'public' / 'apple-touch-icon.png'),
     }
     seiten = []
     for sprache_ordner in sorted((WEBSITE / 'seiten').iterdir()):

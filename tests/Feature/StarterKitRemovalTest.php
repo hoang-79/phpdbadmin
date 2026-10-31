@@ -80,4 +80,18 @@ class StarterKitRemovalTest extends TestCase
     {
         $this->get(route('home'))->assertRedirect(route('login'));
     }
+
+    /**
+     * Favicons aus dem Logo-Kit statt von Laravel — mit der Prüfsumme der Datei in der Adresse, damit Browser ein
+     * zwischengespeichertes altes Symbol nach jeder Änderung ersetzen.
+     */
+    public function test_icons_come_from_the_brand_kit_and_their_address_follows_the_file(): void
+    {
+        $html = (string) $this->get(route('login'))->assertOk()->getContent();
+
+        foreach (['favicon.svg' => 'favicon.svg', 'favicon.ico' => 'png/favicon.ico', 'apple-touch-icon.png' => 'png/apple-touch-icon.png'] as $file => $brand) {
+            $this->assertFileEquals(resource_path('brand/'.$brand), public_path($file), $file);
+            $this->assertStringContainsString('href="/'.$file.'?v='.substr((string) md5_file(public_path($file)), 0, 8).'"', $html, $file);
+        }
+    }
 }
