@@ -75,6 +75,8 @@ Im Menü der Verbindung unter _Server_: Übersicht, laufende **Prozesse** (beend
 
 ## Verbindungen über SSH {#ssh}
 
+MySQL und MariaDB sehen beim Anmelden gleich aus, verstehen aber nicht alle Befehle des anderen. Meldet phpdbadmin «Falscher Treiber», im Formular den Treiber wählen, den die Meldung nennt (die MySQL-Datenbanken von Laravel Cloud etwa sind MySQL, nicht MariaDB).
+
 Ein Datenbank-Server, der nur über einen SSH-Server erreichbar ist: im Formular der Verbindung _SSH-Tunnel_ einschalten, SSH-Host, Benutzer und privaten Schlüssel angeben (eingefügt und verschlüsselt gespeichert oder als Datei in einem erlaubten Ordner). Beim ersten Verbinden merkt sich phpdbadmin den Host-Schlüssel und zeigt seinen Fingerabdruck; ändert er sich später, verbindet phpdbadmin nicht mehr.
 
 Läuft phpdbadmin lokal mit Laravel Herd, schlägt das Formular die Herd-Dienste und die Datenbanken Ihrer Herd-Sites vor.

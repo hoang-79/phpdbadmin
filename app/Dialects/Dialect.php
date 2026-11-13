@@ -46,6 +46,12 @@ interface Dialect
     /** Version des Servers bzw. der SQLite-Bibliothek, ohne Zusätze («10.11.6», «18.0», «8.4.11»). */
     public function serverVersion(Connection $connection): string;
 
+    /**
+     * Passt der Server zum Treiber? MySQL und MariaDB nehmen dieselbe Anmeldung an — mit dem falschen Treiber scheitert
+     * erst der nächste Befehl, mit einer Meldung, die nicht sagt, woran es liegt. Null, wenn alles passt.
+     */
+    public function serverMismatch(Connection $connection): ?ConnectionProblem;
+
     /** Fehler beim Verbinden in eine für Menschen unterscheidbare Art übersetzen (V-02, F-2). */
     public function describeConnectionError(Throwable $error): ConnectionProblem;
 

@@ -34,6 +34,7 @@ final class ConnectionFactory
      *
      * @throws ConnectionNotAllowed
      * @throws TunnelFailed
+     * @throws DriverMismatch
      */
     public function make(ConnectionSettings $settings, ?int $connectTimeout = null, bool $readOnly = false, ?int $statementTimeoutMs = null): Connection
     {
@@ -74,6 +75,15 @@ final class ConnectionFactory
 
         if ($tunnel !== null) {
             $this->tunnels->attach($connection, $tunnel);
+        }
+
+        // Falscher Treiber für diesen Server (MySQL ↔ MariaDB): sonst scheitert gleich das Zeitlimit mit einer Meldung,
+        // die nicht sagt, woran es liegt.
+        $mismatch = $dialect->serverMismatch($connection);
+        if ($mismatch !== null) {
+            $this->release($connection);
+
+            throw new DriverMismatch($mismatch);
         }
 
         $prepare = function (Connection $connection) use ($settings, $dialect, $readOnly, $statementTimeoutMs): void {

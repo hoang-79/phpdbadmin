@@ -3,7 +3,9 @@
 namespace Tests\Feature\Connections;
 
 use App\Connections\ConnectionFactory;
+use App\Connections\ConnectionProblemKind;
 use App\Connections\ConnectionSettings;
+use App\Connections\DriverMismatch;
 use App\Connections\PasswordRequired;
 use App\Connections\ReadOnlyConnection;
 use App\Connections\TargetConnections;
@@ -184,6 +186,26 @@ class TargetConnectionsTest extends TestCase
     /**
      * Server-Verwaltung (W-02, W-04, W-05): die beschreibbare Verbindung gibt es nie für eine schreibgeschützte.
      */
+    /**
+     * Arbeitsbildschirm mit falschem Treiber (MySQL ↔ MariaDB): statt «Unknown system variable» beim Zeitlimit eine
+     * verständliche Meldung mit dem richtigen Treiber — und keine halb eingerichtete Sitzung.
+     */
+    public function test_opening_with_the_wrong_driver_names_the_server_instead_of_failing_on_the_time_limit(): void
+    {
+        foreach ([[DatabaseDriver::MySql, DatabaseDriver::MariaDb], [DatabaseDriver::MariaDb, DatabaseDriver::MySql]] as [$server, $chosen]) {
+            $actual = $this->serverSettings($server);
+            $connection = $this->savedConnection(new ConnectionSettings($chosen, $actual->host, $actual->port, null, $actual->username, $actual->password));
+
+            try {
+                app(TargetConnections::class)->open($connection);
+                $this->fail($chosen->label().' gegen '.$server->label().' hätte nicht öffnen dürfen');
+            } catch (DriverMismatch $exception) {
+                $this->assertSame(ConnectionProblemKind::WrongDriver, $exception->problem->kind);
+                $this->assertStringContainsString('Wählen Sie den Treiber «'.$server->label().'»', (string) $exception->problem->detail);
+            }
+        }
+    }
+
     public function test_writable_connection_is_refused_for_read_only_connection(): void
     {
         $connection = $this->savedConnection($this->scratchSettings(DatabaseDriver::Sqlite, $this->folder), attributes: ['read_only' => true]);

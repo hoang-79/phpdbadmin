@@ -15,6 +15,7 @@ enum ConnectionProblemKind: string
     case DatabaseMissing = 'database_missing';
     case DatabaseNotAllowed = 'database_not_allowed';
     case Ssl = 'ssl';
+    case WrongDriver = 'wrong_driver';
     case FileNotAllowed = 'file_not_allowed';
     case FileMissing = 'file_missing';
     case FileNotDatabase = 'file_not_database';
@@ -37,6 +38,7 @@ enum ConnectionProblemKind: string
             self::DatabaseMissing => __('Datenbank fehlt'),
             self::DatabaseNotAllowed => __('Datenbank nicht erlaubt'),
             self::Ssl => __('Verschlüsselung (SSL) gescheitert'),
+            self::WrongDriver => __('Falscher Treiber'),
             self::FileNotAllowed => __('Datei nicht erlaubt'),
             self::FileMissing => __('Datei nicht gefunden'),
             self::FileNotDatabase => __('Keine SQLite-Datenbank'),
@@ -61,6 +63,7 @@ enum ConnectionProblemKind: string
             self::DatabaseMissing => __('Die Anmeldung hat geklappt, aber diese Datenbank gibt es auf dem Server nicht — oder das Konto darf sie nicht sehen.'),
             self::DatabaseNotAllowed => __('Datenbanknamen mit ; \' " = \\ oder Steuerzeichen nimmt phpdbadmin nicht an — und die eigene Datenbank von phpdbadmin ist nie erreichbar.'),
             self::Ssl => __('Die verschlüsselte Verbindung kam nicht zustande. Unterstützt der Server SSL? Sonst SSL auf «Aus» stellen — nur in vertrauenswürdigen Netzen.'),
+            self::WrongDriver => __('MySQL und MariaDB nehmen dieselbe Anmeldung an, verstehen aber nicht alle Befehle des anderen — etwa für das Zeitlimit. Der Treiber der Verbindung muss zum Server passen.'),
             self::FileNotAllowed => __('SQLite-Dateien müssen in einem erlaubten Ordner liegen (PHPDBADMIN_SQLITE_PATHS). Pfade mit «..» oder Verknüpfungen nach draussen gelten nicht.'),
             self::FileMissing => __('Unter diesem Pfad liegt keine lesbare Datei.'),
             self::FileNotDatabase => __('Die Datei lässt sich öffnen, ist aber keine SQLite-Datenbank.'),

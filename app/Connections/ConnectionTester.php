@@ -54,6 +54,8 @@ final class ConnectionTester
         try {
             $connection = $this->factory->make($settings, $connectTimeout);
             $version = $dialect->serverVersion($connection);
+        } catch (DriverMismatch $exception) {
+            return $this->failed($steps, 'login', $exception->problem, $isServer, $start);
         } catch (Throwable $exception) {
             $problem = $dialect->describeConnectionError($exception);
 
@@ -110,7 +112,7 @@ final class ConnectionTester
         try {
             $connection = $this->factory->make($settings, $connectTimeout);
             $version = $dialect->serverVersion($connection);
-        } catch (TunnelFailed $exception) {
+        } catch (TunnelFailed|DriverMismatch $exception) {
             return $this->failed($steps, 'login', $exception->problem, true, $start, tunnel: true, hostKey: $hostKey);
         } catch (Throwable $exception) {
             return $this->failed($steps, 'login', $this->withoutPassword($dialect->describeConnectionError($exception), $settings->password), true, $start, tunnel: true, hostKey: $hostKey);

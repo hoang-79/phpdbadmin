@@ -2,6 +2,7 @@
 
 namespace App\Dialects;
 
+use App\Connections\ConnectionProblem;
 use App\Enums\PrivilegeLevel;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
@@ -19,6 +20,12 @@ abstract class BaseDialect implements Dialect
     public function prepareSession(Connection $connection, bool $readOnly): void
     {
         // MySQL und MariaDB: Startbefehl in der Konfiguration; SQLite: Öffnen nur lesend.
+    }
+
+    public function serverMismatch(Connection $connection): ?ConnectionProblem
+    {
+        // PostgreSQL und SQLite: der Treiber erreicht nur sein eigenes Produkt.
+        return null;
     }
 
     public function schemas(Connection $connection): array

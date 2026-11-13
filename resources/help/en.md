@@ -75,6 +75,8 @@ In the connection menu under _Server_: overview, running **processes** (end them
 
 ## Connections over SSH {#ssh}
 
+MySQL and MariaDB look the same when signing in but do not understand all of each other’s commands. If phpdbadmin reports “Wrong driver”, choose the driver the message names in the form (Laravel Cloud’s MySQL databases, for example, are MySQL, not MariaDB).
+
 A database server that can only be reached through an SSH server: turn on _SSH tunnel_ in the connection form and enter the SSH host, user and private key (pasted and stored encrypted, or as a file in an allowed folder). On the first connection phpdbadmin remembers the host key and shows its fingerprint; if it changes later, phpdbadmin no longer connects.
 
 If phpdbadmin runs locally with Laravel Herd, the form suggests the Herd services and the databases of your Herd sites.

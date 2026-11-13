@@ -129,6 +129,33 @@ class ConnectionTesterTest extends TestCase
         $this->assertSame(ConnectionProblemKind::FileNotDatabase, $result->problem?->kind, (string) $result->problem?->serverMessage);
     }
 
+    /**
+     * @return array<string, array{0: DatabaseDriver, 1: DatabaseDriver}>
+     */
+    public static function mismatchedDrivers(): array
+    {
+        return [
+            'MySQL-Server als MariaDB eingestellt' => [DatabaseDriver::MySql, DatabaseDriver::MariaDb],
+            'MariaDB-Server als MySQL eingestellt' => [DatabaseDriver::MariaDb, DatabaseDriver::MySql],
+        ];
+    }
+
+    /** MySQL und MariaDB nehmen dieselbe Anmeldung an — der Test sagt trotzdem, dass der Treiber nicht passt. */
+    #[DataProvider('mismatchedDrivers')]
+    public function test_wrong_driver_for_the_server_is_named_with_the_right_one(DatabaseDriver $server, DatabaseDriver $chosen): void
+    {
+        $actual = $this->serverSettings($server);
+        $settings = new ConnectionSettings($chosen, $actual->host, $actual->port, null, $actual->username, $actual->password);
+
+        $result = $this->tester()->test($settings);
+
+        $this->assertFalse($result->ok);
+        $this->assertSame(ConnectionProblemKind::WrongDriver, $result->problem?->kind);
+        $this->assertStringContainsString('Der Server ist '.$server->label().' ', (string) $result->problem?->detail);
+        $this->assertStringContainsString('als '.$chosen->label().' eingestellt', (string) $result->problem?->detail);
+        $this->assertSame(['ok', 'ok', 'failed', 'skipped'], array_column($result->steps, 'state'));
+    }
+
     private function tester(): ConnectionTester
     {
         return app(ConnectionTester::class);

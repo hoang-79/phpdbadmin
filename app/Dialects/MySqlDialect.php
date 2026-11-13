@@ -66,6 +66,30 @@ class MySqlDialect extends BaseDialect
         ];
     }
 
+    /**
+     * MariaDB meldet sich mit «MariaDB» in der Version («10.11.6-MariaDB», älter «5.5.5-10.6.23-MariaDB»), MySQL ohne
+     * («8.4.11», «8.0.36-Vitess»). Gelesen aus der Begrüssung des Servers — ohne zusätzliche Abfrage.
+     */
+    public function serverMismatch(Connection $connection): ?ConnectionProblem
+    {
+        $reported = (string) $connection->getPdo()->getAttribute(PDO::ATTR_SERVER_VERSION);
+        $isMariaDb = stripos($reported, 'mariadb') !== false;
+
+        if ($isMariaDb === ($this->driver() === DatabaseDriver::MariaDb)) {
+            return null;
+        }
+
+        $server = $isMariaDb ? DatabaseDriver::MariaDb : DatabaseDriver::MySql;
+        // Ohne Zusätze und ohne das «5.5.5-», das ältere MariaDB-Server für alte Clients voranstellen
+        $version = preg_match('/^(?:5\.5\.5-)?(\d+(?:\.\d+)*)/', $reported, $match) === 1 ? $match[1] : $reported;
+
+        return ConnectionProblem::of(ConnectionProblemKind::WrongDriver, __('Der Server ist :server :version, die Verbindung ist als :driver eingestellt. Wählen Sie den Treiber «:server».', [
+            'server' => $server->label(),
+            'version' => $version,
+            'driver' => $this->driver()->label(),
+        ]));
+    }
+
     public function serverVersion(Connection $connection): string
     {
         $version = (string) $connection->selectOne('select version() as version')?->version;
