@@ -24,12 +24,23 @@ class MaintenanceController extends ServerController
     {
         return $this->page($request, $connection, 'maintenance', function (?string $database) use ($request, $connection): array {
             $dialect = $connection->driver->dialect();
+            $operations = array_map(fn (MaintenanceOperation $operation): string => $operation->value, $dialect->maintenanceOperations());
+            $operation = $request->query('operation');
+            $schema = $request->query('schema');
+            $table = $request->query('table');
 
             return [
                 'operations' => array_map(fn (MaintenanceOperation $operation): array => [
                     'key' => $operation->value,
                     'forTables' => $dialect->maintenanceForTables($operation),
                 ], $dialect->maintenanceOperations()),
+                // Vorauswahl aus den Menüs «Datenbank» und «Weitere Aktionen» (O-10): ?operation=&schema=&table= —
+                // die Seite übernimmt nur, was es gibt; geprüft wird ohnehin bei Vorschau und Ausführung.
+                'preset' => [
+                    'operation' => is_string($operation) && in_array($operation, $operations, true) ? $operation : null,
+                    'schema' => is_string($schema) && $schema !== '' ? $schema : null,
+                    'table' => is_string($table) && $table !== '' ? $table : null,
+                ],
                 // Tabellen erst, wenn ein Schema gewählt ist (?tables_in=).
                 'tables' => Inertia::optional(fn (): array => $this->inspector->tables($connection, $database, (string) $request->query('tables_in', ''), withViews: false)),
             ];

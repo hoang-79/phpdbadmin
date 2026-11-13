@@ -13,6 +13,7 @@ import { watchDebounced } from '@vueuse/core';
 import { computed, ref } from 'vue';
 import InputError from '@/components/InputError.vue';
 import ChangeDialog from '@/components/workspace/schema/ChangeDialog.vue';
+import OperationsMenuItems from '@/components/workspace/schema/OperationsMenuItems.vue';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -31,7 +32,8 @@ import type { Workspace } from '@/types';
 /**
  * Oben auf der Struktur-Seite (S-03, S-04): «Tabelle ändern» und ein Menü mit Umbenennen, Kopieren, Leeren und
  * Löschen — jede Aktion mit Vorschau im Dialog; Leeren und Löschen nur mit dem Namen der Tabelle. Ohne Recht
- * «schreiben» oder bei Schreibschutz bleiben die Knöpfe sichtbar, aber gesperrt, mit Grund.
+ * «schreiben» oder bei Schreibschutz bleiben die Knöpfe sichtbar, aber gesperrt, mit Grund. Dazu Exportieren,
+ * Importieren und Wartung für diese Tabelle (O-10) — die bleiben erreichbar, ihre Seiten prüfen selbst.
  */
 const props = defineProps<{
     workspace: Workspace;
@@ -134,30 +136,42 @@ function apply(confirmation: {
         </Button>
 
         <DropdownMenu>
-            <DropdownMenuTrigger as-child :disabled="!!blocked">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    :title="blocked ?? undefined"
-                >
+            <DropdownMenuTrigger as-child>
+                <Button variant="outline" size="sm">
                     {{ t('Weitere Aktionen') }}<ChevronDown />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" class="w-56">
-                <DropdownMenuItem @select="start('rename')">
+            <DropdownMenuContent align="start" class="w-72">
+                <DropdownMenuItem
+                    :disabled="!!blocked"
+                    @select="start('rename')"
+                >
                     <TextCursorInput />{{ t('Umbenennen …') }}
                 </DropdownMenuItem>
-                <DropdownMenuItem @select="start('copy')">
+                <DropdownMenuItem :disabled="!!blocked" @select="start('copy')">
                     <Copy />{{ t('Kopieren …') }}
                 </DropdownMenuItem>
+                <template v-if="workspace.schema">
+                    <DropdownMenuSeparator />
+                    <OperationsMenuItems
+                        :workspace="workspace"
+                        :schema="workspace.schema"
+                        :table="table"
+                    />
+                </template>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                     variant="destructive"
+                    :disabled="!!blocked"
                     @select="start('truncate')"
                 >
                     <Eraser />{{ t('Leeren …') }}
                 </DropdownMenuItem>
-                <DropdownMenuItem variant="destructive" @select="start('drop')">
+                <DropdownMenuItem
+                    variant="destructive"
+                    :disabled="!!blocked"
+                    @select="start('drop')"
+                >
                     <Trash2 />{{ t('Löschen …') }}
                 </DropdownMenuItem>
             </DropdownMenuContent>

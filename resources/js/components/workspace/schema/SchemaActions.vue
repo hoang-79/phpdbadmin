@@ -14,6 +14,7 @@ import InputError from '@/components/InputError.vue';
 import Notice from '@/components/Notice.vue';
 import ChangeDialog from '@/components/workspace/schema/ChangeDialog.vue';
 import DropDialog from '@/components/workspace/schema/DropDialog.vue';
+import OperationsMenuItems from '@/components/workspace/schema/OperationsMenuItems.vue';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -34,7 +35,9 @@ import type { SchemaPayload, Workspace } from '@/types';
 /**
  * Oben auf der Schema-Seite (S-02, S-05): «Tabelle anlegen» und ein Menü, um eine Datenbank (MySQL, MariaDB) bzw. ein
  * Schema (PostgreSQL) anzulegen oder das gezeigte zu löschen (DropDialog, wie im Navigator); bei SQLite eine neue Datei
- * in einem erlaubten Ordner. Löschen nur mit dem eingetippten Namen. Ohne Recht «schreiben» oder bei Schreibschutz gesperrt, mit Grund.
+ * in einem erlaubten Ordner. Löschen nur mit dem eingetippten Namen. Ohne Recht «schreiben» oder bei Schreibschutz sind
+ * diese Einträge gesperrt, mit Grund; Exportieren, Importieren, Sichern und Wartung (O-10) bleiben erreichbar — ihre
+ * Seiten prüfen selbst, was das Konto darf.
  */
 const props = defineProps<{
     workspace: Workspace;
@@ -155,12 +158,8 @@ watch(
             </template>
 
             <DropdownMenu>
-                <DropdownMenuTrigger as-child :disabled="!!blocked">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        :title="blocked ?? undefined"
-                    >
+                <DropdownMenuTrigger as-child>
+                    <Button variant="outline" size="sm">
                         {{
                             isSqlite
                                 ? t('Datei')
@@ -170,22 +169,37 @@ watch(
                         }}<ChevronDown />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" class="w-60">
-                    <DropdownMenuItem v-if="isSqlite" @select="startCreate">
+                <DropdownMenuContent align="start" class="w-72">
+                    <DropdownMenuItem
+                        v-if="isSqlite"
+                        :disabled="!!blocked"
+                        @select="startCreate"
+                    >
                         <FilePlus2 />{{ t('Neue SQLite-Datei …') }}
                     </DropdownMenuItem>
                     <template v-else>
-                        <DropdownMenuItem @select="startCreate">
+                        <DropdownMenuItem
+                            :disabled="!!blocked"
+                            @select="startCreate"
+                        >
                             <DatabaseZap />{{
                                 isSchema
                                     ? t('Schema anlegen …')
                                     : t('Datenbank anlegen …')
                             }}
                         </DropdownMenuItem>
-                        <template v-if="workspace.schema">
+                    </template>
+                    <template v-if="workspace.schema">
+                        <DropdownMenuSeparator />
+                        <OperationsMenuItems
+                            :workspace="workspace"
+                            :schema="workspace.schema"
+                        />
+                        <template v-if="!isSqlite">
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                                 variant="destructive"
+                                :disabled="!!blocked"
                                 @select="dropOpen = true"
                             >
                                 <Trash2 />{{

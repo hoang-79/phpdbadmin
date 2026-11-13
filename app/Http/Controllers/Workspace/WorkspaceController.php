@@ -6,6 +6,7 @@ use App\Connections\ConnectionNotAllowed;
 use App\Connections\PasswordRequired;
 use App\Connections\WriteUnlock;
 use App\Enums\DatabaseDriver;
+use App\Enums\MaintenanceOperation;
 use App\Http\Controllers\Controller;
 use App\Models\DatabaseConnection;
 use App\Models\User;
@@ -145,6 +146,11 @@ class WorkspaceController extends Controller
                     'canWrite' => Gate::forUser($user)->allows('write', $connection),
                     // Schreibschutz auf Zeit aufgehoben (V-11): sichtbar im Kopf, bis wann.
                     'unlockedUntil' => $connection->read_only ? app(WriteUnlock::class)->until($connection)?->toIso8601String() : null,
+                    // Wartung, die der Treiber kann (W-05, W-06) — für die Menüs «Datenbank» und «Weitere Aktionen».
+                    'maintenance' => array_map(fn (MaintenanceOperation $operation): array => [
+                        'key' => $operation->value,
+                        'forTables' => $connection->driver->dialect()->maintenanceForTables($operation),
+                    ], $connection->driver->dialect()->maintenanceOperations()),
                 ],
                 // PostgreSQL mit «alle Datenbanken»: Auswahl im Navigator, die gewählte in der Adresse (?db=).
                 'databases' => $databases,

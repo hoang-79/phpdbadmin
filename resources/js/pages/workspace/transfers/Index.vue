@@ -42,7 +42,7 @@ import type {
 const props = defineProps<{
     workspace: Workspace;
     transfers: TransferSummary[];
-    preset: { table: string | null };
+    preset: { table: string | null; scope: 'schema' | null };
     mode: TransferMode;
     canWrite: boolean;
     today: string;
@@ -90,11 +90,11 @@ const delimiters: { value: DelimiterName; label: string }[] = [
 
 const exportForm = useForm({
     schema: props.workspace.schema ?? '',
-    scope: (objects.value.length > 0 ? 'table' : 'schema') as
-        | 'table'
-        | 'schema',
+    scope: (props.preset.scope ??
+        (objects.value.length > 0 ? 'table' : 'schema')) as 'table' | 'schema',
     table: props.preset.table ?? objects.value[0]?.name ?? '',
-    format: 'csv' as TransferFormat,
+    // Die ganze Datenbank geht als SQL hinaus (CSV nur je Tabelle)
+    format: (props.preset.scope === 'schema' ? 'sql' : 'csv') as TransferFormat,
     delimiter: 'semicolon' as DelimiterName,
     bom: true,
     header: true,
@@ -280,6 +280,7 @@ const selectClass =
             <div class="flex min-w-0 flex-col gap-5">
                 <!-- Exportieren -->
                 <form
+                    id="exportieren"
                     class="flex flex-col gap-4 rounded-lg border p-4 sm:p-5"
                     novalidate
                     @submit.prevent="submitExport"
@@ -612,6 +613,7 @@ const selectClass =
 
                 <!-- Importieren -->
                 <section
+                    id="importieren"
                     class="flex flex-col gap-4 rounded-lg border p-4 sm:p-5"
                 >
                     <h2

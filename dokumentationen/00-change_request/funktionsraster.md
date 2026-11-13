@@ -1,6 +1,6 @@
 # Funktionsraster — phpMyAdmin, phpPgAdmin, Adminer → phpdbadmin
 
-**Stand:** 28.10.2026 · v0.1. Grundlage: Controller und Seiten der lokalen Kopien von phpMyAdmin 5.2.2 und phpPgAdmin 7.13.0 (nur Dateinamen und Bereiche gelesen, kein Code übernommen), die Funktionsliste auf adminer.org (6.2.0) und der Artikel zu Jaxon DbAdmin ([Marktbild § 6](marktbild.md#6-quellen-abgerufen-28102026)).
+**Stand:** 13.11.2026 · v0.2 (§ 10 Feinabgleich der Operationen). 28.10.2026 · v0.1. Grundlage: Controller und Seiten der lokalen Kopien von phpMyAdmin 5.2.2 und phpPgAdmin 7.13.0 (nur Dateinamen und Bereiche gelesen, kein Code übernommen), die Funktionsliste auf adminer.org (6.2.0) und der Artikel zu Jaxon DbAdmin ([Marktbild § 6](marktbild.md#6-quellen-abgerufen-28102026)).
 
 **Zeichen:** ✓ vorhanden · ◐ teilweise oder umständlich · — fehlt. **Vorschlag:** **v1.0** (Kern, Stufe 0–2) · **v1.1** (Verwalten, Stufe 3) · **v1.2** (Komfort und Team, Stufe 4) · **Nein**. Die Spalte «Anforderung» verweist auf [CR-001 § 4](CR-001-phpdbadmin.md#4-anforderungen).
 
@@ -121,3 +121,26 @@
 ## 9. Zusammenfassung
 
 Der Kern von phpdbadmin v1.0 deckt das ab, was alle drei Vorbilder gemeinsam haben (Blättern, Filtern, Struktur, SQL, Export, Import), und legt das darauf, was keines hat: **eigene Konten ohne Passwort, Rechte je Verbindung, Sammeln mit SQL-Vorschau, Rückgängig, Umgebungsfarbe mit Schreibschutz, Befehlspalette und gleiche Bedienung über vier Datenbanken.** Die Server-Verwaltung, in der phpMyAdmin am breitesten ist, folgt bewusst in v1.1 — sie wird seltener gebraucht und ist je Datenbank am verschiedensten.
+
+## 10. Feinabgleich: Operationen für Datenbank und Tabelle (13.11.2026)
+
+Anlass: Hoang vermisste «db dump, db backup, db optimierung oder repair» und «für Tabellen Analyse, Optimierung etc.» wie in phpMyAdmin. Abgeglichen mit den Reitern «Operationen», «Export», «Import» und der Wartung je Tabelle in phpMyAdmin 5.2 und mit dem gebauten Stand von phpdbadmin (Routen, Menüs, Dialekte). **Befund:** Dump, Sicherung, Analysieren, Optimieren und Prüfen gab es schon — nur über das Menü des Verbindungs-Chips («Export und Import», «Server → Wartung»), nicht dort, wo man sie sucht.
+
+| Funktion | phpMyAdmin | phpdbadmin vorher | Entscheid | Anforderung |
+|---|---|---|---|---|
+| Export der Datenbank (SQL-Dump), einer Tabelle | ✓ (Reiter Export) | ✓, nur über Verbindungs-Chip bzw. Knopf im Raster | **Menü Datenbank / Weitere Aktionen**, vorgewählt (ganze Datenbank als SQL) | O-10, E-01 |
+| Import in Datenbank oder Tabelle | ✓ (Reiter Import) | ✓, nur über Verbindungs-Chip | **Menü**, vorgewählt | O-10, E-02 |
+| Sichern und Wiederherstellen mit `mysqldump`/`pg_dump` | — (nur Export) | ✓, nur über «Export und Import» | **Menü Datenbank** | O-10, E-03 |
+| Analysieren, Prüfen, Optimieren je Tabelle und für alle | ✓ (Operationen, Mehrfachauswahl) | ✓ unter «Server → Wartung» | **Menü**, Art und Tabelle vorgewählt | O-10, W-05 |
+| Reparieren (`REPAIR TABLE`) | ✓ | — | **neu** (MySQL/MariaDB; InnoDB kann es nicht — als Befund) | W-06 |
+| Prüfsumme (`CHECKSUM TABLE`) | ✓ | — | **neu** | W-06 |
+| Indizes neu aufbauen (`REINDEX`) | — | — | **neu** (PostgreSQL, SQLite) | W-06 |
+| `FLUSH TABLE`, Defragmentieren (`ALTER … ENGINE`) | ✓ | — | **Nein** — Optimieren deckt es ab | — |
+| Tabellenoptionen: Engine, Zeichensatz/Sortierung, `AUTO_INCREMENT`, Kommentar | ✓ (Operationen) | ◐ (nur Kommentar) | **neu** | S-10 |
+| Tabelle in andere Datenbank kopieren oder verschieben | ✓ | ◐ (Kopie nur in derselben Datenbank) | **neu** (gleicher Server) | S-11 |
+| Zeichensatz/Sortierung der Datenbank ändern | ✓ | — | **neu** | S-12 |
+| Datenbank umbenennen oder kopieren | ✓ (Tabelle für Tabelle, mit Löschen der alten) | — | **später** — MySQL kennt kein `RENAME DATABASE`; Kopie über Sichern und Wiederherstellen | — |
+| Server-Status (Zähler, Monitor, Berater), Engines, Zeichensätze, Plugins | ✓ | ◐ (Übersicht, Variablen) | **später** (W-03 lesen erweitern) | W-03 |
+| Partitionen verwalten | ✓ | — | **später** (Plan v1.2) | — |
+| Query by Example, visueller Abfrage-Baukasten | ✓ | ◐ (Filter im Raster) | **Nein** — Filter, SQL-Editor und KI-Hilfe decken es | — |
+

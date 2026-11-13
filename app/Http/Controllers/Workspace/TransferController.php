@@ -27,7 +27,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /**
  * Seite «Export und Import» je Verbindung (Wireframe 11): Export starten (E-01), Aufträge mit Stand und Download
  * (B-07), Statistik auf Knopfdruck (E-06). `?schema=…&table=…` belegt den Export vor — so verlinkt der Knopf
- * «Exportieren» im Objektkopf hierher.
+ * «Exportieren» im Objektkopf hierher; `?scope=schema` exportiert die ganze Datenbank als SQL (Menü «Datenbank», O-10).
  */
 class TransferController extends TransferWorkspaceController
 {
@@ -63,7 +63,10 @@ class TransferController extends TransferWorkspaceController
 
             return $this->render($request, $connection, 'workspace/transfers/Index', $schemas, $schema, $groups, $database, [
                 'selected' => is_string($table) && in_array($table, $known, true) ? $table : null,
-                'preset' => ['table' => is_string($table) && in_array($table, $known, true) ? $table : null],
+                'preset' => [
+                    'table' => is_string($table) && in_array($table, $known, true) ? $table : null,
+                    'scope' => $request->query('scope') === 'schema' ? 'schema' : null,
+                ],
                 'transfers' => $this->recent($user, $connection),
                 'mode' => $this->mode($connection),
                 'canWrite' => $this->canWrite($user, $connection),

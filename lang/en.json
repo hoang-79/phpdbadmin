@@ -1717,5 +1717,8 @@
     "≈ eine Zeile geht verloren.": "≈ one row will be lost.",
     "Falscher Treiber": "Wrong driver",
     "MySQL und MariaDB nehmen dieselbe Anmeldung an, verstehen aber nicht alle Befehle des anderen — etwa für das Zeitlimit. Der Treiber der Verbindung muss zum Server passen.": "MySQL and MariaDB accept the same sign-in but do not understand all of each other’s commands — such as the one for the time limit. The connection’s driver has to match the server.",
-    "Der Server ist :server :version, die Verbindung ist als :driver eingestellt. Wählen Sie den Treiber «:server».": "The server is :server :version, but the connection is set to :driver. Choose the “:server” driver."
+    "Der Server ist :server :version, die Verbindung ist als :driver eingestellt. Wählen Sie den Treiber «:server».": "The server is :server :version, but the connection is set to :driver. Choose the “:server” driver.",
+    "Exportieren …": "Export …",
+    "Importieren …": "Import …",
+    "Sichern und wiederherstellen …": "Back up and restore …"
 }

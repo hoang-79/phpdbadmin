@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { t } from '@/lib/i18n';
+import { maintenanceDescription } from '@/lib/maintenance';
 import { preview, run } from '@/routes/workspace/server/maintenance';
 import type {
     ChangePreview,
@@ -32,6 +33,12 @@ const props = defineProps<{
     server: ServerMeta;
     operations: { key: string; forTables: boolean }[];
     tables?: string[];
+    /** Vorauswahl aus den Menüs «Datenbank» und «Weitere Aktionen» (O-10). */
+    preset: {
+        operation: string | null;
+        schema: string | null;
+        table: string | null;
+    };
 }>();
 
 type Outcome = {
@@ -42,12 +49,25 @@ type Outcome = {
 
 const page = usePage();
 const schemas = computed(() => props.workspace.schemas);
+const presetSchema =
+    props.preset.schema && schemas.value.includes(props.preset.schema)
+        ? props.preset.schema
+        : null;
+const presetOperation = props.operations.find(
+    (operation) => operation.key === props.preset.operation,
+);
 const form = useForm({
-    operation: props.operations[0]?.key ?? '',
-    schema: schemas.value.includes('public')
-        ? 'public'
-        : (schemas.value[0] ?? ''),
-    table: '',
+    operation: presetOperation?.key ?? props.operations[0]?.key ?? '',
+    schema:
+        presetSchema ??
+        (schemas.value.includes('public')
+            ? 'public'
+            : (schemas.value[0] ?? '')),
+    // Eine Tabelle nur, wenn die Wartung sie einzeln kennt (SQLite: VACUUM nur für die ganze Datei)
+    table:
+        presetSchema && presetOperation?.forTables !== false
+            ? (props.preset.table ?? '')
+            : '',
     confirmation: '',
 });
 type Payload = {
@@ -68,42 +88,17 @@ const confirming = ref(false);
 const loadingTables = ref(false);
 const outcome = ref<Outcome | null>(null);
 
-const descriptions = computed<
-    Record<string, { title: string; sql: string; text: string }>
->(() => ({
-    analyze: {
-        title: t('Statistik aktualisieren'),
-        sql: 'ANALYZE',
-        text: t(
-            'Der Server plant Abfragen nach seiner Statistik — nach grossen Änderungen lohnt es sich.',
-        ),
-    },
-    vacuum: {
-        title: t('Platz freigeben'),
-        sql: 'VACUUM',
-        text:
-            props.workspace.connection.driver === 'sqlite'
-                ? t(
-                      'Baut die Datei neu auf und gibt freie Seiten ans System zurück.',
-                  )
-                : t(
-                      'Gibt den Platz gelöschter Zeilen zur Wiederverwendung frei.',
-                  ),
-    },
-    optimize: {
-        title: t('Tabellen neu aufbauen'),
-        sql: 'OPTIMIZE TABLE',
-        text: t('Ordnet Daten und Indizes neu und gibt Platz frei.'),
-    },
-    check: {
-        title: t('Integrität prüfen'),
-        sql:
-            props.workspace.connection.driver === 'sqlite'
-                ? 'PRAGMA integrity_check'
-                : 'CHECK TABLE',
-        text: t('Sucht nach beschädigten Seiten und Indizes; ändert nichts.'),
-    },
-}));
+const descriptions = computed(() =>
+    Object.fromEntries(
+        props.operations.map((operation) => [
+            operation.key,
+            maintenanceDescription(
+                operation.key,
+                props.workspace.connection.driver,
+            ),
+        ]),
+    ),
+);
 
 const chosen = computed(() =>
     props.operations.find((operation) => operation.key === form.operation),
@@ -219,7 +214,17 @@ watch(
     { immediate: true },
 );
 
-onMounted(() => loadTables());
+onMounted(() => loadTables(true));
+
+// Eine vorgewählte Tabelle, die es in diesem Schema nicht gibt, fällt weg — sonst lehnt die Vorschau sie ab.
+watch(
+    () => props.tables,
+    (tables) => {
+        if (tables && form.table && !tables.includes(form.table)) {
+            form.table = '';
+        }
+    },
+);
 
 const statusIcon = {
     ok: CircleCheck,

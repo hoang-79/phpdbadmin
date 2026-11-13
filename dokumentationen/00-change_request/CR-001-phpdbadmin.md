@@ -6,7 +6,7 @@
 | Titel | phpdbadmin — ein Werkzeug für vier Datenbanken, intuitiver als phpMyAdmin und phpPgAdmin |
 | Antragsteller | Hoang Nguyen |
 | Datum | 28.10.2026 |
-| Fassung | 4 |
+| Fassung | 6 |
 | Status | ✅ **Weiterführen** entschieden 28.10.2026 (Hoang: «Feasibility starten») · Feasibility abgeschlossen 28.10.2026: 6 bestanden, 4 bedingt — Auflagen als V-10, Q-09, E-06 und geänderte Abnahmen eingearbeitet |
 | Grundlagen | [Ideensammlung](ideensammlung.md) · [Marktbild](marktbild.md) · [Funktionsraster](funktionsraster.md) · [Ausgangslage und Rückfragen](../01-pre-project/ausgangslage-und-rueckfragen.md) · [Ideen-Backlog](../01-pre-project/ideen-backlog.md) |
 | Folgt | [Terms of Reference](../01-pre-project/terms-of-reference.md) (Entwurf v0.1) → Feasibility |
@@ -20,6 +20,7 @@
 | 3 | 28.10.2026 | Entscheid Weiterführen; Ergebnisse der [Feasibility](../02-feasibility/feasibility.md): neu V-10, Q-09, E-06; Abnahmen von V-02, V-04, O-01, D-04, S-02, S-03, Q-02, Q-03, E-01, B-04, N-02, N-03 geschärft; Schätzung 42–53 PT |
 | 4 | 28.10.2026 | Review der Foundation (Hoang): neu **V-11** Schreibschutz auf Zeit aufheben; D-04 zählt die Folgen über `ON DELETE CASCADE` in der Vorschau (aus den Wireframes) |
 | 5 | 28.10.2026 | TB 00, Wunsch Hoang: **A-06** — erstes Konto auch im Browser, abgesichert über einen Einrichtungsschlüssel als Datei auf dem Server (wer kein Terminal hat, kommt über Dateimanager oder FTP an die Datei), danach Passkey-Onboarding |
+| 6 | 13.11.2026 | Wunsch Hoang («ich vermisse etliche Datenbankfunktionen … db dump, backup, optimierung, repair»): Feinabgleich mit phpMyAdmin im [Funktionsraster § 10](funktionsraster.md#10-feinabgleich-operationen-für-datenbank-und-tabelle-13112026); neu **O-10** (Export, Import, Sicherung und Wartung aus den Menüs von Datenbank und Tabelle), **W-06** (Reparieren, Prüfsumme, Indizes neu aufbauen), **S-10** (Tabellenoptionen), **S-11** (Tabelle in eine andere Datenbank kopieren oder verschieben), **S-12** (Zeichensatz einer Datenbank) |
 
 ## 1. Ausgangslage und Problem
 
@@ -122,6 +123,7 @@ Priorität nach MoSCoW: **M** Must · **S** Should · **C** Could · **W** Won't
 | O-07 | Auf Tablet und Telefon lesbar, Bearbeiten am Desktop; keine Scrollbalken ausser im Datenraster (P-10) | S | 2 | Durchlauf bei 375, 768 und 1440 px |
 | O-08 | WCAG 2.2 AA in den Kernbildschirmen | S | 2 | axe ohne Befund; Tastaturdurchlauf |
 | O-09 | Leer-, Fehler- und Ladezustände mit Ursache und nächstem Schritt | M | 1 | Durchlauf mit leerer Tabelle, SQL-Fehler, getrennter Verbindung, abgelaufener Sitzung |
+| O-10 | Export, Import, Sicherung und Wartung direkt aus dem Menü der Datenbank und der Tabelle — mit Datenbank, Tabelle und Art vorgewählt; Strukturänderungen im selben Menü gesperrt, wenn das Konto nicht schreiben darf | M | 3 | Test: Vorauswahl aus der Adresse; Durchlauf beider Menüs |
 
 ### 4.4 D — Daten
 
@@ -150,6 +152,9 @@ Priorität nach MoSCoW: **M** Must · **S** Should · **C** Could · **W** Won't
 | S-07 | Beziehungsdiagramm aus den Fremdschlüsseln, als SVG exportierbar | S | 3 | Durchlauf mit Basalto-Datenbank |
 | S-08 | Schemavergleich zweier Datenbanken mit Änderungsskript | C | 4 | Test mit zwei Ständen |
 | S-09 | Laravel-Migration aus einer bestehenden Tabelle erzeugen | C | 4 | Test: Migration erzeugt dieselbe Tabelle auf einem anderen Treiber |
+| S-10 | Tabellenoptionen ändern: Speicher-Engine, Zeichensatz und Sortierung, Startwert des Zählers (MySQL/MariaDB) — mit Vorschau | S | 3 | Test: Vorschau und Anwenden je Option |
+| S-11 | Tabelle in eine andere Datenbank bzw. ein anderes Schema desselben Servers kopieren oder verschieben — mit Vorschau | S | 3 | Test: Kopie mit und ohne Daten, Verschieben, Ziel muss existieren |
+| S-12 | Zeichensatz und Sortierung einer Datenbank ändern (MySQL/MariaDB) — mit Vorschau | C | 3 | Test: Vorschau und Anwenden |
 
 ### 4.6 Q — SQL
 
@@ -185,6 +190,7 @@ Priorität nach MoSCoW: **M** Must · **S** Should · **C** Could · **W** Won't
 | W-03 | Variablen und Status lesen | C | 3 | Durchlauf |
 | W-04 | Datenbank-Benutzer, Rollen und Rechte geführt verwalten (GRANT, REVOKE) mit Vorschau | S | 3 | Tests je Treiber (ohne SQLite) |
 | W-05 | Wartung: ANALYZE, VACUUM (PostgreSQL, SQLite), OPTIMIZE (MySQL, MariaDB), Integritätsprüfung (SQLite) | C | 3 | Durchlauf |
+| W-06 | Wartung erweitert: Reparieren (`REPAIR TABLE`, MySQL/MariaDB — nur wo die Engine es kann), Prüfsumme (`CHECKSUM TABLE`), Indizes neu aufbauen (`REINDEX`, PostgreSQL und SQLite) | S | 3 | Test je Treiber, auch «Engine kann es nicht» |
 
 ### 4.9 B — Betrieb und Technik
 
@@ -209,6 +215,8 @@ Priorität nach MoSCoW: **M** Must · **S** Should · **C** Could · **W** Won't
 | N-04 | **Kompatibilität:** MariaDB ab 10.6, MySQL ab 8.0, PostgreSQL ab 14, SQLite ab 3.35 (Annahme R-15) | M | 1 | Feasibility prüft die Untergrenzen |
 | N-05 | Kurze Hilfe in der Oberfläche; Projekt-Doku nach DSDM, bei jedem Commit nachgeführt | S | 2 | Doku-Prüfung im Commit |
 | N-06 | Sprache: Deutsch und Englisch, Sie-Form, Bezeichner im Code englisch | M | 1 | Test über Sprachdateien |
+
+**Zählung Fassung 6** (13.11.2026, per Skript): 86 Anforderungen — M 43, S 31, C 12; neu O-10 (M), W-06, S-10, S-11 (S) und S-12 (C), alle nach v1.0.
 
 **Zählung** (per Skript aus den Tabellen, Fassung 4, 28.10.2026): 81 Anforderungen — M 42, S 28, C 11. Must-Anteil gesamt 52 %; **bis v1.0 (Stufen 0–2, 63 Anforderungen) 67 %** (Fassung 3: 80 und 68 %, Fassung 2: 77 und 71 %); im Plan der [PRL](../03-foundation/prl.md) mit Rückfallwegen 58 % — über der DSDM-Richtgrösse von 60 %. Die PRL in der Foundation muss deshalb Musts in Kern und Bequemlichkeit teilen oder zurückstufen; Kandidaten mit Rückfallweg «bis dahin über den Navigator bzw. den SQL-Editor»: O-02 Befehlspalette, O-09 Zustände (Kern: Fehler; Rest: Leer- und Ladezustände), D-05 (Kern: NULL, JSON, Datum; Bildvorschau später), E-02 (Kern: CSV; SQL-Datei später), Q-01 (Kern: Hervorhebung und Vervollständigung; Formatieren später).
 

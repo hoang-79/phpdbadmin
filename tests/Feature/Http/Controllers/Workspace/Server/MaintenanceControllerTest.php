@@ -66,6 +66,28 @@ class MaintenanceControllerTest extends TestCase
                 ->reloadOnly('tables', fn (Assert $reload) => $reload->where('tables', ['notes'])));
     }
 
+    /**
+     * Aus den Menüs «Datenbank» und «Weitere Aktionen» (O-10): Art, Schema und Tabelle aus der Adresse — eine Art, die der
+     * Treiber nicht kennt, fällt weg. Der Arbeitsbereich trägt die Arten des Treibers für die Menüs mit.
+     */
+    public function test_menus_preselect_operation_schema_and_table_from_the_address(): void
+    {
+        $connection = $this->sqliteConnection();
+
+        $this->actingAs($this->user)->get(route('workspace.server.maintenance', [$connection, 'operation' => 'check', 'schema' => 'main', 'table' => 'notes']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('preset', ['operation' => 'check', 'schema' => 'main', 'table' => 'notes'])
+                ->where('workspace.connection.maintenance', [
+                    ['key' => 'analyze', 'forTables' => true],
+                    ['key' => 'vacuum', 'forTables' => false],
+                    ['key' => 'check', 'forTables' => true],
+                ]));
+        $this->actingAs($this->user)->get(route('workspace.server.maintenance', [$connection, 'operation' => 'optimize']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('preset.operation', null));
+    }
+
     public function test_preview_lists_the_statements_and_runs_nothing(): void
     {
         $connection = $this->sqliteConnection();

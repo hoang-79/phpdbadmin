@@ -71,6 +71,19 @@ class TransferControllerTest extends TestCase
                 ->where('canWrite', true));
     }
 
+    /** Aus dem Menü «Datenbank» (O-10): die ganze Datenbank vorgewählt; anderes als «schema» gilt nicht. */
+    public function test_menu_database_presets_the_export_of_the_whole_database(): void
+    {
+        $connection = $this->sqliteSamples();
+
+        $this->actingAs($this->user)->get(route('workspace.transfers.index', [$connection, 'schema' => 'main', 'scope' => 'schema']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('preset.scope', 'schema')->where('preset.table', null));
+        $this->actingAs($this->user)->get(route('workspace.transfers.index', [$connection, 'schema' => 'main', 'scope' => 'alles']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('preset.scope', null));
+    }
+
     public function test_guest_is_sent_to_login_and_foreign_connection_is_404(): void
     {
         $foreign = DatabaseConnection::factory()->sqlite($this->folder.'/x.sqlite')->create();

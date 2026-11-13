@@ -45,6 +45,8 @@ export type Workspace = {
         canManage: boolean;
         canWrite: boolean;
         unlockedUntil: string | null;
+        /** Wartung, die der Treiber kann (W-05, W-06); forTables: auch für eine einzelne Tabelle. */
+        maintenance: { key: string; forTables: boolean }[];
     };
     databases: string[] | null;
     database: string | null;
