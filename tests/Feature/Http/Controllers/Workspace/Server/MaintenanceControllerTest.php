@@ -61,6 +61,7 @@ class MaintenanceControllerTest extends TestCase
                     ['key' => 'analyze', 'forTables' => true],
                     ['key' => 'vacuum', 'forTables' => false],
                     ['key' => 'check', 'forTables' => true],
+                    ['key' => 'reindex', 'forTables' => true],
                 ])
                 ->missing('tables')
                 ->reloadOnly('tables', fn (Assert $reload) => $reload->where('tables', ['notes'])));
@@ -82,6 +83,7 @@ class MaintenanceControllerTest extends TestCase
                     ['key' => 'analyze', 'forTables' => true],
                     ['key' => 'vacuum', 'forTables' => false],
                     ['key' => 'check', 'forTables' => true],
+                    ['key' => 'reindex', 'forTables' => true],
                 ]));
         $this->actingAs($this->user)->get(route('workspace.server.maintenance', [$connection, 'operation' => 'optimize']))
             ->assertOk()

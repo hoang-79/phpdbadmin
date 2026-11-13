@@ -180,6 +180,9 @@ final class ServerPlans
             MaintenanceOperation::Analyze => __('Aktualisiert die Statistik, nach der der Server Abfragen plant.'),
             MaintenanceOperation::Optimize => __('Baut die Tabellen neu auf; Schreibzugriffe warten so lange.'),
             MaintenanceOperation::Check => __('Prüft nur und ändert nichts.'),
+            MaintenanceOperation::Repair => __('Repariert Tabellen der Engines MyISAM, Aria, ARCHIVE und CSV; InnoDB repariert sich selbst und meldet das als Hinweis.'),
+            MaintenanceOperation::Checksum => __('Liest jede Zeile und rechnet eine Prüfsumme — etwa um zwei Kopien zu vergleichen; ändert nichts.'),
+            MaintenanceOperation::Reindex => __('Baut die Indizes neu auf; Schreibzugriffe auf die Tabelle warten so lange.'),
             MaintenanceOperation::Vacuum => $driver === DatabaseDriver::Sqlite
                 ? __('Baut die ganze Datei neu auf und braucht dafür kurz bis doppelt so viel Platz; so lange ist sie gesperrt.')
                 : __('Gibt den Platz gelöschter Zeilen frei; Lesen und Schreiben laufen weiter.'),

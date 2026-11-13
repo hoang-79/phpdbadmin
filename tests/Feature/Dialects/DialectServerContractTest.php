@@ -351,10 +351,37 @@ class DialectServerContractTest extends TestCase
 
     public function test_maintenance_offers_per_driver_what_the_driver_knows(): void
     {
-        $this->assertSame(['analyze', 'optimize', 'check'], array_column(DatabaseDriver::MySql->dialect()->maintenanceOperations(), 'value'));
-        $this->assertSame(['analyze', 'vacuum'], array_column(DatabaseDriver::Postgres->dialect()->maintenanceOperations(), 'value'));
-        $this->assertSame(['analyze', 'vacuum', 'check'], array_column(DatabaseDriver::Sqlite->dialect()->maintenanceOperations(), 'value'));
+        $this->assertSame(['analyze', 'optimize', 'check', 'repair', 'checksum'], array_column(DatabaseDriver::MySql->dialect()->maintenanceOperations(), 'value'));
+        $this->assertSame(['analyze', 'vacuum', 'reindex'], array_column(DatabaseDriver::Postgres->dialect()->maintenanceOperations(), 'value'));
+        $this->assertSame(['analyze', 'vacuum', 'check', 'reindex'], array_column(DatabaseDriver::Sqlite->dialect()->maintenanceOperations(), 'value'));
         $this->assertFalse(DatabaseDriver::Sqlite->dialect()->maintenanceForTables(MaintenanceOperation::Vacuum));
+    }
+
+    /**
+     * @return array<string, array{0: DatabaseDriver}>
+     */
+    public static function mysqlFamily(): array
+    {
+        return ['MySQL' => [DatabaseDriver::MySql], 'MariaDB' => [DatabaseDriver::MariaDb]];
+    }
+
+    /** W-06: REPAIR repariert MyISAM; InnoDB kann es nicht — das ist ein Hinweis, kein Fehler. CHECKSUM liefert eine Zahl. */
+    #[DataProvider('mysqlFamily')]
+    public function test_repair_works_for_myisam_notes_innodb_and_checksum_returns_a_number(DatabaseDriver $driver): void
+    {
+        $connection = $this->writable($driver);
+        $schema = $this->sampleSchemaName($driver);
+        $this->createSampleSchema($connection, $driver);
+        $connection->statement('create table archiv (id int primary key, text varchar(20)) engine = MyISAM');
+        $connection->table('archiv')->insert([['id' => 1, 'text' => 'a'], ['id' => 2, 'text' => 'b']]);
+        $dialect = $driver->dialect();
+        $run = fn (MaintenanceOperation $operation, string $table): array => $dialect->runMaintenance($connection, $dialect->maintenanceStatements($connection, $operation, $schema, [$table])[0]);
+
+        $this->assertSame('ok', $run(MaintenanceOperation::Repair, 'archiv')[0]['status']);
+        $this->assertSame('note', $run(MaintenanceOperation::Repair, 'orders')[0]['status']);
+        $checksum = $run(MaintenanceOperation::Checksum, 'archiv')[0];
+        $this->assertSame('ok', $checksum['status']);
+        $this->assertMatchesRegularExpression('/^Prüfsumme \d+$/', $checksum['message']);
     }
 
     public function test_sqlite_integrity_check_reports_a_damaged_index(): void

@@ -478,7 +478,7 @@ class MySqlDialect extends BaseDialect
 
     public function maintenanceOperations(): array
     {
-        return [MaintenanceOperation::Analyze, MaintenanceOperation::Optimize, MaintenanceOperation::Check];
+        return [MaintenanceOperation::Analyze, MaintenanceOperation::Optimize, MaintenanceOperation::Check, MaintenanceOperation::Repair, MaintenanceOperation::Checksum];
     }
 
     public function maintenanceForTables(MaintenanceOperation $operation): bool
@@ -492,7 +492,10 @@ class MySqlDialect extends BaseDialect
             MaintenanceOperation::Analyze => 'ANALYZE TABLE ',
             MaintenanceOperation::Optimize => 'OPTIMIZE TABLE ',
             MaintenanceOperation::Check => 'CHECK TABLE ',
-            MaintenanceOperation::Vacuum => throw new InvalidArgumentException('VACUUM gibt es nur bei PostgreSQL und SQLite.'),
+            // Nur MyISAM, Aria, ARCHIVE und CSV — InnoDB antwortet mit einem Hinweis (W-06)
+            MaintenanceOperation::Repair => 'REPAIR TABLE ',
+            MaintenanceOperation::Checksum => 'CHECKSUM TABLE ',
+            MaintenanceOperation::Vacuum, MaintenanceOperation::Reindex => throw new InvalidArgumentException('VACUUM und REINDEX gibt es nur bei PostgreSQL und SQLite.'),
         };
         $tables ??= $this->baseTables($connection, $schema);
 
@@ -509,6 +512,16 @@ class MySqlDialect extends BaseDialect
     {
         return array_values(array_map(function (object $row): array {
             $values = array_change_key_case((array) $row);
+
+            // CHECKSUM TABLE antwortet mit Tabelle und Zahl statt mit Meldung — NULL heisst: Tabelle nicht gefunden.
+            if (array_key_exists('checksum', $values)) {
+                return [
+                    'table' => isset($values['table']) ? (string) $values['table'] : null,
+                    'status' => $values['checksum'] === null ? 'error' : 'ok',
+                    'message' => $values['checksum'] === null ? __('Tabelle nicht gefunden') : __('Prüfsumme :value', ['value' => (string) $values['checksum']]),
+                ];
+            }
+
             $type = strtolower((string) ($values['msg_type'] ?? ''));
             $message = (string) ($values['msg_text'] ?? '');
 

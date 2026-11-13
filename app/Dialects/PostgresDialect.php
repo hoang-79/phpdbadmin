@@ -588,7 +588,7 @@ class PostgresDialect extends BaseDialect
 
     public function maintenanceOperations(): array
     {
-        return [MaintenanceOperation::Analyze, MaintenanceOperation::Vacuum];
+        return [MaintenanceOperation::Analyze, MaintenanceOperation::Vacuum, MaintenanceOperation::Reindex];
     }
 
     public function maintenanceForTables(MaintenanceOperation $operation): bool
@@ -601,7 +601,8 @@ class PostgresDialect extends BaseDialect
         $keyword = match ($operation) {
             MaintenanceOperation::Analyze => 'ANALYZE ',
             MaintenanceOperation::Vacuum => 'VACUUM ',
-            MaintenanceOperation::Optimize, MaintenanceOperation::Check => throw new InvalidArgumentException('PostgreSQL kennt dafür ANALYZE und VACUUM.'),
+            MaintenanceOperation::Reindex => 'REINDEX TABLE ',
+            MaintenanceOperation::Optimize, MaintenanceOperation::Check, MaintenanceOperation::Repair, MaintenanceOperation::Checksum => throw new InvalidArgumentException('PostgreSQL kennt dafür ANALYZE, VACUUM und REINDEX.'),
         };
         $tables ??= $this->baseTables($connection, $schema);
 
@@ -610,6 +611,11 @@ class PostgresDialect extends BaseDialect
         }
 
         $names = array_map(fn (string $table): string => $this->quoteIdentifier($schema).'.'.$this->quoteIdentifier($table), $tables);
+
+        // REINDEX TABLE nimmt genau eine Tabelle — je Tabelle eine Anweisung, das Ergebnis dann auch je Tabelle.
+        if ($operation === MaintenanceOperation::Reindex) {
+            return array_map(fn (string $name, string $table): PlannedStatement => new PlannedStatement($keyword.$name, objects: [$table]), $names, $tables);
+        }
 
         return [new PlannedStatement($keyword.implode(', ', $names), objects: $tables)];
     }

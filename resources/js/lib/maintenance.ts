@@ -48,6 +48,30 @@ export function maintenanceDescription(
                     'Sucht nach beschädigten Seiten und Indizes; ändert nichts.',
                 ),
             };
+        case 'repair':
+            return {
+                title: t('Tabellen reparieren'),
+                sql: 'REPAIR TABLE',
+                text: t(
+                    'Repariert beschädigte Tabellen von MyISAM und Aria; InnoDB braucht das nicht.',
+                ),
+            };
+        case 'checksum':
+            return {
+                title: t('Prüfsumme berechnen'),
+                sql: 'CHECKSUM TABLE',
+                text: t(
+                    'Rechnet eine Prüfsumme über alle Zeilen — um zwei Kopien zu vergleichen.',
+                ),
+            };
+        case 'reindex':
+            return {
+                title: t('Indizes neu aufbauen'),
+                sql: 'REINDEX',
+                text: t(
+                    'Baut die Indizes neu auf, etwa nach einer Beschädigung oder starkem Wachstum.',
+                ),
+            };
         default:
             return { title: t('Wartung'), sql: '', text: '' };
     }

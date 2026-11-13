@@ -15,8 +15,9 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Wartung (W-05): ANALYZE, VACUUM (PostgreSQL, SQLite), OPTIMIZE (MySQL, MariaDB), Integritätsprüfung (SQLite,
- * MySQL/MariaDB) je Tabelle oder Schema — Vorschau, Bestätigung, Ergebnis je Tabelle.
+ * Wartung (W-05, W-06): ANALYZE, VACUUM (PostgreSQL, SQLite), OPTIMIZE, REPAIR und CHECKSUM (MySQL, MariaDB),
+ * Integritätsprüfung (SQLite, MySQL/MariaDB), REINDEX (PostgreSQL, SQLite) je Tabelle oder Schema — Vorschau,
+ * Bestätigung, Ergebnis je Tabelle.
  */
 class MaintenanceController extends ServerController
 {

@@ -316,7 +316,7 @@ class SqliteDialect extends BaseDialect
 
     public function maintenanceOperations(): array
     {
-        return [MaintenanceOperation::Analyze, MaintenanceOperation::Vacuum, MaintenanceOperation::Check];
+        return [MaintenanceOperation::Analyze, MaintenanceOperation::Vacuum, MaintenanceOperation::Check, MaintenanceOperation::Reindex];
     }
 
     /** VACUUM baut immer die ganze Datei neu auf. */
@@ -339,7 +339,12 @@ class SqliteDialect extends BaseDialect
             MaintenanceOperation::Check => $tables === null
                 ? [new PlannedStatement('PRAGMA '.$prefix.'.integrity_check')]
                 : array_map(fn (string $table): PlannedStatement => new PlannedStatement('PRAGMA '.$prefix.'.integrity_check('.$this->quoteIdentifier($table).')', objects: [$table]), $tables),
-            MaintenanceOperation::Optimize => throw new InvalidArgumentException('OPTIMIZE gibt es nur bei MySQL und MariaDB.'),
+            // REINDEX kennt kein «ganzes Schema» — dann jede Tabelle einzeln, das Ergebnis je Tabelle
+            MaintenanceOperation::Reindex => array_map(
+                fn (string $table): PlannedStatement => new PlannedStatement('REINDEX '.$prefix.'.'.$this->quoteIdentifier($table), objects: [$table]),
+                $tables ?? $this->baseTables($connection, $schema),
+            ),
+            MaintenanceOperation::Optimize, MaintenanceOperation::Repair, MaintenanceOperation::Checksum => throw new InvalidArgumentException('OPTIMIZE, REPAIR und CHECKSUM gibt es nur bei MySQL und MariaDB.'),
         };
     }
 
