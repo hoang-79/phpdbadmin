@@ -18,3 +18,11 @@
   Browser nur Anfragen an die eigene Domain und keine Konsolenmeldung.
 - Keine Sicherung nötig (Ordner war leer). Aktualisieren: derselbe Befehl; zurück: vorherigen Stand aus Git bauen
   und hochladen.
+
+## 13.11.2026 — Website auf Version 1.4.0
+
+- `PHPDBADMIN_WEBSITE_ZIEL=cyon-krelora:public_html/phpdbadmin.net website/hochladen.sh` (rsync `--delete` in den
+  Ordner mit Marker `.phpdbadmin-website`): Version 1.4.0 im Kopf, Fuss und in den strukturierten Daten, Kachel
+  «Server-Verwaltung» nennt Analysieren, Optimieren, Prüfen und Reparieren.
+- Danach geprüft: Startseite DE und EN zeigen 1.4.0 und den neuen Text, CSP/HSTS/Cache-Header wie bisher.
+- Zurück: vorherigen Stand aus Git bauen und mit demselben Befehl hochladen.
