@@ -12,6 +12,7 @@ A connection leads to a database server (MariaDB, MySQL, PostgreSQL) or to an SQ
 - **Read-only** — phpdbadmin writes nothing through this connection, not even in the SQL editor.
 - **Password for this session only** — phpdbadmin does not store it and asks again after every sign-in.
 - Only servers and folders allowed by the installation can be reached (`PHPDBADMIN_ALLOWED_HOSTS`, `PHPDBADMIN_SQLITE_PATHS`).
+- **Driver** — MySQL and MariaDB look the same when signing in but do not understand all of each other’s commands. If phpdbadmin reports “Wrong driver”, choose the driver the message names (Laravel Cloud’s MySQL databases, for example, are MySQL, not MariaDB).
 
 ## Workspace {#arbeitsbildschirm}
 
@@ -57,6 +58,8 @@ The **relationship diagram** of a schema shows the tables with their foreign key
 
 _Alter table_ on the Structure page: add, change, rename and drop columns; indexes and foreign keys. The preview shows the SQL exactly as it will run. MySQL and MariaDB run structure changes statement by statement and cannot roll them back — the preview says so. Dropping, emptying and removing columns with data require the table name. _More actions_ renames, copies, empties or drops a table.
 
+_More actions_ of a table: rename and **move to another database or schema**, copy (also there), empty, drop. For MySQL and MariaDB also **table options** (engine, character set and collation — optionally converting the existing columns —, next counter value) and, in the _Database_ menu, the **character set and collation** of the whole database. Everything with a preview of the exact SQL.
+
 ## Comparing and migrations {#vergleich}
 
 _Compare schemas_ (in the connection overview) sets two schemas side by side — also between MySQL, MariaDB, PostgreSQL and SQLite — and creates a change script in the target's dialect. Nothing runs: you copy the script or open it in the target's SQL editor.
@@ -65,17 +68,17 @@ _Laravel migration_ on the Structure page creates a migration file for a Laravel
 
 ## Export and import {#export-import}
 
-From the connection menu or with _Export_ in a table's header: **CSV**, **JSON** or **SQL**. Large exports run in the background; the file is ready to download for 24 hours.
+From the _Database_ menu of a database, under _More actions_ of a table, from the connection menu or with _Export_ in a table's header: **CSV**, **JSON** or **SQL**. Large exports run in the background; the file is ready to download for 24 hours.
 
 When **importing** a CSV file you map the columns and do a **dry run** first — it lists failing rows with their line number and writes nothing. An SQL file is executed statement by statement.
 
+**Back up and restore** (_Database_ menu) uses the server’s own tools — `mysqldump` or `mariadb-dump`, `pg_dump` and `sqlite3` — and restores such a backup.
+
 ## Server administration {#server}
 
-In the connection menu under _Server_: overview, running **processes** (end them), **variables**, **accounts and privileges** and **maintenance** (e.g. `ANALYZE`, `OPTIMIZE`, `VACUUM`). Every change shows its SQL first and is recorded in the audit log afterwards. Changes need the _manage_ permission and a connection that is not read-only.
+In the connection menu under _Server_: overview, running **processes** (end them), **variables**, **accounts and privileges** and **maintenance**: update statistics (`ANALYZE`), rebuild tables (`OPTIMIZE TABLE`), free space (`VACUUM`), check integrity (`CHECK TABLE`, `PRAGMA integrity_check`), repair (`REPAIR TABLE` — only MyISAM, Aria, ARCHIVE and CSV; InnoDB reports this as a note), checksum (`CHECKSUM TABLE`) and rebuild indexes (`REINDEX`). Quicker via the _Maintenance_ submenu in the _Database_ menu or on each table — the kind, database and table are then already chosen. Every change shows its SQL first and is recorded in the audit log afterwards. Changes need the _manage_ permission and a connection that is not read-only.
 
 ## Connections over SSH {#ssh}
-
-MySQL and MariaDB look the same when signing in but do not understand all of each other’s commands. If phpdbadmin reports “Wrong driver”, choose the driver the message names in the form (Laravel Cloud’s MySQL databases, for example, are MySQL, not MariaDB).
 
 A database server that can only be reached through an SSH server: turn on _SSH tunnel_ in the connection form and enter the SSH host, user and private key (pasted and stored encrypted, or as a file in an allowed folder). On the first connection phpdbadmin remembers the host key and shows its fingerprint; if it changes later, phpdbadmin no longer connects.
 

@@ -10,12 +10,13 @@ use App\Services\Schema\SchemaPlan;
 use Illuminate\Database\Connection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 /**
  * Datenbank (MySQL, MariaDB) bzw. Schema (PostgreSQL) anlegen und löschen, bei PostgreSQL mit «alle Datenbanken» auch
  * eine ganze Datenbank löschen, bei SQLite eine neue Datei in einem erlaubten Ordner (S-05). Löschen nur mit dem
- * eingetippten Namen.
+ * eingetippten Namen. Bei MySQL und MariaDB auch Zeichensatz und Sortierung einer Datenbank ändern (S-12).
  */
 class SchemaController extends SchemaEditorController
 {
@@ -28,6 +29,21 @@ class SchemaController extends SchemaEditorController
         abort_unless($connection->driver === DatabaseDriver::Sqlite, 404);
 
         return response()->json(['folders' => $this->plans->sqliteFolders()]);
+    }
+
+    /**
+     * Zeichensatz und Sortierung einer Datenbank (S-12) für den Dialog — was sie hat und was der Server anbietet.
+     */
+    public function options(Request $request, DatabaseConnection $connection): JsonResponse
+    {
+        $this->authorizeEditing($connection);
+        $name = (string) $request->query('name', '');
+        $target = $this->targets->open($connection, $this->database($request, $connection));
+        $dialect = $connection->driver->dialect();
+        $current = $name !== '' && in_array($name, $this->inspector->schemasOn($target, $connection), true) ? $dialect->databaseOptions($target, $name) : null;
+        abort_if($current === null, 404);
+
+        return response()->json(['current' => $current, 'choices' => $dialect->optionChoices($target)]);
     }
 
     public function preview(SchemaRequest $request, DatabaseConnection $connection): JsonResponse
@@ -58,6 +74,12 @@ class SchemaController extends SchemaEditorController
                     return to_route('workspace.schema', $this->withDatabase([$connection, $name], $database));
                 }
 
+                if ($request->operation() === 'charset') {
+                    $this->toast(__('Zeichensatz von :name geändert.', ['name' => $name]));
+
+                    return back();
+                }
+
                 if ($request->operation() === 'drop-database') {
                     $this->toast(__('Datenbank :name gelöscht.', ['name' => $name]));
 
@@ -80,6 +102,7 @@ class SchemaController extends SchemaEditorController
 
         return match ($request->operation()) {
             'create' => $this->plans->createSchema($target, $connection, $request->text('name')),
+            'charset' => $this->plans->databaseCharset($target, $connection, $request->text('name'), $request->text('collation'), (bool) $request->validated('convert_tables')),
             'drop-database' => $this->plans->dropDatabase($target, $connection, $request->text('name')),
             default => $this->plans->dropSchema($target, $connection, $request->text('name')),
         };

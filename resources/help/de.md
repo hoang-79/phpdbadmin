@@ -12,6 +12,7 @@ Eine Verbindung führt zu einem Datenbank-Server (MariaDB, MySQL, PostgreSQL) od
 - **Schreibgeschützt** — phpdbadmin schreibt über diese Verbindung nichts, auch nicht im SQL-Editor.
 - **Passwort nur für diese Sitzung** — phpdbadmin speichert es nicht und fragt nach jeder Anmeldung neu.
 - Erreichbar sind nur Server und Ordner, die in der Installation erlaubt sind (`PHPDBADMIN_ALLOWED_HOSTS`, `PHPDBADMIN_SQLITE_PATHS`).
+- **Treiber** — MySQL und MariaDB sehen beim Anmelden gleich aus, verstehen aber nicht alle Befehle des anderen. Meldet phpdbadmin «Falscher Treiber», wählen Sie den Treiber, den die Meldung nennt (die MySQL-Datenbanken von Laravel Cloud etwa sind MySQL, nicht MariaDB).
 
 ## Arbeitsbildschirm {#arbeitsbildschirm}
 
@@ -57,6 +58,8 @@ Das **Beziehungsdiagramm** eines Schemas zeigt die Tabellen mit ihren Fremdschl�
 
 _Tabelle ändern_ auf der Seite Struktur: Spalten hinzufügen, ändern, umbenennen, löschen; Indizes und Fremdschlüssel. Die Vorschau zeigt das SQL, das genau so ausgeführt wird. MySQL und MariaDB führen Strukturänderungen Anweisung für Anweisung aus und können sie nicht zurückrollen — die Vorschau sagt es. Löschen, Leeren und Spalten mit Daten entfernen verlangen den Namen der Tabelle. _Weitere Aktionen_ benennt um, kopiert, leert oder löscht eine Tabelle.
 
+_Weitere Aktionen_ einer Tabelle: umbenennen und **in eine andere Datenbank bzw. ein anderes Schema verschieben**, kopieren (auch dorthin), leeren, löschen. Bei MySQL und MariaDB dazu **Tabellenoptionen** (Engine, Zeichensatz und Sortierung — auf Wunsch mit Umwandeln der bestehenden Spalten —, nächster Wert des Zählers) und im Menü _Datenbank_ **Zeichensatz und Sortierung** der ganzen Datenbank. Alles mit Vorschau des genauen SQL.
+
 ## Vergleichen und Migration {#vergleich}
 
 _Schemas vergleichen_ (in der Verbindungsübersicht) stellt zwei Schemas gegenüber — auch zwischen MySQL, MariaDB, PostgreSQL und SQLite — und erzeugt ein Änderungsskript im Dialekt des Ziels. Ausgeführt wird nichts: Sie kopieren das Skript oder öffnen es im SQL-Editor des Ziels.
@@ -65,17 +68,17 @@ _Laravel-Migration_ auf der Seite Struktur erzeugt aus einer Tabelle eine Migrat
 
 ## Export und Import {#export-import}
 
-Im Menü der Verbindung oder mit _Exportieren_ im Kopf einer Tabelle: **CSV**, **JSON** oder **SQL**. Grosse Exporte laufen im Hintergrund; die Datei liegt 24 Stunden zum Herunterladen bereit.
+Im Menü _Datenbank_ einer Datenbank, unter _Weitere Aktionen_ einer Tabelle, im Menü der Verbindung oder mit _Exportieren_ im Kopf einer Tabelle: **CSV**, **JSON** oder **SQL**. Grosse Exporte laufen im Hintergrund; die Datei liegt 24 Stunden zum Herunterladen bereit.
 
 Beim **Import** einer CSV-Datei ordnen Sie die Spalten zu und machen zuerst einen **Probelauf** — er zeigt Fehlerzeilen mit Zeilennummer und schreibt nichts. Eine SQL-Datei wird Anweisung für Anweisung ausgeführt.
 
+**Sichern und wiederherstellen** (Menü _Datenbank_) nimmt die Werkzeuge des Servers selbst — `mysqldump` bzw. `mariadb-dump`, `pg_dump` und `sqlite3` — und spielt eine solche Sicherung wieder ein.
+
 ## Server-Verwaltung {#server}
 
-Im Menü der Verbindung unter _Server_: Übersicht, laufende **Prozesse** (beenden), **Variablen**, **Konten und Rechte** und **Wartung** (z. B. `ANALYZE`, `OPTIMIZE`, `VACUUM`). Jede Änderung zeigt zuerst ihr SQL und steht danach im Protokoll. Ändern verlangt das Recht _verwalten_ und eine Verbindung ohne Schreibschutz.
+Im Menü der Verbindung unter _Server_: Übersicht, laufende **Prozesse** (beenden), **Variablen**, **Konten und Rechte** und **Wartung**: Statistik aktualisieren (`ANALYZE`), Tabellen neu aufbauen (`OPTIMIZE TABLE`), Platz freigeben (`VACUUM`), Integrität prüfen (`CHECK TABLE`, `PRAGMA integrity_check`), reparieren (`REPAIR TABLE` — nur MyISAM, Aria, ARCHIVE und CSV; InnoDB meldet das als Hinweis), Prüfsumme (`CHECKSUM TABLE`) und Indizes neu aufbauen (`REINDEX`). Schneller geht es über das Untermenü _Wartung_ im Menü _Datenbank_ bzw. bei jeder Tabelle — Art, Datenbank und Tabelle sind dann schon gewählt. Jede Änderung zeigt zuerst ihr SQL und steht danach im Protokoll. Ändern verlangt das Recht _verwalten_ und eine Verbindung ohne Schreibschutz.
 
 ## Verbindungen über SSH {#ssh}
-
-MySQL und MariaDB sehen beim Anmelden gleich aus, verstehen aber nicht alle Befehle des anderen. Meldet phpdbadmin «Falscher Treiber», im Formular den Treiber wählen, den die Meldung nennt (die MySQL-Datenbanken von Laravel Cloud etwa sind MySQL, nicht MariaDB).
 
 Ein Datenbank-Server, der nur über einen SSH-Server erreichbar ist: im Formular der Verbindung _SSH-Tunnel_ einschalten, SSH-Host, Benutzer und privaten Schlüssel angeben (eingefügt und verschlüsselt gespeichert oder als Datei in einem erlaubten Ordner). Beim ersten Verbinden merkt sich phpdbadmin den Host-Schlüssel und zeigt seinen Fingerabdruck; ändert er sich später, verbindet phpdbadmin nicht mehr.
 

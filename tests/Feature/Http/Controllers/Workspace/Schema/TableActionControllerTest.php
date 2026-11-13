@@ -179,6 +179,56 @@ class TableActionControllerTest extends TestCase
         }
     }
 
+    /**
+     * @return array<string, array{0: DatabaseDriver}>
+     */
+    public static function mysqlFamily(): array
+    {
+        return ['MySQL' => [DatabaseDriver::MySql], 'MariaDB' => [DatabaseDriver::MariaDb]];
+    }
+
+    /**
+     * S-10: Engine, Sortierung (nur Vorgabe oder mit Umwandeln) und nächster Zählerwert — nur, was sich ändert, wird eine
+     * Anweisung; was der Server nicht anbietet, wird abgewiesen.
+     */
+    #[DataProvider('mysqlFamily')]
+    public function test_table_options_change_engine_collation_and_counter(DatabaseDriver $driver): void
+    {
+        [$connection, $schema, $target] = $this->parentWithChildren($driver);
+        $this->actingAs($this->user)->getJson(route('workspace.object.options', [$connection, $schema, 'parents']))
+            ->assertOk()
+            ->assertJsonPath('current.engine', 'InnoDB')
+            ->assertJsonPath('current.autoIncrement', 3)
+            ->assertJson(fn ($json) => $json->has('choices.engines')->has('choices.collations')->etc());
+
+        $this->actingAs($this->user)->postJson(route('workspace.object.actions.preview', [$connection, $schema, 'parents']), ['operation' => 'options', 'collation' => 'utf8mb4_bin', 'convert' => true, 'auto_increment' => 100])
+            ->assertOk()
+            ->assertJsonPath('statements.*.sql', [
+                'ALTER TABLE `'.$schema.'`.`parents` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_bin',
+                'ALTER TABLE `'.$schema.'`.`parents` AUTO_INCREMENT = 100',
+            ]);
+        $this->apply($connection, $schema, 'parents', ['operation' => 'options', 'collation' => 'utf8mb4_bin', 'convert' => true, 'auto_increment' => 100])
+            ->assertSessionHasNoErrors();
+
+        $options = $driver->dialect()->tableOptions($target, $schema, 'parents');
+        $this->assertSame(['utf8mb4_bin', 100], [$options['collation'], $options['autoIncrement']]);
+        $this->assertSame('utf8mb4_bin', $target->selectOne('select collation_name as c from information_schema.columns where table_schema = ? and table_name = ? and column_name = ?', [$schema, 'parents', 'name'])->c);
+
+        $this->apply($connection, $schema, 'parents', ['operation' => 'options', 'engine' => 'BLACKHOLE'])->assertSessionHasErrors(['engine']);
+        $this->apply($connection, $schema, 'parents', ['operation' => 'options', 'collation' => 'utf8mb4_erfunden'])->assertSessionHasErrors(['collation']);
+        $this->apply($connection, $schema, 'parents', ['operation' => 'options', 'collation' => 'utf8mb4_bin'])->assertSessionHasErrors(['options' => 'Nichts geändert.']);
+        $this->assertSame(['schema.options'], AuditEntry::query()->pluck('action')->all());
+    }
+
+    public function test_table_options_are_only_for_mysql_and_mariadb(): void
+    {
+        [$connection, $schema] = $this->parentWithChildren(DatabaseDriver::Sqlite);
+
+        $this->actingAs($this->user)->getJson(route('workspace.object.options', [$connection, $schema, 'parents']))->assertNotFound();
+        $this->apply($connection, $schema, 'parents', ['operation' => 'options', 'engine' => 'InnoDB'])
+            ->assertSessionHasErrors(['operation' => 'Tabellenoptionen gibt es hier nur bei MySQL und MariaDB.']);
+    }
+
     public function test_target_must_exist_and_sqlite_does_not_move_between_files(): void
     {
         [$connection, $schema] = $this->parentWithChildren(DatabaseDriver::Sqlite);

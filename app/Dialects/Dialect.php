@@ -52,6 +52,28 @@ interface Dialect
      */
     public function serverMismatch(Connection $connection): ?ConnectionProblem;
 
+    /**
+     * Optionen einer Tabelle (S-10): Engine, Sortierung mit Zeichensatz, nächster Wert des Zählers — nur MySQL und
+     * MariaDB, sonst null.
+     *
+     * @return array{engine: string|null, collation: string|null, charset: string|null, autoIncrement: int|null}|null
+     */
+    public function tableOptions(Connection $connection, string $schema, string $table): ?array;
+
+    /**
+     * Zeichensatz und Sortierung einer Datenbank (S-12) — nur MySQL und MariaDB, sonst null.
+     *
+     * @return array{charset: string, collation: string}|null
+     */
+    public function databaseOptions(Connection $connection, string $schema): ?array;
+
+    /**
+     * Was der Server anbietet (S-10, S-12): Engines, die er gerade kann, und alle Sortierungen mit ihrem Zeichensatz.
+     *
+     * @return array{engines: list<string>, collations: list<array{name: string, charset: string, default: bool}>}|null
+     */
+    public function optionChoices(Connection $connection): ?array;
+
     /** Fehler beim Verbinden in eine für Menschen unterscheidbare Art übersetzen (V-02, F-2). */
     public function describeConnectionError(Throwable $error): ConnectionProblem;
 

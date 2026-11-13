@@ -21,8 +21,11 @@ class SchemaRequest extends SchemaChangeRequest
         $isSqlite = $this->targetConnection()->driver === DatabaseDriver::Sqlite;
 
         return [
-            // drop-database: ganze Datenbank bei PostgreSQL mit «alle Datenbanken»; drop: Datenbank (MySQL, MariaDB) bzw. Schema.
-            'operation' => ['required', $isSqlite ? Rule::in(['create']) : Rule::in(['create', 'drop', 'drop-database'])],
+            // drop-database: ganze Datenbank bei PostgreSQL mit «alle Datenbanken»; drop: Datenbank (MySQL, MariaDB) bzw. Schema;
+            // charset: Zeichensatz und Sortierung einer Datenbank (S-12, MySQL und MariaDB — das prüft der Plan).
+            'operation' => ['required', $isSqlite ? Rule::in(['create']) : Rule::in(['create', 'drop', 'drop-database', 'charset'])],
+            'collation' => ['exclude_unless:operation,charset', 'required', 'string', 'max:64'],
+            'convert_tables' => ['exclude_unless:operation,charset', 'boolean'],
             'name' => $isSqlite ? ['prohibited'] : ['required', 'string', 'max:255'],
             'folder' => $isSqlite ? ['required', 'string', 'max:1024'] : ['prohibited'],
             'file' => $isSqlite ? ['required', 'string', 'max:255'] : ['prohibited'],
@@ -58,6 +61,7 @@ class SchemaRequest extends SchemaChangeRequest
     {
         return [
             'operation' => __('Aktion'),
+            'collation' => __('Sortierung'),
             'name' => __('Name'),
             'folder' => __('Ordner'),
             'file' => __('Dateiname'),

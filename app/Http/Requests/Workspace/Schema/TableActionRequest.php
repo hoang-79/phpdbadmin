@@ -6,12 +6,12 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 
 /**
- * Tabelle umbenennen, kopieren, leeren oder löschen (S-04). Leeren und Löschen laufen nur mit dem eingetippten Namen
+ * Tabelle umbenennen, kopieren, leeren oder löschen (S-04), verschieben (S-11), Optionen ändern (S-10). Leeren und Löschen laufen nur mit dem eingetippten Namen
  * der Tabelle — das prüft SchemaChanges vor der ersten Anweisung.
  */
 class TableActionRequest extends SchemaChangeRequest
 {
-    public const array OPERATIONS = ['rename', 'copy', 'truncate', 'drop'];
+    public const array OPERATIONS = ['rename', 'copy', 'truncate', 'drop', 'options'];
 
     /**
      * @return array<string, ValidationRule|array<mixed>|string>
@@ -23,6 +23,11 @@ class TableActionRequest extends SchemaChangeRequest
             'to' => ['exclude_unless:operation,rename,copy', 'required', 'string', 'max:255'],
             'to_schema' => ['exclude_unless:operation,rename,copy', 'nullable', 'string', 'max:255'],
             'with_data' => ['boolean'],
+            // Tabellenoptionen (S-10): nur, was sich ändern soll; leer heisst unverändert
+            'engine' => ['exclude_unless:operation,options', 'nullable', 'string', 'max:64'],
+            'collation' => ['exclude_unless:operation,options', 'nullable', 'string', 'max:64'],
+            'convert' => ['exclude_unless:operation,options', 'boolean'],
+            'auto_increment' => ['exclude_unless:operation,options', 'nullable', 'integer', 'min:1', 'max:18446744073709551615'],
             ...$this->commonRules(),
         ];
     }
@@ -54,6 +59,9 @@ class TableActionRequest extends SchemaChangeRequest
             'operation' => __('Aktion'),
             'to' => __('Neuer Name'),
             'to_schema' => __('Ziel'),
+            'engine' => __('Engine'),
+            'collation' => __('Sortierung'),
+            'auto_increment' => __('Nächster Wert des Zählers'),
             'confirmation' => __('Name der Verbindung'),
         ];
     }

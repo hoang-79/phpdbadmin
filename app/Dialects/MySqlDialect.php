@@ -90,6 +90,81 @@ class MySqlDialect extends BaseDialect
         ]));
     }
 
+    public function tableOptions(Connection $connection, string $schema, string $table): ?array
+    {
+        $row = $connection->selectOne(
+            'select t.engine as engine, t.table_collation as collation, c.character_set_name as charset
+            from information_schema.tables t left join information_schema.collations c on c.collation_name = t.table_collation
+            where t.table_schema = ? and t.table_name = ?',
+            [$schema, $table],
+        );
+
+        if ($row === null) {
+            return null;
+        }
+
+        // Zähler nicht aus information_schema: MySQL 8 hält den Wert dort bis zu 24 Stunden zwischengespeichert
+        // (information_schema_stats_expiry). SHOW CREATE TABLE ist immer aktuell und nennt ihn ab 2.
+        $counted = $connection->selectOne(
+            "select 1 as found from information_schema.columns where table_schema = ? and table_name = ? and extra like '%auto_increment%'",
+            [$schema, $table],
+        ) !== null;
+        $autoIncrement = null;
+
+        if ($counted) {
+            $create = array_values((array) $connection->selectOne('show create table '.$this->quoteIdentifier($schema).'.'.$this->quoteIdentifier($table)))[1] ?? '';
+            $autoIncrement = preg_match('/\bAUTO_INCREMENT=(\d+)/', (string) $create, $match) === 1 ? (int) $match[1] : 1;
+        }
+
+        return [
+            'engine' => $row->engine !== null ? (string) $row->engine : null,
+            'collation' => $row->collation !== null ? (string) $row->collation : null,
+            'charset' => $row->charset !== null ? (string) $row->charset : null,
+            'autoIncrement' => $autoIncrement,
+        ];
+    }
+
+    public function databaseOptions(Connection $connection, string $schema): ?array
+    {
+        $row = $connection->selectOne(
+            'select default_character_set_name as charset, default_collation_name as collation from information_schema.schemata where schema_name = ?',
+            [$schema],
+        );
+
+        return $row === null ? null : ['charset' => (string) $row->charset, 'collation' => (string) $row->collation];
+    }
+
+    /**
+     * Engines aus SHOW ENGINES (nur «YES» und «DEFAULT» — abgeschaltete nicht, besondere wie BLACKHOLE auch nicht);
+     * Sortierungen aus information_schema.
+     * MariaDB führt dort auch Sortierungen ohne Zeichensatz (NULL) — die fallen weg.
+     */
+    public function optionChoices(Connection $connection): ?array
+    {
+        $engines = [];
+
+        foreach ($connection->select('show engines') as $row) {
+            $values = array_change_key_case((array) $row);
+
+            $engine = (string) ($values['engine'] ?? '');
+
+            // Nicht für eigene Tabellen: Systemspeicher, Sequenzen, Verbünde — und BLACKHOLE, das jede Zeile verwirft
+            if (in_array(strtoupper((string) ($values['support'] ?? '')), ['YES', 'DEFAULT'], true)
+                && ! in_array(strtoupper($engine), ['PERFORMANCE_SCHEMA', 'SEQUENCE', 'MRG_MYISAM', 'FEDERATED', 'BLACKHOLE'], true)) {
+                $engines[] = $engine;
+            }
+        }
+
+        sort($engines, SORT_NATURAL | SORT_FLAG_CASE);
+        $collations = [];
+
+        foreach ($connection->select('select collation_name as name, character_set_name as charset, is_default from information_schema.collations where character_set_name is not null order by character_set_name, collation_name') as $row) {
+            $collations[] = ['name' => (string) $row->name, 'charset' => (string) $row->charset, 'default' => strtoupper((string) $row->is_default) === 'YES'];
+        }
+
+        return ['engines' => $engines, 'collations' => $collations];
+    }
+
     public function serverVersion(Connection $connection): string
     {
         $version = (string) $connection->selectOne('select version() as version')?->version;

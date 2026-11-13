@@ -6,6 +6,7 @@ import {
     Eraser,
     Lock,
     PencilLine,
+    SlidersHorizontal,
     TextCursorInput,
     Trash2,
 } from '@lucide/vue';
@@ -14,6 +15,7 @@ import { computed, ref } from 'vue';
 import InputError from '@/components/InputError.vue';
 import ChangeDialog from '@/components/workspace/schema/ChangeDialog.vue';
 import OperationsMenuItems from '@/components/workspace/schema/OperationsMenuItems.vue';
+import TableOptionsDialog from '@/components/workspace/schema/TableOptionsDialog.vue';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -64,6 +66,11 @@ const change = useSchemaChange({
 const { plan, loading, failure, errors, message, processing } = change;
 
 const blocked = computed(() => structureBlock(props.workspace.connection));
+/** Tabellenoptionen (S-10) gibt es nur bei MySQL und MariaDB. */
+const hasOptions = computed(() =>
+    ['mysql', 'mariadb'].includes(props.workspace.connection.driver),
+);
+const optionsOpen = ref(false);
 
 function start(next: Operation): void {
     operation.value = next;
@@ -174,6 +181,13 @@ function apply(confirmation: {
                 </DropdownMenuItem>
                 <DropdownMenuItem :disabled="!!blocked" @select="start('copy')">
                     <Copy />{{ t('Kopieren …') }}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                    v-if="hasOptions"
+                    :disabled="!!blocked"
+                    @select="optionsOpen = true"
+                >
+                    <SlidersHorizontal />{{ t('Tabellenoptionen …') }}
                 </DropdownMenuItem>
                 <template v-if="workspace.schema">
                     <DropdownMenuSeparator />
@@ -304,5 +318,11 @@ function apply(confirmation: {
                 </label>
             </fieldset>
         </ChangeDialog>
+        <TableOptionsDialog
+            v-if="hasOptions"
+            v-model:open="optionsOpen"
+            :workspace="workspace"
+            :table="table"
+        />
     </div>
 </template>

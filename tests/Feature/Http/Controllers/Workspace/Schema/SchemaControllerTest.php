@@ -85,6 +85,67 @@ class SchemaControllerTest extends TestCase
         }
     }
 
+    /**
+     * @return array<string, array{0: DatabaseDriver}>
+     */
+    public static function mysqlFamily(): array
+    {
+        return ['MySQL' => [DatabaseDriver::MySql], 'MariaDB' => [DatabaseDriver::MariaDb]];
+    }
+
+    /** S-12: Zeichensatz und Sortierung einer Datenbank — als Vorgabe, auf Wunsch mit allen Tabellen umgewandelt. */
+    #[DataProvider('mysqlFamily')]
+    public function test_changes_the_character_set_of_a_database_and_on_request_of_its_tables(DatabaseDriver $driver): void
+    {
+        $settings = $this->serverSettings($driver);
+        $connection = $this->savedConnection($settings, $this->user);
+        $name = 'phpdbadmin_s12_'.getmypid();
+        $root = app(ConnectionFactory::class)->make($settings);
+        $root->statement('drop database if exists '.$name);
+        $root->statement('create database '.$name.' character set utf8mb4 collate utf8mb4_unicode_ci');
+        $root->statement('create table '.$name.'.notes (id int primary key, body varchar(20))');
+
+        try {
+            $this->actingAs($this->user)->getJson(route('workspace.schemas.options', [$connection, 'name' => $name]))
+                ->assertOk()
+                ->assertJsonPath('current', ['charset' => 'utf8mb4', 'collation' => 'utf8mb4_unicode_ci']);
+
+            $this->actingAs($this->user)->postJson(route('workspace.schemas.preview', $connection), ['operation' => 'charset', 'name' => $name, 'collation' => 'utf8mb4_bin'])
+                ->assertOk()
+                ->assertJsonPath('statements.*.sql', ['ALTER DATABASE `'.$name.'` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin']);
+            $this->actingAs($this->user)->from(route('workspace.schema', [$connection, $name]))
+                ->post(route('workspace.schemas.apply', $connection), ['operation' => 'charset', 'name' => $name, 'collation' => 'utf8mb4_bin', 'convert_tables' => true])
+                ->assertSessionHasNoErrors()
+                ->assertRedirect(route('workspace.schema', [$connection, $name]));
+
+            $this->assertSame('utf8mb4_bin', $driver->dialect()->databaseOptions($root, $name)['collation'] ?? null);
+            $this->assertSame('utf8mb4_bin', $root->selectOne('select collation_name as c from information_schema.columns where table_schema = ? and table_name = ? and column_name = ?', [$name, 'notes', 'body'])->c);
+            $this->assertSame([['database.charset', 1]], AuditEntry::query()->get()->map(fn (AuditEntry $entry): array => [$entry->action, $entry->context['tables'] ?? null])->all());
+
+            $this->post(route('workspace.schemas.apply', $connection), ['operation' => 'charset', 'name' => $name, 'collation' => 'utf8mb4_bin'])
+                ->assertSessionHasErrors(['collation' => 'Nichts geändert.']);
+        } finally {
+            $root->statement('drop database if exists '.$name);
+        }
+    }
+
+    public function test_never_changes_the_character_set_of_the_app_database(): void
+    {
+        $settings = $this->serverSettings(DatabaseDriver::MariaDb);
+        $root = app(ConnectionFactory::class)->make($settings);
+        $name = 'phpdbadmin_s12_app_'.getmypid();
+        $root->statement('create database if not exists '.$name);
+        $this->pretendAppDatabase(DatabaseDriver::MariaDb, $name);
+        $connection = $this->savedConnection($settings, $this->user);
+
+        try {
+            $this->actingAs($this->user)->postJson(route('workspace.schemas.apply', $connection), ['operation' => 'charset', 'name' => $name, 'collation' => 'utf8mb4_bin'])
+                ->assertJsonValidationErrors(['name' => 'Das ist die eigene Datenbank von phpdbadmin — sie lässt sich hier nicht ändern.']);
+        } finally {
+            $root->statement('drop database if exists '.$name);
+        }
+    }
+
     public function test_drops_a_whole_postgres_database_only_with_its_name_even_while_it_is_open(): void
     {
         $connection = $this->savedConnection($this->serverSettings(DatabaseDriver::Postgres, ['database' => null]), $this->user);

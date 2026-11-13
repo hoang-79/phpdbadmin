@@ -28,6 +28,21 @@ abstract class BaseDialect implements Dialect
         return null;
     }
 
+    public function tableOptions(Connection $connection, string $schema, string $table): ?array
+    {
+        return null;
+    }
+
+    public function databaseOptions(Connection $connection, string $schema): ?array
+    {
+        return null;
+    }
+
+    public function optionChoices(Connection $connection): ?array
+    {
+        return null;
+    }
+
     public function schemas(Connection $connection): array
     {
         return array_map(

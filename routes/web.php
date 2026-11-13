@@ -106,6 +106,7 @@ Route::middleware('auth')->group(function () {
             Route::post('alter', [Schema\TableAlterController::class, 'update'])->name('workspace.object.alter.apply');
             Route::post('actions/preview', [Schema\TableActionController::class, 'preview'])->name('workspace.object.actions.preview');
             Route::post('actions', [Schema\TableActionController::class, 'apply'])->name('workspace.object.actions.apply');
+            Route::get('options', [Schema\TableActionController::class, 'options'])->name('workspace.object.options');
 
             // Suchen und Ersetzen (D-08): Vorschau, dann in einer Transaktion; Rückgängig wie beim Bearbeiten.
             Route::post('replace/preview', [SearchReplaceController::class, 'preview'])->name('workspace.object.replace.preview');
@@ -119,6 +120,7 @@ Route::middleware('auth')->group(function () {
             Route::post('new-table', [Schema\TableCreateController::class, 'store'])->name('workspace.table.store');
         });
         Route::get('schemas/sqlite-folders', [Schema\SchemaController::class, 'folders'])->name('workspace.schemas.folders');
+        Route::get('schemas/options', [Schema\SchemaController::class, 'options'])->name('workspace.schemas.options');
         Route::post('schemas/preview', [Schema\SchemaController::class, 'preview'])->name('workspace.schemas.preview');
         Route::post('schemas', [Schema\SchemaController::class, 'apply'])->name('workspace.schemas.apply');
 

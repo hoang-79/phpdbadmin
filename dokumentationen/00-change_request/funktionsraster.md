@@ -124,7 +124,7 @@ Der Kern von phpdbadmin v1.0 deckt das ab, was alle drei Vorbilder gemeinsam hab
 
 ## 10. Feinabgleich: Operationen für Datenbank und Tabelle (13.11.2026)
 
-Anlass: Hoang vermisste «db dump, db backup, db optimierung oder repair» und «für Tabellen Analyse, Optimierung etc.» wie in phpMyAdmin. Abgeglichen mit den Reitern «Operationen», «Export», «Import» und der Wartung je Tabelle in phpMyAdmin 5.2 und mit dem gebauten Stand von phpdbadmin (Routen, Menüs, Dialekte). **Befund:** Dump, Sicherung, Analysieren, Optimieren und Prüfen gab es schon — nur über das Menü des Verbindungs-Chips («Export und Import», «Server → Wartung»), nicht dort, wo man sie sucht.
+Anlass: Hoang vermisste «db dump, db backup, db optimierung oder repair» und «für Tabellen Analyse, Optimierung etc.» wie in phpMyAdmin. Abgeglichen mit den Reitern «Operationen», «Export», «Import» und der Wartung je Tabelle in phpMyAdmin 5.2 und mit dem gebauten Stand von phpdbadmin (Routen, Menüs, Dialekte). Umgesetzt in [Timebox 13](../04-evolutionary-development/timebox-13-operationen.md) (13.11.2026): alle «neu» und «Menü» unten. **Befund:** Dump, Sicherung, Analysieren, Optimieren und Prüfen gab es schon — nur über das Menü des Verbindungs-Chips («Export und Import», «Server → Wartung»), nicht dort, wo man sie sucht.
 
 | Funktion | phpMyAdmin | phpdbadmin vorher | Entscheid | Anforderung |
 |---|---|---|---|---|

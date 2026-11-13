@@ -477,6 +477,130 @@ final class SchemaPlans
     }
 
     /**
+     * Tabellenoptionen (S-10, MySQL und MariaDB): Engine, Zeichensatz mit Sortierung — nur als Vorgabe für neue Spalten
+     * oder mit Umwandeln aller Textspalten (CONVERT TO) — und der nächste Wert des Zählers. Nur, was sich ändert, wird
+     * eine Anweisung; Engine und Sortierung nur aus dem, was der Server anbietet.
+     *
+     * @throws ValidationException
+     */
+    public function tableOptions(Connection $target, DatabaseConnection $connection, string $schema, string $table, ?string $engine, ?string $collation, bool $convert, ?int $autoIncrement): SchemaPlan
+    {
+        $driver = $connection->driver;
+        $dialect = $driver->dialect();
+        $current = $dialect->tableOptions($target, $schema, $table);
+        $choices = $dialect->optionChoices($target);
+
+        if ($current === null || $choices === null) {
+            throw ValidationException::withMessages(['operation' => __('Tabellenoptionen gibt es hier nur bei MySQL und MariaDB.')]);
+        }
+
+        $this->checkTable($target, $connection, $schema, $table);
+        $qualified = SchemaName::qualified($driver, $schema, $table);
+        $statements = [];
+        $notes = [];
+
+        if ($engine !== null && $engine !== $current['engine']) {
+            if (! in_array($engine, $choices['engines'], true)) {
+                throw ValidationException::withMessages(['engine' => __('Diese Engine bietet der Server nicht an.')]);
+            }
+
+            $statements[] = 'ALTER TABLE '.$qualified.' ENGINE = '.$engine;
+            $notes[] = __('Die Tabelle wird in der neuen Engine neu aufgebaut; Schreibzugriffe warten so lange.');
+
+            if (strtoupper($engine) === 'MEMORY') {
+                $notes[] = __('MEMORY hält die Daten nur im Arbeitsspeicher — nach einem Neustart des Servers ist die Tabelle leer.');
+            }
+        }
+
+        if ($collation !== null && ($collation !== $current['collation'] || $convert)) {
+            $charset = $this->charsetOf($choices, $collation, 'collation');
+            $statements[] = 'ALTER TABLE '.$qualified.($convert ? ' CONVERT TO CHARACTER SET ' : ' DEFAULT CHARACTER SET ').$charset.' COLLATE '.$collation;
+            $notes[] = $convert
+                ? __('Wandelt die Texte aller Spalten in den neuen Zeichensatz um und baut die Tabelle neu auf. Zeichen, die er nicht kennt, lehnt der Server ab.')
+                : __('Gilt nur für neue Spalten — bestehende behalten ihren Zeichensatz.');
+        }
+
+        if ($autoIncrement !== null && $autoIncrement !== $current['autoIncrement']) {
+            if ($current['autoIncrement'] === null) {
+                throw ValidationException::withMessages(['auto_increment' => __('Diese Tabelle hat keinen Zähler (AUTO_INCREMENT).')]);
+            }
+
+            $statements[] = 'ALTER TABLE '.$qualified.' AUTO_INCREMENT = '.max(1, $autoIncrement);
+            $notes[] = __('Kleiner als der grösste vorhandene Wert geht nicht — der Server nimmt dann den nächsten freien.');
+        }
+
+        if ($statements === []) {
+            throw ValidationException::withMessages(['options' => __('Nichts geändert.')]);
+        }
+
+        return new SchemaPlan('schema.options', $schema.'.'.$table, $driver, ApplyMode::for($driver), $statements, $notes,
+            context: ['schema' => $schema, 'table' => $table, 'engine' => $engine, 'collation' => $collation, 'convert' => $convert, 'auto_increment' => $autoIncrement]);
+    }
+
+    /**
+     * Zeichensatz und Sortierung einer Datenbank (S-12, MySQL und MariaDB) — als Vorgabe für neue Tabellen, auf Wunsch
+     * auch alle bestehenden umgewandelt. Nie die App-Datenbank von phpdbadmin (T-17).
+     *
+     * @throws ValidationException
+     */
+    public function databaseCharset(Connection $target, DatabaseConnection $connection, string $name, string $collation, bool $convertTables): SchemaPlan
+    {
+        $driver = $connection->driver;
+        $dialect = $driver->dialect();
+        $choices = $dialect->optionChoices($target);
+
+        if ($choices === null) {
+            throw ValidationException::withMessages(['operation' => __('Zeichensatz und Sortierung einer Datenbank ändert phpdbadmin nur bei MySQL und MariaDB.')]);
+        }
+
+        $this->checkSchema($target, $connection, $name);
+
+        if (! SchemaName::isSafe($name)) {
+            throw ValidationException::withMessages(['name' => __('Dieser Name lässt sich hier nicht verarbeiten — nutzen Sie den SQL-Editor.')]);
+        }
+
+        $this->checkNotAppDatabase($connection, $name, dropping: false);
+        $current = $dialect->databaseOptions($target, $name);
+        $charset = $this->charsetOf($choices, $collation, 'collation');
+
+        if ($current !== null && $current['collation'] === $collation && ! $convertTables) {
+            throw ValidationException::withMessages(['collation' => __('Nichts geändert.')]);
+        }
+
+        $statements = ['ALTER DATABASE '.SchemaName::quote($driver, $name).' CHARACTER SET '.$charset.' COLLATE '.$collation];
+        $tables = $convertTables ? $this->inspector->tablesOn($target, $connection, $name, withViews: false) : [];
+
+        foreach ($tables as $table) {
+            $statements[] = 'ALTER TABLE '.SchemaName::qualified($driver, $name, $table).' CONVERT TO CHARACTER SET '.$charset.' COLLATE '.$collation;
+        }
+
+        $notes = $convertTables
+            ? [trans_choice('Wandelt auch :count bestehende Tabelle um — sie wird dabei neu aufgebaut.|Wandelt auch :count bestehende Tabellen um — jede wird dabei neu aufgebaut.', count($tables), ['count' => count($tables)])]
+            : [__('Gilt für neue Tabellen — bestehende behalten ihren Zeichensatz.')];
+
+        return new SchemaPlan('database.charset', $name, $driver, ApplyMode::for($driver), $statements, $notes,
+            context: ['name' => $name, 'collation' => $collation, 'tables' => count($tables)]);
+    }
+
+    /**
+     * Zeichensatz zu einer Sortierung aus dem Angebot des Servers — was dort nicht steht, ist kein gültiger Name.
+     *
+     * @param  array{engines: list<string>, collations: list<array{name: string, charset: string, default: bool}>}  $choices
+     *
+     * @throws ValidationException
+     */
+    private function charsetOf(array $choices, string $collation, string $field): string
+    {
+        foreach ($choices['collations'] as $choice) {
+            if ($choice['name'] === $collation) {
+                return $choice['charset'];
+            }
+        }
+
+        throw ValidationException::withMessages([$field => __('Diese Sortierung bietet der Server nicht an.')]);
+    }
+
+    /**
      * Tabelle leeren (S-04) — nur mit dem Namen der Tabelle zur Bestätigung.
      *
      * @throws ValidationException
@@ -1036,14 +1160,16 @@ final class SchemaPlans
      *
      * @throws ValidationException
      */
-    private function checkNotAppDatabase(DatabaseConnection $connection, string $name): void
+    private function checkNotAppDatabase(DatabaseConnection $connection, string $name, bool $dropping = true): void
     {
         try {
             $this->targets->credentials($connection, $name);
         } catch (ConnectionNotAllowed $exception) {
-            throw ValidationException::withMessages(['name' => $exception->problem->isAppDatabase()
-                ? __('Das ist die eigene Datenbank von phpdbadmin — sie lässt sich hier nicht löschen.')
-                : $exception->problem->title()]);
+            throw ValidationException::withMessages(['name' => match (true) {
+                ! $exception->problem->isAppDatabase() => $exception->problem->title(),
+                $dropping => __('Das ist die eigene Datenbank von phpdbadmin — sie lässt sich hier nicht löschen.'),
+                default => __('Das ist die eigene Datenbank von phpdbadmin — sie lässt sich hier nicht ändern.'),
+            }]);
         }
     }
 

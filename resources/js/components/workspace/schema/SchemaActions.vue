@@ -4,6 +4,7 @@ import {
     ChevronDown,
     DatabaseZap,
     FilePlus2,
+    Languages,
     Lock,
     Plus,
     Trash2,
@@ -14,6 +15,7 @@ import InputError from '@/components/InputError.vue';
 import Notice from '@/components/Notice.vue';
 import ChangeDialog from '@/components/workspace/schema/ChangeDialog.vue';
 import DropDialog from '@/components/workspace/schema/DropDialog.vue';
+import DatabaseCharsetDialog from '@/components/workspace/schema/DatabaseCharsetDialog.vue';
 import OperationsMenuItems from '@/components/workspace/schema/OperationsMenuItems.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -48,6 +50,11 @@ const isSchema = computed(() => props.workspace.schemaKind === 'schema');
 const open = ref(false);
 /** Löschen des gezeigten Schemas bzw. der gezeigten Datenbank — eigener Dialog, wie im Navigator. */
 const dropOpen = ref(false);
+/** Zeichensatz und Sortierung der gezeigten Datenbank (S-12) — nur MySQL und MariaDB. */
+const charsetOpen = ref(false);
+const hasCharset = computed(() =>
+    ['mysql', 'mariadb'].includes(props.workspace.connection.driver),
+);
 const name = ref('');
 const folder = ref('');
 const file = ref('');
@@ -190,6 +197,13 @@ watch(
                         </DropdownMenuItem>
                     </template>
                     <template v-if="workspace.schema">
+                        <DropdownMenuItem
+                            v-if="hasCharset"
+                            :disabled="!!blocked"
+                            @select="charsetOpen = true"
+                        >
+                            <Languages />{{ t('Zeichensatz und Sortierung …') }}
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <OperationsMenuItems
                             :workspace="workspace"
@@ -314,6 +328,12 @@ watch(
             :workspace="workspace"
             :name="workspace.schema"
             scope="schema"
+        />
+        <DatabaseCharsetDialog
+            v-if="workspace.schema && hasCharset"
+            v-model:open="charsetOpen"
+            :workspace="workspace"
+            :schema="workspace.schema"
         />
     </div>
 </template>

@@ -112,3 +112,16 @@ export type JsonValue =
     | { [key: string]: JsonValue };
 
 export type SchemaPayload = { [key: string]: JsonValue };
+
+/** Sortierung mit Zeichensatz, wie der Server sie anbietet (S-10, S-12). */
+export type CollationChoice = {
+    name: string;
+    charset: string;
+    default: boolean;
+};
+
+/** Was der Server für Tabellen- und Datenbankoptionen anbietet (MySQL, MariaDB). */
+export type OptionChoices = {
+    engines: string[];
+    collations: CollationChoice[];
+};
