@@ -46,6 +46,8 @@ const operation = ref<Operation>('rename');
 const open = ref(false);
 const to = ref('');
 const withData = ref(true);
+/** Ziel beim Umbenennen und Kopieren (S-11): eine andere Datenbank bzw. ein anderes Schema desselben Servers. */
+const toSchema = ref('');
 const urls = computed(() => actionUrls(props.workspace, props.table));
 
 const change = useSchemaChange({
@@ -55,6 +57,7 @@ const change = useSchemaChange({
         operation: operation.value,
         to: to.value.trim(),
         with_data: withData.value,
+        to_schema: toSchema.value,
         ...databaseField(props.workspace),
     }),
 });
@@ -71,6 +74,7 @@ function start(next: Operation): void {
               ? `${props.table}_kopie`
               : '';
     withData.value = true;
+    toSchema.value = props.workspace.schema ?? '';
     change.reset();
     open.value = true;
 
@@ -79,8 +83,16 @@ function start(next: Operation): void {
     }
 }
 
+// SQLite verschiebt nicht zwischen Dateien; eine Kopie dorthin geht — aber eine Verbindung sieht meist nur «main».
+const targets = computed(() =>
+    props.workspace.connection.driver === 'sqlite' &&
+    operation.value === 'rename'
+        ? []
+        : props.workspace.schemas,
+);
+
 watchDebounced(
-    [to, withData],
+    [to, withData, toSchema],
     () => {
         if (
             open.value &&
@@ -88,7 +100,8 @@ watchDebounced(
         ) {
             if (
                 operation.value === 'rename' &&
-                to.value.trim() === props.table
+                to.value.trim() === props.table &&
+                toSchema.value === props.workspace.schema
             ) {
                 change.reset();
 
@@ -104,7 +117,13 @@ watchDebounced(
 const dialog = computed(
     () =>
         ({
-            rename: { title: t('Tabelle umbenennen'), apply: t('Umbenennen') },
+            rename: {
+                title: t('Tabelle umbenennen oder verschieben'),
+                apply:
+                    toSchema.value !== props.workspace.schema
+                        ? t('Verschieben')
+                        : t('Umbenennen'),
+            },
             copy: { title: t('Tabelle kopieren'), apply: t('Kopieren') },
             truncate: {
                 title: t('Tabelle leeren'),
@@ -146,7 +165,12 @@ function apply(confirmation: {
                     :disabled="!!blocked"
                     @select="start('rename')"
                 >
-                    <TextCursorInput />{{ t('Umbenennen …') }}
+                    <TextCursorInput />{{
+                        workspace.schemas.length > 1 &&
+                        workspace.connection.driver !== 'sqlite'
+                            ? t('Umbenennen oder verschieben …')
+                            : t('Umbenennen …')
+                    }}
                 </DropdownMenuItem>
                 <DropdownMenuItem :disabled="!!blocked" @select="start('copy')">
                     <Copy />{{ t('Kopieren …') }}
@@ -224,6 +248,38 @@ function apply(confirmation: {
                     :aria-invalid="errors.to ? true : undefined"
                 />
                 <InputError :message="errors.to" />
+            </div>
+            <div
+                v-if="
+                    (operation === 'rename' || operation === 'copy') &&
+                    targets.length > 1
+                "
+                class="flex flex-col gap-1.5"
+            >
+                <label for="tabelle-ziel" class="text-[13px] font-medium">{{
+                    workspace.schemaKind === 'schema'
+                        ? t('In Schema')
+                        : t('In Datenbank')
+                }}</label>
+                <select
+                    id="tabelle-ziel"
+                    v-model="toSchema"
+                    class="h-9 rounded-md border bg-background px-2 font-mono text-sm"
+                    :aria-invalid="errors.to_schema ? true : undefined"
+                >
+                    <option
+                        v-for="schema in targets"
+                        :key="schema"
+                        :value="schema"
+                    >
+                        {{
+                            schema === workspace.schema
+                                ? t(':name (diese)', { name: schema })
+                                : schema
+                        }}
+                    </option>
+                </select>
+                <InputError :message="errors.to_schema" />
             </div>
             <fieldset
                 v-if="operation === 'copy'"

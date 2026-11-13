@@ -1406,7 +1406,6 @@
     "Tabelle leeren": "Empty table",
     "Tabelle löschen": "Drop table",
     "Tabelle neu": "new table",
-    "Tabelle umbenennen": "Rename table",
     "Tabelle weg": "table dropped",
     "Tabelle wählen": "Choose table",
     "Tabelle «:table» anlegen": "Create table «:table»",
@@ -1731,5 +1730,15 @@
     "Prüfsumme berechnen": "Compute checksum",
     "Rechnet eine Prüfsumme über alle Zeilen — um zwei Kopien zu vergleichen.": "Computes a checksum over all rows — to compare two copies.",
     "Indizes neu aufbauen": "Rebuild indexes",
-    "Baut die Indizes neu auf, etwa nach einer Beschädigung oder starkem Wachstum.": "Rebuilds the indexes, for example after damage or heavy growth."
+    "Baut die Indizes neu auf, etwa nach einer Beschädigung oder starkem Wachstum.": "Rebuilds the indexes, for example after damage or heavy growth.",
+    "Tabelle umbenennen oder verschieben": "Rename or move table",
+    "Verschieben": "Move",
+    "In Schema": "In schema",
+    "In Datenbank": "In database",
+    ":name (diese)": ":name (this one)",
+    "Umbenennen oder verschieben …": "Rename or move …",
+    "Tabelle :table nach :to verschoben.": "Table :table moved to :to.",
+    "Rechte, die nur für die alte Datenbank gelten, gelten für die verschobene Tabelle nicht mehr.": "Privileges granted only on the old database no longer apply to the moved table.",
+    "SQLite verschiebt keine Tabellen zwischen Dateien — kopieren Sie sie und löschen Sie danach das Original.": "SQLite does not move tables between files — copy it and then drop the original.",
+    "Diese Datenbank bzw. dieses Schema gibt es nicht.": "This database or schema does not exist."
 }

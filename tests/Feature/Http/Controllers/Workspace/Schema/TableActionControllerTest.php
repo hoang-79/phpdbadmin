@@ -148,6 +148,48 @@ class TableActionControllerTest extends TestCase
         $this->assertSame(['failed', 'failed'], AuditEntry::query()->orderBy('id')->get()->map(fn (AuditEntry $entry): mixed => $entry->context['outcome'] ?? null)->all());
     }
 
+    /**
+     * S-11: Verschieben und Kopieren in eine andere Datenbank (MySQL, MariaDB) bzw. ein anderes Schema (PostgreSQL)
+     * desselben Servers — Kinder folgen der verschobenen Tabelle, die Kopie hat ihre Zeilen und zählt weiter.
+     */
+    #[DataProvider('serverDrivers')]
+    public function test_move_and_copy_into_another_database_or_schema(DatabaseDriver $driver): void
+    {
+        [$connection, $schema, $target] = $this->parentWithChildren($driver);
+        $other = $this->otherSchema($driver, $target, $connection);
+
+        try {
+            $this->apply($connection, $schema, 'parents', ['operation' => 'copy', 'to' => 'parents_kopie', 'to_schema' => $other, 'with_data' => true])
+                ->assertSessionHasNoErrors()
+                ->assertRedirect(route('workspace.object.structure', [$connection, $other, 'parents_kopie']));
+            $this->assertSame(['A', 'B'], $target->table($other.'.parents_kopie')->orderBy('id')->pluck('name')->all());
+            $target->table($other.'.parents_kopie')->insert(['name' => 'C', 'code' => 'c']);
+            $this->assertSame(3, (int) $target->table($other.'.parents_kopie')->where('code', 'c')->value('id'));
+
+            $this->apply($connection, $schema, 'parents', ['operation' => 'rename', 'to' => 'eltern', 'to_schema' => $other])
+                ->assertSessionHasNoErrors()
+                ->assertRedirect(route('workspace.object.structure', [$connection, $other, 'eltern']));
+            $this->assertNotContains('parents', $target->getSchemaBuilder()->getTableListing($schema, schemaQualified: false));
+            $this->assertSame(2, $target->table($other.'.eltern')->count());
+            $foreignKey = $target->getSchemaBuilder()->getForeignKeys($schema.'.children')[0];
+            $this->assertSame([$other, 'eltern'], [$foreignKey['foreign_schema'], $foreignKey['foreign_table']]);
+            $this->assertSame(['schema.copy', 'schema.move'], AuditEntry::query()->orderBy('id')->pluck('action')->all());
+        } finally {
+            $this->dropOtherSchema($driver, $target, $other);
+        }
+    }
+
+    public function test_target_must_exist_and_sqlite_does_not_move_between_files(): void
+    {
+        [$connection, $schema] = $this->parentWithChildren(DatabaseDriver::Sqlite);
+
+        $this->apply($connection, $schema, 'parents', ['operation' => 'copy', 'to' => 'kopie', 'to_schema' => 'gibt_es_nicht'])
+            ->assertSessionHasErrors(['to_schema' => 'Diese Datenbank bzw. dieses Schema gibt es nicht.']);
+        $this->apply($connection, $schema, 'parents', ['operation' => 'rename', 'to' => 'eltern', 'to_schema' => 'anders'])
+            ->assertSessionHasErrors(['to_schema' => 'SQLite verschiebt keine Tabellen zwischen Dateien — kopieren Sie sie und löschen Sie danach das Original.']);
+        $this->assertSame(0, AuditEntry::query()->count());
+    }
+
     public function test_views_are_not_tables(): void
     {
         [$connection, $schema, $target] = $this->parentWithChildren(DatabaseDriver::Sqlite);
@@ -160,6 +202,39 @@ class TableActionControllerTest extends TestCase
     /**
      * @param  array<string, mixed>  $payload
      */
+    /**
+     * Zweites Ziel auf demselben Server: bei MySQL/MariaDB eine eigene Datenbank (die Verbindung darf dann alle sehen),
+     * bei PostgreSQL ein Schema in der Test-Datenbank.
+     */
+    private function otherSchema(DatabaseDriver $driver, Connection $target, DatabaseConnection $connection): string
+    {
+        $name = 'phpdbadmin_test_ziel_'.getmypid();
+
+        if ($driver === DatabaseDriver::Postgres) {
+            $target->statement('create schema '.$name);
+        } else {
+            $target->statement('drop database if exists '.$name);
+            $target->statement('create database '.$name);
+            $connection->forceFill(['database' => null])->save();
+        }
+
+        return $name;
+    }
+
+    private function dropOtherSchema(DatabaseDriver $driver, Connection $target, string $name): void
+    {
+        if ($driver === DatabaseDriver::Postgres) {
+            $target->statement('drop schema if exists '.$name.' cascade');
+
+            return;
+        }
+
+        // «children» in der Test-Datenbank zeigt auf die verschobene Tabelle — sonst lehnt MySQL das Löschen ab
+        $target->statement('set foreign_key_checks = 0');
+        $target->statement('drop database if exists '.$name);
+        $target->statement('set foreign_key_checks = 1');
+    }
+
     private function apply(DatabaseConnection $connection, string $schema, string $table, array $payload): TestResponse
     {
         return $this->actingAs($this->user)

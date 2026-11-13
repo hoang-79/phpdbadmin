@@ -409,24 +409,39 @@ final class SchemaPlans
     }
 
     /**
-     * Tabelle umbenennen (S-04).
+     * Tabelle umbenennen (S-04) — oder in eine andere Datenbank bzw. ein anderes Schema desselben Servers verschieben
+     * (S-11, `$toSchema`). SQLite verschiebt nicht zwischen Dateien.
      *
      * @throws ValidationException
      */
-    public function rename(Connection $target, DatabaseConnection $connection, string $schema, string $table, string $to): SchemaPlan
+    public function rename(Connection $target, DatabaseConnection $connection, string $schema, string $table, string $to, ?string $toSchema = null): SchemaPlan
     {
         $driver = $connection->driver;
+        $toSchema ??= $schema;
         $this->checkTable($target, $connection, $schema, $table);
-        $this->checkFreeName($target, $connection, $schema, $to);
+        $this->checkTargetSchema($target, $connection, $schema, $toSchema, moving: true);
+        $this->checkFreeName($target, $connection, $toSchema, $to);
+        $moved = $toSchema !== $schema;
 
-        $sql = match ($driver) {
-            DatabaseDriver::MySql, DatabaseDriver::MariaDb => 'RENAME TABLE '.SchemaName::qualified($driver, $schema, $table).' TO '.SchemaName::qualified($driver, $schema, $to),
-            default => 'ALTER TABLE '.SchemaName::qualified($driver, $schema, $table).' RENAME TO '.SchemaName::quote($driver, $to),
+        $statements = match (true) {
+            $driver === DatabaseDriver::MySql || $driver === DatabaseDriver::MariaDb => ['RENAME TABLE '.SchemaName::qualified($driver, $schema, $table).' TO '.SchemaName::qualified($driver, $toSchema, $to)],
+            // PostgreSQL: SET SCHEMA nimmt Indizes, Constraints und eigene Sequenzen mit; umbenannt wird danach im Ziel
+            $moved => $to === $table
+                ? ['ALTER TABLE '.SchemaName::qualified($driver, $schema, $table).' SET SCHEMA '.SchemaName::quote($driver, $toSchema)]
+                : [
+                    'ALTER TABLE '.SchemaName::qualified($driver, $schema, $table).' SET SCHEMA '.SchemaName::quote($driver, $toSchema),
+                    'ALTER TABLE '.SchemaName::qualified($driver, $toSchema, $table).' RENAME TO '.SchemaName::quote($driver, $to),
+                ],
+            default => ['ALTER TABLE '.SchemaName::qualified($driver, $schema, $table).' RENAME TO '.SchemaName::quote($driver, $to)],
         };
+        $notes = [__('Fremdschlüssel anderer Tabellen zeigen danach auf den neuen Namen; Sichten und Routinen, die den alten Namen nennen, passen Sie selbst an.')];
 
-        return new SchemaPlan('schema.rename', $schema.'.'.$table, $driver, ApplyMode::for($driver), [$sql], [
-            __('Fremdschlüssel anderer Tabellen zeigen danach auf den neuen Namen; Sichten und Routinen, die den alten Namen nennen, passen Sie selbst an.'),
-        ], context: ['schema' => $schema, 'table' => $table, 'to' => $to]);
+        if ($moved) {
+            $notes[] = __('Rechte, die nur für die alte Datenbank gelten, gelten für die verschobene Tabelle nicht mehr.');
+        }
+
+        return new SchemaPlan($moved ? 'schema.move' : 'schema.rename', $schema.'.'.$table, $driver, ApplyMode::for($driver), $statements, $notes,
+            context: ['schema' => $schema, 'table' => $table, 'to' => $to, 'to_schema' => $toSchema]);
     }
 
     /**
@@ -434,21 +449,23 @@ final class SchemaPlans
      *
      * @throws ValidationException
      */
-    public function copy(Connection $target, DatabaseConnection $connection, string $schema, string $table, string $to, bool $withData): SchemaPlan
+    public function copy(Connection $target, DatabaseConnection $connection, string $schema, string $table, string $to, bool $withData, ?string $toSchema = null): SchemaPlan
     {
         $driver = $connection->driver;
+        $toSchema ??= $schema;
         $this->checkTable($target, $connection, $schema, $table);
-        $this->checkFreeName($target, $connection, $schema, $to);
+        $this->checkTargetSchema($target, $connection, $schema, $toSchema, moving: false);
+        $this->checkFreeName($target, $connection, $toSchema, $to);
         $from = SchemaName::qualified($driver, $schema, $table);
-        $copy = SchemaName::qualified($driver, $schema, $to);
+        $copy = SchemaName::qualified($driver, $toSchema, $to);
         $notes = [__('Fremdschlüssel und Trigger werden nicht mitkopiert.')];
 
         $statements = match ($driver) {
             DatabaseDriver::MySql, DatabaseDriver::MariaDb => $withData
                 ? ['CREATE TABLE '.$copy.' LIKE '.$from, 'INSERT INTO '.$copy.' SELECT * FROM '.$from]
                 : ['CREATE TABLE '.$copy.' LIKE '.$from],
-            DatabaseDriver::Postgres => $this->postgresCopy($target, $schema, $table, $to, $withData),
-            DatabaseDriver::Sqlite => $this->sqliteCopy($target, $schema, $table, $to, $withData),
+            DatabaseDriver::Postgres => $this->postgresCopy($target, $schema, $table, $to, $withData, $toSchema),
+            DatabaseDriver::Sqlite => $this->sqliteCopy($target, $schema, $table, $to, $withData, $toSchema),
         };
 
         if ($driver === DatabaseDriver::Postgres) {
@@ -456,7 +473,7 @@ final class SchemaPlans
         }
 
         return new SchemaPlan('schema.copy', $schema.'.'.$table, $driver, ApplyMode::for($driver), $statements, $notes,
-            context: ['schema' => $schema, 'table' => $table, 'to' => $to, 'with_data' => $withData]);
+            context: ['schema' => $schema, 'table' => $table, 'to' => $to, 'to_schema' => $toSchema, 'with_data' => $withData]);
     }
 
     /**
@@ -958,6 +975,25 @@ final class SchemaPlans
         }
     }
 
+    /**
+     * Ziel von Verschieben und Kopieren (S-11): ein Schema bzw. eine Datenbank desselben Servers, das es gibt —
+     * nie die App-Datenbank (die Liste kennt sie nicht). SQLite verschiebt nicht zwischen angehängten Dateien.
+     */
+    private function checkTargetSchema(Connection $target, DatabaseConnection $connection, string $schema, string $toSchema, bool $moving): void
+    {
+        if ($toSchema === $schema) {
+            return;
+        }
+
+        if ($moving && $connection->driver === DatabaseDriver::Sqlite) {
+            throw ValidationException::withMessages(['to_schema' => __('SQLite verschiebt keine Tabellen zwischen Dateien — kopieren Sie sie und löschen Sie danach das Original.')]);
+        }
+
+        if (! in_array($toSchema, $this->inspector->schemasOn($target, $connection), true) || ! SchemaName::isSafe($toSchema)) {
+            throw ValidationException::withMessages(['to_schema' => __('Diese Datenbank bzw. dieses Schema gibt es nicht.')]);
+        }
+    }
+
     private function checkSchema(Connection $target, DatabaseConnection $connection, string $schema): void
     {
         if (! in_array($schema, $this->inspector->schemasOn($target, $connection), true)) {
@@ -1135,11 +1171,11 @@ final class SchemaPlans
      *
      * @return list<string>
      */
-    private function postgresCopy(Connection $target, string $schema, string $table, string $to, bool $withData): array
+    private function postgresCopy(Connection $target, string $schema, string $table, string $to, bool $withData, string $toSchema): array
     {
         $driver = DatabaseDriver::Postgres;
         $from = SchemaName::qualified($driver, $schema, $table);
-        $copy = SchemaName::qualified($driver, $schema, $to);
+        $copy = SchemaName::qualified($driver, $toSchema, $to);
         $statements = ['CREATE TABLE '.$copy.' (LIKE '.$from.' INCLUDING ALL)'];
         $counters = [];
 
@@ -1149,7 +1185,7 @@ final class SchemaPlans
 
             if (str_starts_with($default, 'nextval(')) {
                 $sequence = SchemaName::conventional($to, [$name], 'seq');
-                $qualifiedSequence = SchemaName::qualified($driver, $schema, $sequence);
+                $qualifiedSequence = SchemaName::qualified($driver, $toSchema, $sequence);
                 $statements[] = 'CREATE SEQUENCE '.$qualifiedSequence.' OWNED BY '.$copy.'.'.SchemaName::quote($driver, $name);
                 $statements[] = 'ALTER TABLE '.$copy.' ALTER COLUMN '.SchemaName::quote($driver, $name).' SET DEFAULT nextval('.$this->literal($target, $qualifiedSequence).'::regclass)';
                 $counters[] = [$name, $this->literal($target, $qualifiedSequence)];
@@ -1178,28 +1214,28 @@ final class SchemaPlans
      *
      * @return list<string>
      */
-    private function sqliteCopy(Connection $target, string $schema, string $table, string $to, bool $withData): array
+    private function sqliteCopy(Connection $target, string $schema, string $table, string $to, bool $withData, string $toSchema): array
     {
         $driver = DatabaseDriver::Sqlite;
         $catalog = SchemaName::quote($driver, $schema).'.sqlite_schema';
         $create = (string) $target->selectOne('select sql from '.$catalog." where type = 'table' and name = ?", [$table])?->sql;
         $name = '(?:"(?:[^"]|"")+"|`(?:[^`]|``)+`|\[[^\]]+\]|[^\s(]+)';
 
-        $statements = [(string) preg_replace('/^\s*CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?'.$name.'/i', 'CREATE TABLE '.SchemaName::qualified($driver, $schema, $to), $create, 1)];
+        $statements = [(string) preg_replace('/^\s*CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?'.$name.'/i', 'CREATE TABLE '.SchemaName::qualified($driver, $toSchema, $to), $create, 1)];
 
         foreach ($target->select('select name, sql from '.$catalog." where type = 'index' and tbl_name = ? and sql is not null order by name", [$table]) as $index) {
             $indexName = (string) $index->name;
             $newName = str_starts_with($indexName, $table.'_') ? $to.substr($indexName, strlen($table)) : $to.'_'.$indexName;
             $statements[] = (string) preg_replace(
                 '/^\s*CREATE\s+(UNIQUE\s+)?INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?'.$name.'\s+ON\s+'.$name.'/i',
-                'CREATE $1INDEX '.SchemaName::qualified($driver, $schema, mb_strcut($newName, 0, SchemaName::MAX_BYTES)).' ON '.SchemaName::quote($driver, $to),
+                'CREATE $1INDEX '.SchemaName::qualified($driver, $toSchema, mb_strcut($newName, 0, SchemaName::MAX_BYTES)).' ON '.SchemaName::quote($driver, $to),
                 (string) $index->sql,
                 1,
             );
         }
 
         if ($withData) {
-            $statements[] = 'INSERT INTO '.SchemaName::qualified($driver, $schema, $to).' SELECT * FROM '.SchemaName::qualified($driver, $schema, $table);
+            $statements[] = 'INSERT INTO '.SchemaName::qualified($driver, $toSchema, $to).' SELECT * FROM '.SchemaName::qualified($driver, $schema, $table);
         }
 
         return $statements;
