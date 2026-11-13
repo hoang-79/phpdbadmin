@@ -6,12 +6,12 @@ Website: **[phpdbadmin.net](https://phpdbadmin.net)**
 
 - **Ansehen:** Navigator über Datenbanken, Schemas und Objekte (Tabellen, Sichten, Routinen, Trigger, Sequenzen, Typen); Datenraster mit Filtern, Suche, Fremdschlüsseln in beide Richtungen und Zeilen-Detail; Struktur mit Indizes, Fremdschlüsseln, Triggern und DDL; Beziehungsdiagramm als SVG; Suche über ein ganzes Schema.
 - **Ändern ohne Angst:** jede Änderung zuerst als SQL-Vorschau (mit den Zeilen, die `ON DELETE CASCADE` mitlöscht), dann in einer Transaktion angewendet und rückgängig zu machen — im Raster, in Ergebnissen des SQL-Editors und beim Suchen und Ersetzen. Verbindungen sind nach Umgebung markiert (lokal, Test, Produktion); Produktion verlangt den Namen der Verbindung, schreibgeschützte Verbindungen lassen sich mit Grund für 15 Minuten freigeben.
-- **Struktur ändern:** Tabellen anlegen und ändern, Sichten und Routinen bearbeiten — je Treiber richtig angewendet (SQLite nach dem Umbauverfahren, PostgreSQL in einer Transaktion), mit Vorschau des genauen SQL.
+- **Struktur ändern:** Tabellen anlegen und ändern, Sichten und Routinen bearbeiten — je Treiber richtig angewendet (SQLite nach dem Umbauverfahren, PostgreSQL in einer Transaktion), mit Vorschau des genauen SQL. Tabellen umbenennen, kopieren und in eine andere Datenbank bzw. ein anderes Schema verschieben; bei MySQL und MariaDB Engine, Sortierung und Zählerstand einer Tabelle sowie Zeichensatz und Sortierung einer Datenbank ändern.
 - **SQL-Editor** mit Vervollständigung aus dem Katalog, Zeit- und Zeilengrenze, Abbrechen auf dem Server, EXPLAIN als Baum mit Hinweisen, Verlauf und gespeicherten Abfragen; Befehlspalette mit ⌘K; auf Wunsch SQL-Hilfe mit KI (nur mit eigenem Schlüssel, nur das Schema wird gesendet).
 - **Export, Import, Sicherung:** CSV, JSON, SQL und Excel im Hintergrund; Sicherung und Wiederherstellung über `mysqldump`, `pg_dump` und `sqlite3`; Statistik nach Importen.
 - **Vergleichen:** zwei Schemas gegenüberstellen — auch zwischen verschiedenen Datenbanken — mit Änderungsskript im Dialekt des Ziels; Laravel-Migration aus einer Tabelle.
 - **Verbinden:** direkt oder über einen SSH-Tunnel; lokal mit Laravel Herd schlägt das Formular die Herd-Dienste und Sites vor.
-- **Server-Verwaltung:** Prozesse, Variablen, Konten und Rechte, Wartung.
+- **Server-Verwaltung:** Prozesse, Variablen, Konten und Rechte; Wartung je Treiber (ANALYZE, OPTIMIZE, CHECK, REPAIR, CHECKSUM, VACUUM, REINDEX) — auch direkt aus den Menüs von Datenbank und Tabelle, die ebenso zu Export, Import und Sicherung führen.
 - **Mehrere Konten:** Rechte je Verbindung (lesen, schreiben, verwalten), Teilen, Einladungen, aktive Sitzungen und ein Protokoll jeder schreibenden Aktion — ohne Werte.
 
 ## Voraussetzungen

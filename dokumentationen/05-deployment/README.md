@@ -2,7 +2,7 @@
 
 > **PDF der Phase:** [deployment.pdf](deployment.pdf) — bei jeder Änderung neu gebaut (`python3 dokumentationen/werkzeuge/pdf-bauen.py --nur 05`).
 
-**Stand 30.10.2026:** v1.3.0 veröffentlicht, mit Web-Installer; Landingpage online unter [phpdbadmin.net](https://phpdbadmin.net); v1.0 ist installierbar (B-05, [TB 08](../04-evolutionary-development/timebox-08-sicherheit-v1.md)). Zielbild nach R-11 (lokal und selbst gehostet) und R-30:
+**Stand 13.11.2026:** v1.4.0 veröffentlicht (Timebox 13: Operationen, Wartung, Verschieben, Tabellenoptionen; Web-Installer seit v1.3.0); Landingpage online unter [phpdbadmin.net](https://phpdbadmin.net); v1.0 ist installierbar (B-05, [TB 08](../04-evolutionary-development/timebox-08-sicherheit-v1.md)). Zielbild nach R-11 (lokal und selbst gehostet) und R-30:
 
 | Stufe | Ort | Bemerkung |
 |---|---|---|
@@ -53,7 +53,7 @@ Releases baut Hoang lokal (spart Actions-Minuten, der Signaturschlüssel verläs
 ```bash
 npm run build
 php artisan phpdbadmin:release --key=~/.ssh/phpdbadmin/release-ed25519.key
-gh release create v1.3.0 storage/app/release/* --title "phpdbadmin 1.3.0" --notes-file …
+gh release create v1.4.0 storage/app/release/* --title "phpdbadmin 1.4.0" --notes-file …
 ```
 
 Version in `config/phpdbadmin.php` (`version`). Das Archiv enthält nur, was zur Laufzeit nötig ist (`vendor` ohne Entwicklungspakete, gebaute Oberfläche), dazu `latest.json` (Grösse, SHA-256, Ed25519-Signatur, Mindest-PHP, Erweiterungen) und den Installer mit eingesetztem öffentlichem Schlüssel und Repository. Geheimschlüssel: `~/.ssh/phpdbadmin/release-ed25519.key` (Rechte 600, nie ins Repository); öffentlicher Schlüssel `2wyjL2KumyQ6vlmUvcv4NydLkoxJXr8U8OG9B+iYz/M=`. Neuer Schlüssel nur mit `phpdbadmin:release --keygen=<pfad>` — ältere Installer prüfen dann nicht mehr gegen neue Releases.

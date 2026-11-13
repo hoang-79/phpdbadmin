@@ -44,7 +44,7 @@ Feinabgleich im [Funktionsraster § 10](../00-change_request/funktionsraster.md#
 
 ## Commits
 
-`333641e` Menüs (O-10) · `4d93fde` Wartung (W-06) · `76958de` Verschieben und Kopieren (S-11) · Tabellenoptionen und Zeichensatz (S-10, S-12) im Abschluss-Commit dieser Timebox.
+`333641e` Menüs (O-10) · `4d93fde` Wartung (W-06) · `76958de` Verschieben und Kopieren (S-11) · `b6e0f84` Tabellenoptionen und Zeichensatz (S-10, S-12) · veröffentlicht mit [v1.4.0](https://github.com/hoang-79/phpdbadmin/releases/tag/v1.4.0) am 13.11.2026.
 
 ## Gelernt
 
