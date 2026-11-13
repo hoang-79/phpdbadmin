@@ -156,15 +156,23 @@ jobs:
           key: composer-${{ hashFiles('composer.lock') }}
           restore-keys: composer-
 
-      # Sicherung und Wiederherstellung (E-03) brauchen die PostgreSQL-Werkzeuge in der Version des Servers: Der Runner
-      # bringt nur pg_dump 16 mit (älter als PostgreSQL 18 — phpdbadmin lehnt das richtigerweise ab), und ein neueres
-      # pg_restore schickt einem älteren Server Einstellungen, die er nicht kennt (transaction_timeout ab 17).
+      # Sicherung und Wiederherstellung (E-03) brauchen die PostgreSQL-Werkzeuge in der Version des Servers: Ein älteres
+      # pg_dump lehnt phpdbadmin richtigerweise ab, und ein neueres pg_restore schickt einem älteren Server
+      # Einstellungen, die er nicht kennt (transaction_timeout ab 17). Bringt der Runner die Hauptversion schon mit (das
+      # Image mit Ubuntu 26.04 hat PostgreSQL 18 aus apt.postgresql.org), bleibt sie, wie sie ist: Das Nachziehen auf die
+      # nächste Nebenversion scheiterte dort am Paketkonflikt libpq-dev/postgresql-common um /usr/bin/pg_config.
       - name: PostgreSQL-Werkzeuge in der Version des Servers
         run: |
-          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-          sudo apt-get install -y -qq postgresql-client-${{ matrix.postgres }}
+          bin=/usr/lib/postgresql/${{ matrix.postgres }}/bin
+          if [ -x "$bin/pg_dump" ]; then
+            echo "Schon vorhanden: $("$bin/pg_dump" --version)"
+          else
+            sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+            sudo apt-get install -y -qq postgresql-client-${{ matrix.postgres }}
+          fi
           for tool in pg_dump pg_restore psql; do
-            echo "PHPDBADMIN_TOOL_$(echo "$tool" | tr '[:lower:]' '[:upper:]')=/usr/lib/postgresql/${{ matrix.postgres }}/bin/$tool" >> "$GITHUB_ENV"
+            test -x "$bin/$tool"
+            echo "PHPDBADMIN_TOOL_$(echo "$tool" | tr '[:lower:]' '[:upper:]')=$bin/$tool" >> "$GITHUB_ENV"
           done
 
       - name: Setup Application
