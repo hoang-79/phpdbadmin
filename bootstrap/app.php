@@ -22,7 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->encryptCookies(except: ['appearance']);
+        // Durchlass durch den Wartungsmodus beim Aktualisieren (B-09): Laravel prüft ihn unverschlüsselt (HMAC), schon vor
+        // dem Start der App in storage/framework/maintenance.php.
+        $middleware->encryptCookies(except: ['appearance', 'laravel_maintenance']);
 
         // Werte für die Zieldatenbank kommen wörtlich an (D-04, D-08, Q-05): Leerzeichen am Rand gehören zum Wert, und
         // leerer Text ist nicht NULL. Gilt für das Bearbeiten von Zeilen und für Suchen und Ersetzen.

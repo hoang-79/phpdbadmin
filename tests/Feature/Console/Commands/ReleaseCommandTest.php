@@ -61,6 +61,7 @@ class ReleaseCommandTest extends TestCase
         $this->app->instance(ReleaseBuilder::class, new ReleaseBuilder($paths['source']));
         $keyPath = $this->keyFolder.'/release.key';
         $publicKey = ReleaseSignature::generate($keyPath);
+        config(['phpdbadmin.release.public_key' => $publicKey]);
 
         $this->artisan('phpdbadmin:release', ['--out' => $paths['out'], '--key' => $keyPath, '--vendor-from' => $paths['vendor']])
             ->expectsOutputToContain('gh release create v'.config('phpdbadmin.version'))
@@ -71,6 +72,20 @@ class ReleaseCommandTest extends TestCase
         $message = ReleaseSignature::message($manifest['version'], $manifest['file'], $manifest['size'], $manifest['sha256']);
         $this->assertTrue(ReleaseSignature::verify($message, (string) $manifest['signature'], $publicKey));
         $this->assertStringContainsString($publicKey, (string) file_get_contents($paths['out'].'/phpdbadmin-installer.php'));
+    }
+
+    public function test_a_key_that_installations_do_not_trust_stops_the_build(): void
+    {
+        $paths = $this->releaseSource();
+        $this->app->instance(ReleaseBuilder::class, new ReleaseBuilder($paths['source']));
+        $keyPath = $this->keyFolder.'/release.key';
+        ReleaseSignature::generate($keyPath);
+
+        $this->artisan('phpdbadmin:release', ['--out' => $paths['out'], '--key' => $keyPath, '--vendor-from' => $paths['vendor']])
+            ->expectsOutputToContain('phpdbadmin.release.public_key')
+            ->assertFailed();
+
+        $this->assertFileDoesNotExist($paths['out'].'/latest.json');
     }
 
     public function test_a_wrong_key_stops_the_build(): void

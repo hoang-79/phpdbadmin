@@ -26,6 +26,7 @@ final class AuditPresenter
         'sql' => ['sql.'],
         'transfer' => ['export.', 'import.', 'transfer.'],
         'audit' => ['audit.'],
+        'update' => ['app.'],
     ];
 
     /**
@@ -42,6 +43,7 @@ final class AuditPresenter
             ['value' => 'sql', 'label' => __('SQL ausgeführt')],
             ['value' => 'transfer', 'label' => __('Export und Import')],
             ['value' => 'audit', 'label' => __('Protokoll')],
+            ['value' => 'update', 'label' => __('Aktualisierung')],
         ];
     }
 
@@ -136,6 +138,8 @@ final class AuditPresenter
             'data.replace' => __('Suchen und Ersetzen'),
             'data.restore' => __('Sicherung wiederhergestellt'),
             'transfer.backup' => __('Sicherung erstellt'),
+            'app.updated' => __('phpdbadmin aktualisiert'),
+            'app.update_failed' => __('Aktualisierung gescheitert'),
             default => $this->categoryLabel($action) ?? $action,
         };
     }
@@ -153,6 +157,7 @@ final class AuditPresenter
             'connection.permission' => $text('account').': '.$this->permission($text('from')).' → '.$this->permission($text('to')),
             'account.role' => $entry->target.': '.$text('from').' → '.$text('to'),
             'account.deleted' => $text('name').' · '.$entry->target,
+            'app.updated', 'app.update_failed' => $text('from').' → '.$text('to'),
             default => $entry->target,
         };
 

@@ -92,6 +92,12 @@ The **audit log** (administration) records every writing action — who, when, o
 
 Under _Account → Sessions_ you see where your account is signed in and end other sessions — for example on a lost device.
 
+## Updating {#aktualisieren}
+
+When a new version is out, the account menu of administrators shows a dot. _Administration → Update_ tells you what is new, and **Update to …** does the rest: phpdbadmin downloads the new version, verifies its signature and checksum, replaces the program and updates the app database. While the program is being replaced, phpdbadmin is unavailable to everyone else for a few seconds; keep the page open until all four steps are done.
+
+The settings in `.env`, the app database and the files under `storage` stay as they are. If a step fails, the previous version keeps running; after a successful update it is kept as a backup under `storage/app/private/aktualisierung`. If you installed phpdbadmin with Git, update on the console with `git pull` and `composer upgrade`.
+
 ## Keyboard shortcuts {#kuerzel}
 
 **?** shows all shortcuts. The most important: **⌘K** command palette, **/** filter the navigator, **⌘↩** run statement, **⌘E** explain statement, **Enter** or **F2** edit a cell, **Esc** cancel.

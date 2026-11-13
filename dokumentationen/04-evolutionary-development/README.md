@@ -4,7 +4,7 @@
 
 Timebox-Protokolle (`timebox-nn-titel.md`) und Architekturentscheide (`adr/ADR-nnn-titel.md`: Kontext → Optionen → Entscheid → Konsequenzen).
 
-**Stand 29.10.2026:** alle dreizehn Timeboxen gebaut (TB 04–06 und 10–11 parallel auf eigenen Zweigen, zusammengeführt und im Browser geprüft). Meilensteine: **Alpha** (TB 03), **v1.0** (TB 08, offen: axe-Lauf von Hand), **v1.1** (TB 10: Server-Verwaltung auf drei Treibern, Sicherung und Wiederherstellung mit den Server-Werkzeugen), **v1.2** (TB 12: Schemavergleich und Migration gegenseitig zwischen zwei Treibern, KI-Hilfe mit Attrappe getestet). Zwei Sicherheitsdurchgänge ohne offenen hohen Befund ([Bericht](sicherheitspruefung-n02.md)). Tests: 1'347, davon 25 bewusst übersprungen (schwere Proben, SSH ohne Dienst); `composer ci:local` grün mit der App-Datenbank auf SQLite, MariaDB, MySQL und PostgreSQL.
+**Stand 13.11.2026:** alle Timeboxen bis 14 gebaut (TB 04–06 und 10–11 parallel auf eigenen Zweigen, zusammengeführt und im Browser geprüft; TB 13 in v1.4.0, TB 14 kommt mit dem nächsten Release). Meilensteine: **Alpha** (TB 03), **v1.0** (TB 08, offen: axe-Lauf von Hand), **v1.1** (TB 10: Server-Verwaltung auf drei Treibern, Sicherung und Wiederherstellung mit den Server-Werkzeugen), **v1.2** (TB 12: Schemavergleich und Migration gegenseitig zwischen zwei Treibern, KI-Hilfe mit Attrappe getestet). Zwei Sicherheitsdurchgänge ohne offenen hohen Befund ([Bericht](sicherheitspruefung-n02.md)). Tests: 1'439, davon 25 bewusst übersprungen (schwere Proben, SSH ohne Dienst); `composer ci:local` grün mit der App-Datenbank auf SQLite, MariaDB, MySQL und PostgreSQL.
 
 ## Timeboxes
 
@@ -25,6 +25,7 @@ Timebox-Protokolle (`timebox-nn-titel.md`) und Architekturentscheide (`adr/ADR-n
 | [**11 Vergleich, Migration, Herd, SSH**](timebox-11-vergleich-migration-herd-ssh.md) | Schemavergleich mit Änderungsskript im Dialekt des Ziels, auch zwischen zwei Treibern; Laravel-Migration aus einer Tabelle, auf einem anderen Treiber geprüft; Vorschläge aus Laravel Herd ohne Passwörter im Browser; Verbindungen über SSH-Tunnel mit dem System-ssh (ADR-012) | S-08, S-09, V-07, V-08 | ✅ 29.10.2026 |
 | [**12 Sitzungen und SQL-Hilfe mit KI**](timebox-12-sitzungen-ki.md) | Aktive Sitzungen sehen und beenden; im SQL-Editor «KI fragen» mit eigenem Schlüssel, nur Frage und Schema-Umriss gehen hinaus | A-08, Q-08 | ✅ 29.10.2026 → **v1.2** |
 | [**13 Operationen für Datenbank und Tabelle**](timebox-13-operationen.md) | Export, Import, Sicherung und Wartung aus den Menüs von Datenbank und Tabelle (vorgewählt); Reparieren, Prüfsumme, Indizes neu aufbauen; Tabelle in eine andere Datenbank verschieben oder kopieren; Tabellenoptionen (Engine, Sortierung, Zähler) und Zeichensatz der Datenbank — nach einem Feinabgleich mit phpMyAdmin | O-10, W-06, S-10, S-11, S-12 | ✅ 13.11.2026 |
+| [**14 Aktualisieren über die Oberfläche**](timebox-14-aktualisierung.md) | Neue Version sehen (Punkt am Kontomenü, Reiter in der Verwaltung) und mit einem Knopf aktualisieren: signiertes Release, vier Schritte, Wartungsmodus mit Durchlass, Tausch per Umbenennen mit Sicherung, Migrationen im neuen Code; scheitert ein Schritt, läuft die bisherige Version weiter — für Installationen aus dem Web-Installer | B-09 | ✅ 13.11.2026 |
 
 ## Architekturentscheide
 

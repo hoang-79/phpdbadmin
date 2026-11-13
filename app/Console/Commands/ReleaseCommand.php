@@ -39,6 +39,11 @@ class ReleaseCommand extends Command
 
             if ($secretKey === null) {
                 $this->components->warn('Ohne Schlüssel bleibt das Release unsigniert — ein Installer mit öffentlichem Schlüssel lehnt es ab.');
+            } elseif (ReleaseSignature::publicKeyFor($secretKey) !== (string) config('phpdbadmin.release.public_key')) {
+                // Installationen prüfen Aktualisierungen gegen phpdbadmin.release.public_key (B-09).
+                $this->components->error('Der Schlüssel passt nicht zu phpdbadmin.release.public_key — Installationen würden dieses Release als Aktualisierung ablehnen.');
+
+                return self::FAILURE;
             }
 
             $result = $builder->build(

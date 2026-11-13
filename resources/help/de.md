@@ -92,6 +92,12 @@ Das **Protokoll** (Verwaltung) hält jede schreibende Aktion fest — wer, wann,
 
 Unter _Konto → Sitzungen_ sehen Sie, wo Ihr Konto angemeldet ist, und beenden fremde Sitzungen — etwa auf einem verlorenen Gerät.
 
+## Aktualisieren {#aktualisieren}
+
+Gibt es eine neue Version, zeigt das Kontomenü der Administratoren einen Punkt. Unter _Verwaltung → Aktualisierung_ steht, was neu ist, und **Auf … aktualisieren** erledigt den Rest: phpdbadmin lädt die neue Version, prüft ihre Signatur und Prüfsumme, tauscht das Programm aus und passt die App-Datenbank an. Während des Austauschs ist phpdbadmin für alle anderen einige Sekunden nicht erreichbar; lassen Sie die Seite offen, bis alle vier Schritte erledigt sind.
+
+Unverändert bleiben die Einstellungen in `.env`, die App-Datenbank und die Dateien unter `storage`. Scheitert ein Schritt, läuft die bisherige Version weiter; nach dem Erfolg liegt sie als Sicherung unter `storage/app/private/aktualisierung`. Wer phpdbadmin mit Git installiert hat, aktualisiert auf der Konsole mit `git pull` und `composer upgrade`.
+
 ## Tastenkürzel {#kuerzel}
 
 **?** zeigt alle Tastenkürzel. Die wichtigsten: **⌘K** Befehlspalette, **/** Navigator filtern, **⌘↩** Anweisung ausführen, **⌘E** Anweisung erklären, **Eingabe** bzw. **F2** Zelle bearbeiten, **Esc** abbrechen.

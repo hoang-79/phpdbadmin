@@ -2,6 +2,7 @@
 import { Link, router, usePage } from '@inertiajs/vue3';
 import {
     ChevronDown,
+    CircleArrowUp,
     CircleHelp,
     LogOut,
     Palette,
@@ -21,9 +22,12 @@ import { getInitials } from '@/composables/useInitials';
 import { t } from '@/lib/i18n';
 import { account, help, logout } from '@/routes';
 import { index as adminAccounts } from '@/routes/admin/accounts';
+import { index as adminUpdate } from '@/routes/admin/update';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+// Neue Version (B-09): nur Administratoren bekommen den Hinweis.
+const update = computed(() => page.props.update);
 
 function signOut(): void {
     router.flushAll();
@@ -34,12 +38,20 @@ function signOut(): void {
     <DropdownMenu v-if="user">
         <DropdownMenuTrigger
             class="inline-flex items-center gap-1 rounded-full text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            :aria-label="t('Kontomenü')"
+            :aria-label="
+                update
+                    ? t('Kontomenü — neue Version verfügbar')
+                    : t('Kontomenü')
+            "
         >
             <span
-                class="inline-grid size-8 place-items-center rounded-full border bg-surface-strong text-xs font-semibold text-foreground"
-                >{{ getInitials(user.name) }}</span
-            >
+                class="relative inline-grid size-8 place-items-center rounded-full border bg-surface-strong text-xs font-semibold text-foreground"
+                >{{ getInitials(user.name)
+                }}<span
+                    v-if="update"
+                    class="absolute -top-0.5 -right-0.5 size-2.5 rounded-full border-2 border-background bg-primary"
+                    :title="t('Neue Version verfügbar')"
+            /></span>
             <ChevronDown class="size-3.5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" class="w-64 p-1.5">
@@ -67,6 +79,15 @@ function signOut(): void {
                 <DropdownMenuItem as-child>
                     <Link :href="adminAccounts()" class="gap-2.5">
                         <Users class="size-4" />{{ t('Verwaltung') }}
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem v-if="update" as-child>
+                    <Link :href="adminUpdate()" class="gap-2.5 text-primary">
+                        <CircleArrowUp class="size-4" />{{
+                            t('Version :version verfügbar', {
+                                version: update.version,
+                            })
+                        }}
                     </Link>
                 </DropdownMenuItem>
             </template>

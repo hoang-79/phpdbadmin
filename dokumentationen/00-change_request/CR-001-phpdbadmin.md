@@ -6,7 +6,7 @@
 | Titel | phpdbadmin — ein Werkzeug für vier Datenbanken, intuitiver als phpMyAdmin und phpPgAdmin |
 | Antragsteller | Hoang Nguyen |
 | Datum | 28.10.2026 |
-| Fassung | 6 |
+| Fassung | 7 |
 | Status | ✅ **Weiterführen** entschieden 28.10.2026 (Hoang: «Feasibility starten») · Feasibility abgeschlossen 28.10.2026: 6 bestanden, 4 bedingt — Auflagen als V-10, Q-09, E-06 und geänderte Abnahmen eingearbeitet |
 | Grundlagen | [Ideensammlung](ideensammlung.md) · [Marktbild](marktbild.md) · [Funktionsraster](funktionsraster.md) · [Ausgangslage und Rückfragen](../01-pre-project/ausgangslage-und-rueckfragen.md) · [Ideen-Backlog](../01-pre-project/ideen-backlog.md) |
 | Folgt | [Terms of Reference](../01-pre-project/terms-of-reference.md) (Entwurf v0.1) → Feasibility |
@@ -21,6 +21,7 @@
 | 4 | 28.10.2026 | Review der Foundation (Hoang): neu **V-11** Schreibschutz auf Zeit aufheben; D-04 zählt die Folgen über `ON DELETE CASCADE` in der Vorschau (aus den Wireframes) |
 | 5 | 28.10.2026 | TB 00, Wunsch Hoang: **A-06** — erstes Konto auch im Browser, abgesichert über einen Einrichtungsschlüssel als Datei auf dem Server (wer kein Terminal hat, kommt über Dateimanager oder FTP an die Datei), danach Passkey-Onboarding |
 | 6 | 13.11.2026 | Wunsch Hoang («ich vermisse etliche Datenbankfunktionen … db dump, backup, optimierung, repair»): Feinabgleich mit phpMyAdmin im [Funktionsraster § 10](funktionsraster.md#10-feinabgleich-operationen-für-datenbank-und-tabelle-13112026); neu **O-10** (Export, Import, Sicherung und Wartung aus den Menüs von Datenbank und Tabelle), **W-06** (Reparieren, Prüfsumme, Indizes neu aufbauen), **S-10** (Tabellenoptionen), **S-11** (Tabelle in eine andere Datenbank kopieren oder verschieben), **S-12** (Zeichensatz einer Datenbank) |
+| 7 | 13.11.2026 | Wunsch Hoang («für die Aktualisierung möchte ich, dass es über die Web-Oberfläche updaten kann»): neu **B-09** — Aktualisieren über die Oberfläche für Installationen aus dem Release-Archiv (Web-Installer oder hochgeladen), mit Signaturprüfung, Wartungsmodus und Rückkehr zur bisherigen Version, wenn ein Schritt scheitert |
 
 ## 1. Ausgangslage und Problem
 
@@ -204,6 +205,7 @@ Priorität nach MoSCoW: **M** Must · **S** Should · **C** Could · **W** Won't
 | B-06 | App-Datenbank SQLite als Vorgabe, MariaDB, MySQL und PostgreSQL möglich | M | 0 | Suite läuft mit jeder App-Datenbank |
 | B-07 | Queue für Export und Import; ohne Worker synchron mit Grenze | S | 2 | Test beider Wege |
 | B-08 | Qualität: Pint, Larastan, vue-tsc, `vp check`; Sicherheitsprüfung vor v1.0 | M | 0 | lokale Prüfkette in der Reihenfolge der CI |
+| B-09 | **Aktualisieren über die Oberfläche:** Administratoren sehen eine neue Version und aktualisieren mit einem Knopf — nur ein signiertes Release, Programm per Umbenennen getauscht, Migrationen im neuen Code; scheitert ein Schritt, läuft die bisherige Version weiter. Git-Installationen bleiben bei `git pull` | M | 4 | Tests: manipuliertes Archiv, fremde Signatur, Pfad ausserhalb, gescheiterte Migration (Stapel zurück, alte Version zurück); Durchlauf mit echtem Archiv über den Web-Installer |
 
 ### 4.10 N — Nicht-funktionale Anforderungen
 
@@ -215,6 +217,8 @@ Priorität nach MoSCoW: **M** Must · **S** Should · **C** Could · **W** Won't
 | N-04 | **Kompatibilität:** MariaDB ab 10.6, MySQL ab 8.0, PostgreSQL ab 14, SQLite ab 3.35 (Annahme R-15) | M | 1 | Feasibility prüft die Untergrenzen |
 | N-05 | Kurze Hilfe in der Oberfläche; Projekt-Doku nach DSDM, bei jedem Commit nachgeführt | S | 2 | Doku-Prüfung im Commit |
 | N-06 | Sprache: Deutsch und Englisch, Sie-Form, Bezeichner im Code englisch | M | 1 | Test über Sprachdateien |
+
+**Zählung Fassung 7** (13.11.2026): 87 Anforderungen — M 44, S 31, C 12; neu B-09 (M), nach v1.0.
 
 **Zählung Fassung 6** (13.11.2026, per Skript): 86 Anforderungen — M 43, S 31, C 12; neu O-10 (M), W-06, S-10, S-11 (S) und S-12 (C), alle nach v1.0.
 

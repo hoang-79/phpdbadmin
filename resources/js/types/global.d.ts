@@ -21,6 +21,8 @@ declare module '@inertiajs/core' {
             auth: Auth;
             locale: 'de' | 'en';
             translations?: Record<string, string>;
+            /** Neue Version (B-09) — nur für Administratoren, sonst null. */
+            update: { version: string } | null;
             [key: string]: unknown;
         };
     }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { FileText, Send, Users } from '@lucide/vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import { CircleArrowUp, FileText, Send, Users } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import InviteDialog from '@/components/admin/InviteDialog.vue';
 import HelpLink from '@/components/HelpLink.vue';
@@ -9,14 +9,19 @@ import { formatNumber, t } from '@/lib/i18n';
 import { index as accounts } from '@/routes/admin/accounts';
 import { index as audit } from '@/routes/admin/audit';
 import { index as invitations } from '@/routes/admin/invitations';
+import { index as update } from '@/routes/admin/update';
 import type { AdminTabs } from '@/types';
 
-/** Kopf der Verwaltung (Wireframe 14): Titel, «Person einladen», Reiter Konten · Einladungen · Protokoll. */
+/**
+ * Kopf der Verwaltung (Wireframe 14): Titel, «Person einladen», Reiter Konten · Einladungen · Protokoll ·
+ * Aktualisierung (mit Punkt, wenn eine neue Version bereitsteht).
+ */
 const props = defineProps<{
     tabs: AdminTabs;
-    active: 'accounts' | 'invitations' | 'audit';
+    active: 'accounts' | 'invitations' | 'audit' | 'update';
 }>();
 
+const page = usePage();
 const inviting = ref(false);
 
 const links = computed(() => [
@@ -40,6 +45,15 @@ const links = computed(() => [
         label: t('Protokoll'),
         count: null,
         icon: FileText,
+    },
+    {
+        key: 'update',
+        href: update(),
+        label: t('Aktualisierung'),
+        count: null,
+        icon: CircleArrowUp,
+        // Neue Version bereit (B-09).
+        dot: page.props.update !== null,
     },
 ]);
 </script>
@@ -87,6 +101,11 @@ const links = computed(() => [
                 ]"
             >
                 <component :is="tab.icon" class="size-4" />{{ tab.label }}
+                <span
+                    v-if="'dot' in tab && tab.dot"
+                    class="size-2 rounded-full bg-primary"
+                    :title="t('Neue Version verfügbar')"
+                />
                 <span
                     v-if="tab.count !== null"
                     class="text-xs font-normal text-muted-foreground tabular-nums"

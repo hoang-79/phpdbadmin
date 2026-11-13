@@ -116,3 +116,44 @@ export type AuditPage = {
     previousUrl: string | null;
     nextUrl: string | null;
 };
+
+/** Was das Aktualisieren über die Oberfläche hier verhindert (B-09). */
+export type UpdateBlocker = {
+    key: string;
+    message: string;
+};
+
+/** Stand der Versionen (UpdateChannel), nachgeladen; `blockers` gelten nur für das neueste Release. */
+export type UpdateStatus = {
+    current: string;
+    latest: string | null;
+    available: boolean;
+    published: string | null;
+    notesUrl: string | null;
+    php: string | null;
+    extensions: string[];
+    error: string | null;
+    checkedAt: string;
+    blockers: UpdateBlocker[];
+};
+
+/** Letzte oder laufende Aktualisierung (AppUpdater::summary). */
+export type UpdateState = {
+    step: 'downloaded' | 'extracted' | 'replaced' | 'finished' | 'failed';
+    from: string;
+    to: string;
+    startedAt: string;
+    finishedAt: string | null;
+    message: string | null;
+    backup: string | null;
+};
+
+/** Antwort eines Schritts — `finish` beantwortet schon der Code der neuen Version. */
+export type UpdateStepResponse = {
+    ok: boolean;
+    step?: string;
+    version?: string;
+    wait?: number;
+    message?: string;
+    retry?: boolean;
+};

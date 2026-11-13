@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\User;
 use App\Services\Ai\SqlAssistant;
+use App\Services\Update\UpdateChannel;
 use App\Support\Translations;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -61,6 +62,21 @@ class HandleInertiaRequests extends Middleware
                     'ai' => SqlAssistant::enabled() ? ['hasKey' => filled($user->ai_api_key)] : null,
                 ] : null,
             ],
+            // Neue Version (B-09): nur für Administratoren und nur aus dem Zwischenspeicher — fehlt er, fragt phpdbadmin
+            // nach der Antwort nach.
+            'update' => fn (): ?array => $user instanceof User && $user->isAdmin() ? $this->updateHint() : null,
         ];
+    }
+
+    /**
+     * @return array{version: string}|null
+     */
+    private function updateHint(): ?array
+    {
+        $channel = app(UpdateChannel::class);
+        $channel->refreshAfterResponse();
+        $status = $channel->cached();
+
+        return $status !== null && $status['available'] && $status['latest'] !== null ? ['version' => $status['latest']] : null;
     }
 }

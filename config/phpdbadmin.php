@@ -10,12 +10,23 @@ return [
     | Version dieses Stands — `phpdbadmin:release` baut daraus `phpdbadmin-<version>.zip` mit `latest.json` (Tag
     | `v<version>`). Der Web-Installer lädt das neueste Release aus diesem GitHub-Repository.
     |
+    | Aktualisieren über die Oberfläche (B-09): phpdbadmin nimmt nur ein Release an, dessen Manifest mit dem
+    | öffentlichen Schlüssel (Ed25519) unterschrieben ist. Nach neuen Versionen sieht es höchstens alle 12 Stunden,
+    | nur für angemeldete Administratoren und nur bei GitHub (oder unter `manifest_url`); `check=false` schaltet das ab
+    | — «Jetzt prüfen» in der Verwaltung geht weiterhin.
+    |
     */
 
     'version' => '1.4.0',
 
     'release' => [
         'repository' => env('PHPDBADMIN_RELEASE_REPOSITORY', 'hoang-79/phpdbadmin'),
+        'public_key' => env('PHPDBADMIN_RELEASE_PUBLIC_KEY', '2wyjL2KumyQ6vlmUvcv4NydLkoxJXr8U8OG9B+iYz/M='),
+    ],
+
+    'update' => [
+        'check' => (bool) env('PHPDBADMIN_UPDATE_CHECK', true),
+        'manifest_url' => env('PHPDBADMIN_UPDATE_URL'),
     ],
 
     /*

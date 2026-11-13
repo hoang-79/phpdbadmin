@@ -10,6 +10,7 @@ use App\Http\Controllers\Account\SessionController;
 use App\Http\Controllers\Admin\AccountController as AdminAccountController;
 use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\InvitationController as AdminInvitationController;
+use App\Http\Controllers\Admin\UpdateController;
 use App\Http\Controllers\CompareController;
 use App\Http\Controllers\Connections\ConnectionController;
 use App\Http\Controllers\Connections\FavoriteController;
@@ -36,6 +37,7 @@ use App\Http\Controllers\Workspace\SqlController;
 use App\Http\Controllers\Workspace\TransferController;
 use App\Http\Controllers\Workspace\WorkspaceController;
 use App\Http\Controllers\Workspace\WriteUnlockController;
+use App\Services\Update\AppUpdater;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/auth.php';
@@ -176,7 +178,7 @@ Route::middleware('auth')->group(function () {
 
     // Befehlspalette ⌘K (O-02): Suchquelle für das Wechseln der Verbindung.
     Route::get('palette', PaletteController::class)->name('palette');
-    // Verwaltung (Wireframe 14): Konten, Einladungen, Rechte, Protokoll — nur Administratoren (403 für alle anderen).
+    // Verwaltung (Wireframe 14): Konten, Einladungen, Rechte, Protokoll, Aktualisierung — nur Administratoren (403 für alle anderen).
     Route::middleware('can:administrate')->prefix('admin')->name('admin.')->group(function () {
         Route::get('accounts', [AdminAccountController::class, 'index'])->name('accounts.index');
         Route::get('accounts/{account}', [AdminAccountController::class, 'show'])->name('accounts.show');
@@ -194,6 +196,11 @@ Route::middleware('auth')->group(function () {
         // Protokoll (B-04): Filter, Seiten, Export als CSV.
         Route::get('audit', [AuditController::class, 'index'])->name('audit.index');
         Route::get('audit/export', [AuditController::class, 'export'])->name('audit.export');
+
+        // Aktualisieren über die Oberfläche (B-09). «finish» führt der Code der neuen Version aus — die Adresse bleibt.
+        Route::get('update', [UpdateController::class, 'index'])->name('update.index');
+        Route::post('update/check', [UpdateController::class, 'check'])->middleware('throttle:6,1')->name('update.check');
+        Route::post('update/{step}', [UpdateController::class, 'step'])->whereIn('step', AppUpdater::STEPS)->name('update.step');
     });
 
     // Kein Profil (A-05): das Konto zeigt Sicherheit und Darstellung.
