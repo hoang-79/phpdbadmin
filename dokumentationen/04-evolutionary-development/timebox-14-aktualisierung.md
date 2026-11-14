@@ -52,6 +52,8 @@ Neu im [CR-001](../00-change_request/CR-001-phpdbadmin.md) (Fassung 7); im Bedro
 
 `333fcfc` Aktualisieren über die Oberfläche (B-09) · veröffentlicht mit [v1.5.0](https://github.com/hoang-79/phpdbadmin/releases/tag/v1.5.0) am 14.11.2026 — die erste Version mit dem Knopf; von v1.4.0 einmal von Hand ([Deployment](../05-deployment/README.md#aktualisieren)).
 
+Rechtstexte geprüft: erst beim Release — FAQ «Verlassen meine Daten den Server?» und Datenschutzerklärung der Website nannten die KI-Hilfe als einzige Verbindung nach aussen; jetzt mit dem Nachsehen bei GitHub (`868917a`).
+
 ## Gelernt
 
 - **Produktion sperrt `migrate:rollback`.** `DB::prohibitDestructiveCommands(app()->isProduction())` im AppServiceProvider sperrt den Befehl still (Rückgabe «Fehler», keine Ausnahme) — die Tests liefen in `testing` und waren grün, erst der Durchlauf mit dem echten Archiv zeigte die stehengebliebene Migration. Zurückgerollt wird jetzt über den Migrator; der Test setzt die Sperre wie in Produktion.
