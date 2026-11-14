@@ -6,7 +6,7 @@ gegenstueck: /datenschutz/
 ---
 <div class="rahmen text">
     <h1>Privacy</h1>
-    <p class="stand">As of 30 October 2026</p>
+    <p class="stand">As of 14 November 2026</p>
 
     <h2>In short</h2>
     <ul>
@@ -31,7 +31,7 @@ gegenstueck: /datenschutz/
     <p>Source code, releases and the installer are hosted on GitHub (GitHub, Inc., USA). When you follow these links or download a file, you leave this website; <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a> then applies, and data may be transferred to the USA.</p>
 
     <h2>The phpdbadmin software</h2>
-    <p>phpdbadmin runs on your own server. We receive no data from it — there is no telemetry and nothing phones home. During setup, the web installer downloads the latest release from GitHub. The SQL help with AI is off until your installation switches it on; then the question and the schema go to Anthropic with your own key, never data from your tables.</p>
+    <p>phpdbadmin runs on your own server. We receive no data from it — there is no telemetry and nothing phones home. During setup, the web installer downloads the latest release from GitHub. From version 1.5.0, phpdbadmin checks GitHub for a new release at most every 12 hours for administrators; GitHub then learns your server's address and the installed version, nothing from your databases. All we see of this is the download count GitHub keeps per file. <code>PHPDBADMIN_UPDATE_CHECK=false</code> switches the check off. The SQL help with AI is off until your installation switches it on; then the question and the schema go to Anthropic with your own key, never data from your tables.</p>
 
     <h2>Your rights</h2>
     <p>You have the right to information about the data we process about you, and to correction and deletion — under the Swiss Federal Act on Data Protection (FADP) and, where applicable, the EU General Data Protection Regulation (GDPR). As this website itself stores no personal data, such requests usually concern only the server logs. You may lodge a complaint with the Federal Data Protection and Information Commissioner (FDPIC).</p>

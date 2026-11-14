@@ -318,7 +318,7 @@ jsonld: ja
             </details>
             <details>
                 <summary>Does my data leave the server? {{ symbol:chevron-down }}</summary>
-                <div><p>No. phpdbadmin runs on your side and reports nothing back — no telemetry, no statistics.</p><p>The only exception is the SQL help with AI: it is off until your installation switches it on, and then every account needs its own key. Only your question and the schema (tables, columns, types, keys) are sent — never data.</p></div>
+                <div><p>No. phpdbadmin runs on your side and reports nothing back — no telemetry, no statistics.</p><p>For administrators, phpdbadmin (from version 1.5.0) checks GitHub for new versions at most every 12 hours. GitHub then learns your server's address and the installed version, nothing from your databases; <code>PHPDBADMIN_UPDATE_CHECK=false</code> switches this off.</p><p>The only case in which anything about your databases leaves the server is the SQL help with AI: it is off until your installation switches it on, and then every account needs its own key. Only your question and the schema (tables, columns, types, keys) are sent — never data.</p></div>
             </details>
             <details>
                 <summary>Which databases and versions are supported? {{ symbol:chevron-down }}</summary>

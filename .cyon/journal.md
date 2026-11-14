@@ -26,3 +26,13 @@
   «Server-Verwaltung» nennt Analysieren, Optimieren, Prüfen und Reparieren.
 - Danach geprüft: Startseite DE und EN zeigen 1.4.0 und den neuen Text, CSP/HSTS/Cache-Header wie bisher.
 - Zurück: vorherigen Stand aus Git bauen und mit demselben Befehl hochladen.
+
+## 14.11.2026 — Website auf Version 1.5.0
+
+- `PHPDBADMIN_WEBSITE_ZIEL=cyon-krelora:public_html/phpdbadmin.net website/hochladen.sh` (zweimal, rsync `--delete` in
+  den Ordner mit Marker `.phpdbadmin-website`): Version 1.5.0 im Kopf, Fuss und in den strukturierten Daten; «Wie
+  aktualisiere ich?» und das Kleingedruckte zur Installation nennen den Knopf unter Verwaltung → Aktualisierung.
+- Zweiter Upload: «Verlassen meine Daten den Server?» und die Datenschutzerklärung (DE/EN, Stand 14.11.2026) nennen
+  das Nachsehen nach neuen Versionen bei GitHub (Adresse des Servers und Version, abschaltbar).
+- Danach geprüft: alle vier Seiten zeigen die neuen Texte, CSP/HSTS/Cache-Header wie bisher.
+- Zurück: vorherigen Stand aus Git bauen und mit demselben Befehl hochladen.
