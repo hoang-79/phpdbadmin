@@ -17,7 +17,7 @@ return [
     |
     */
 
-    'version' => '1.4.0',
+    'version' => '1.5.0',
 
     'release' => [
         'repository' => env('PHPDBADMIN_RELEASE_REPOSITORY', 'hoang-79/phpdbadmin'),

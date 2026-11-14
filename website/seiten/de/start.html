@@ -265,7 +265,7 @@ jsonld: ja
 <span class="p">$ </span><span data-zeile>composer setup</span></code></pre>
                 </div>
                 <p class="kleingedruckt"><code>composer setup</code> installiert die Abhängigkeiten, baut die Oberfläche, richtet die App-Datenbank ein, prüft das System und fragt nach Ihrem Namen und Ihrer Mail-Adresse. Am Ende steht ein Einrichtungslink, der Sie anmeldet und Ihren Passkey anlegt.</p>
-                <p class="kleingedruckt">Aktualisieren: <code>git pull</code> und <code>composer upgrade</code>.</p>
+                <p class="kleingedruckt">Aktualisieren: <code>git pull</code> und <code>composer upgrade</code>. Mit dem Installer eingerichtet: ein Knopf unter <em>Verwaltung → Aktualisierung</em>.</p>
             </div>
         </div>
         <div class="voraussetzungen" data-einblenden>
@@ -338,7 +338,7 @@ jsonld: ja
             </details>
             <details>
                 <summary>Wie aktualisiere ich? {{ symbol:chevron-down }}</summary>
-                <div><p>Mit Konsole: <code>git pull</code> und danach <code>composer upgrade</code> — das holt die Abhängigkeiten, baut die Oberfläche, führt die Migrationen aus und prüft das System. Neue Versionen stehen unter <a href="{{ repository }}/releases">Releases</a>.</p></div>
+                <div><p>Mit dem Installer eingerichtet (ab Version 1.5.0): Gibt es eine neue Version, zeigt phpdbadmin Administratoren einen Hinweis — unter <em>Verwaltung → Aktualisierung</em> genügt ein Knopf. phpdbadmin prüft die Signatur, tauscht das Programm für einige Sekunden im Wartungsmodus aus und passt die App-Datenbank an. Einstellungen und Daten bleiben; scheitert ein Schritt, läuft die bisherige Version weiter.</p><p>Mit Konsole: <code>git pull</code> und danach <code>composer upgrade</code> — das holt die Abhängigkeiten, baut die Oberfläche, führt die Migrationen aus und prüft das System. Neue Versionen stehen unter <a href="{{ repository }}/releases">Releases</a>.</p></div>
             </details>
             <details>
                 <summary>Gibt es phpdbadmin auch gehostet? {{ symbol:chevron-down }}</summary>

@@ -4,7 +4,7 @@
 
 Timebox-Protokolle (`timebox-nn-titel.md`) und Architekturentscheide (`adr/ADR-nnn-titel.md`: Kontext → Optionen → Entscheid → Konsequenzen).
 
-**Stand 13.11.2026:** alle Timeboxen bis 14 gebaut (TB 04–06 und 10–11 parallel auf eigenen Zweigen, zusammengeführt und im Browser geprüft; TB 13 in v1.4.0, TB 14 kommt mit dem nächsten Release). Meilensteine: **Alpha** (TB 03), **v1.0** (TB 08, offen: axe-Lauf von Hand), **v1.1** (TB 10: Server-Verwaltung auf drei Treibern, Sicherung und Wiederherstellung mit den Server-Werkzeugen), **v1.2** (TB 12: Schemavergleich und Migration gegenseitig zwischen zwei Treibern, KI-Hilfe mit Attrappe getestet). Zwei Sicherheitsdurchgänge ohne offenen hohen Befund ([Bericht](sicherheitspruefung-n02.md)). Tests: 1'439, davon 25 bewusst übersprungen (schwere Proben, SSH ohne Dienst); `composer ci:local` grün mit der App-Datenbank auf SQLite, MariaDB, MySQL und PostgreSQL.
+**Stand 14.11.2026:** alle Timeboxen bis 14 gebaut (TB 04–06 und 10–11 parallel auf eigenen Zweigen, zusammengeführt und im Browser geprüft; TB 13 in v1.4.0, TB 14 in v1.5.0). Meilensteine: **Alpha** (TB 03), **v1.0** (TB 08, offen: axe-Lauf von Hand), **v1.1** (TB 10: Server-Verwaltung auf drei Treibern, Sicherung und Wiederherstellung mit den Server-Werkzeugen), **v1.2** (TB 12: Schemavergleich und Migration gegenseitig zwischen zwei Treibern, KI-Hilfe mit Attrappe getestet). Zwei Sicherheitsdurchgänge ohne offenen hohen Befund ([Bericht](sicherheitspruefung-n02.md)). Tests: 1'439, davon 25 bewusst übersprungen (schwere Proben, SSH ohne Dienst); `composer ci:local` grün mit der App-Datenbank auf SQLite, MariaDB, MySQL und PostgreSQL.
 
 ## Timeboxes
 

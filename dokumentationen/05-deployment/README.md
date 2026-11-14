@@ -2,7 +2,7 @@
 
 > **PDF der Phase:** [deployment.pdf](deployment.pdf) — bei jeder Änderung neu gebaut (`python3 dokumentationen/werkzeuge/pdf-bauen.py --nur 05`).
 
-**Stand 13.11.2026:** v1.4.0 veröffentlicht (Timebox 13: Operationen, Wartung, Verschieben, Tabellenoptionen; Web-Installer seit v1.3.0); Aktualisieren über die Oberfläche gebaut ([TB 14](../04-evolutionary-development/timebox-14-aktualisierung.md)), kommt mit dem nächsten Release; Landingpage online unter [phpdbadmin.net](https://phpdbadmin.net); v1.0 ist installierbar (B-05, [TB 08](../04-evolutionary-development/timebox-08-sicherheit-v1.md)). Zielbild nach R-11 (lokal und selbst gehostet) und R-30:
+**Stand 14.11.2026:** v1.5.0 veröffentlicht (Timebox 14: Aktualisieren über die Oberfläche, [TB 14](../04-evolutionary-development/timebox-14-aktualisierung.md); Web-Installer seit v1.3.0); Landingpage online unter [phpdbadmin.net](https://phpdbadmin.net); v1.0 ist installierbar (B-05, [TB 08](../04-evolutionary-development/timebox-08-sicherheit-v1.md)). Zielbild nach R-11 (lokal und selbst gehostet) und R-30:
 
 | Stufe | Ort | Bemerkung |
 |---|---|---|
@@ -41,7 +41,7 @@ Ohne Konsole: Code hochladen, Dokumentenwurzel `public/`, Seite öffnen — die 
 
 - **Mit Git:** `git pull && composer upgrade` (Abhängigkeiten, Oberfläche, Migrationen, Systemprüfung).
 - **Aus dem Release-Archiv** (Web-Installer oder hochgeladen, B-09): *Verwaltung → Aktualisierung → Auf … aktualisieren.* Vier Schritte, je eine Anfrage: Manifest und Archiv gegen die Signatur prüfen, entpacken mit Pfadprüfung, Programm per Umbenennen tauschen (Wartungsmodus, Durchlass-Cookie für das Konto, das aktualisiert), Migrationen im neuen Code. Unberührt bleiben `.env`, `storage/`, die SQLite-Datei und Eigenes im Webordner; die bisherige Fassung bleibt in `storage/app/private/aktualisierung/sicherung-<version>`. Scheitert ein Schritt, läuft die bisherige Version weiter. Nachsehen nach neuen Versionen höchstens alle 12 Stunden, nur für Administratoren — `PHPDBADMIN_UPDATE_CHECK=false` schaltet es ab, `PHPDBADMIN_UPDATE_URL` nennt eine eigene Quelle (Archiv daneben, Signatur mit `PHPDBADMIN_RELEASE_PUBLIC_KEY`). Bleibt ein Austausch ohne Abschluss liegen, schliesst ihn der Scheduler nach zwei Minuten ab (`phpdbadmin:update --finish`).
-- **Von v1.4.0 und älter** gibt es den Knopf noch nicht: einmal von Hand das Archiv der neuen Version entpacken und über das Programm hochladen — ohne `.env`, `storage/` und `database/database.sqlite` —, danach `bootstrap/cache/*.php` löschen und im Webordner des Web-Installers `build/` ersetzen. Das genügt, solange die neue Version keine Migration mitbringt (Stand 13.11.2026: keine seit v1.4.0) — sonst braucht es einmal `php artisan migrate`.
+- **Von v1.4.0 und älter** gibt es den Knopf noch nicht: einmal von Hand das Archiv der neuen Version entpacken und über das Programm hochladen — ohne `.env`, `storage/` und `database/database.sqlite` —, danach `bootstrap/cache/*.php` löschen und im Webordner des Web-Installers `build/` ersetzen. Das genügt, solange die neue Version keine Migration mitbringt (v1.5.0 bringt keine mit) — sonst braucht es einmal `php artisan migrate`. Ab v1.5.0 geht jede weitere Aktualisierung über den Knopf.
 
 `APP_KEY` nie ändern — gespeicherte Passwörter der Verbindungen wären verloren.
 
@@ -59,7 +59,7 @@ Releases baut Hoang lokal (spart Actions-Minuten, der Signaturschlüssel verläs
 ```bash
 npm run build
 php artisan phpdbadmin:release --key=~/.ssh/phpdbadmin/release-ed25519.key --out=<leerer Ordner>
-gh release create v1.4.0 <leerer Ordner>/* --verify-tag --title "phpdbadmin 1.4.0" --notes-file …
+gh release create v1.5.0 <leerer Ordner>/* --verify-tag --title "phpdbadmin 1.5.0" --notes-file …
 ```
 
 Ein leerer Ausgabeordner, weil `storage/app/release` die Dateien früherer Releases behält — `*` nähme sonst das alte Archiv mit.

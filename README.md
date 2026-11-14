@@ -78,7 +78,7 @@ Ohne Worker laufen Exporte und Importe in der Anfrage, bis zu einer Grenze (Vorg
 
 ### Aktualisieren
 
-Installiert mit dem Web-Installer oder als Archiv: Gibt es eine neue Version, zeigt das Kontomenü der Administratoren einen Punkt — unter _Verwaltung → Aktualisierung_ genügt ein Knopf. phpdbadmin prüft Signatur und Prüfsumme, tauscht das Programm aus (einige Sekunden Wartungsmodus) und passt die App-Datenbank an; `.env`, `storage/` und die App-Datenbank bleiben, die bisherige Version bleibt als Sicherung. Scheitert ein Schritt, läuft die bisherige Version weiter. Nach neuen Versionen sieht phpdbadmin höchstens alle 12 Stunden bei GitHub nach; `PHPDBADMIN_UPDATE_CHECK=false` schaltet das ab.
+Installiert mit dem Web-Installer oder als Archiv (ab Version 1.5.0): Gibt es eine neue Version, zeigt das Kontomenü der Administratoren einen Punkt — unter _Verwaltung → Aktualisierung_ genügt ein Knopf. phpdbadmin prüft Signatur und Prüfsumme, tauscht das Programm aus (einige Sekunden Wartungsmodus) und passt die App-Datenbank an; `.env`, `storage/` und die App-Datenbank bleiben, die bisherige Version bleibt als Sicherung. Scheitert ein Schritt, läuft die bisherige Version weiter. Nach neuen Versionen sieht phpdbadmin höchstens alle 12 Stunden bei GitHub nach; `PHPDBADMIN_UPDATE_CHECK=false` schaltet das ab. Von Version 1.4.0 und älter geht es einmal von Hand — siehe [Deployment](dokumentationen/05-deployment/README.md#aktualisieren).
 
 Installiert mit Git:
 

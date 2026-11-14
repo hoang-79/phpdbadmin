@@ -1,6 +1,6 @@
 # Timebox 14 — Aktualisieren über die Oberfläche
 
-**Stand:** 13.11.2026 · ✅ gebaut — Wunsch von Hoang: «für die aktualisierung, möchte ich, dass es über die web-oberfläche updaten kann. wenn ein neuer update verfügbar ist, dann kann man über den button die app updaten.»
+**Stand:** 14.11.2026 · ✅ gebaut, veröffentlicht mit v1.5.0 — Wunsch von Hoang: «für die aktualisierung, möchte ich, dass es über die web-oberfläche updaten kann. wenn ein neuer update verfügbar ist, dann kann man über den button die app updaten.»
 
 ## Ziel
 
@@ -47,6 +47,10 @@ Neu im [CR-001](../00-change_request/CR-001-phpdbadmin.md) (Fassung 7); im Bedro
 | Gescheiterter Tausch: jeder Eintrag zurück | `…::test_a_failed_replacement_puts_every_entry_back` |
 | Nur Administratoren; Hinweis nur für sie; vier Schritte über HTTP durch den Wartungsmodus; «noch alter Code» = 409 | `UpdateControllerTest` (9 Tests), `UpdateCommandTest` (3 Tests) |
 | Durchlauf mit echten Archiven | 1.4.90 mit dem echten Web-Installer installiert (Programm ausserhalb des Webordners), im Browser auf 1.4.91 aktualisiert: Version, neue Migration als eigener Stapel, Build im Webordner, `index.php` und `.htaccess` unverändert, `.env` unverändert, Protokoll. Dann 1.4.92 mit absichtlich scheiternder Migration: 1.4.91 läuft wieder, die gelungene Migration ist zurückgerollt, nichts liegt herum. Eine fremde Anfrage während des Tauschs bekam die Wartungsseite (503). |
+
+## Commits
+
+`333fcfc` Aktualisieren über die Oberfläche (B-09) · veröffentlicht mit [v1.5.0](https://github.com/hoang-79/phpdbadmin/releases/tag/v1.5.0) am 14.11.2026 — die erste Version mit dem Knopf; von v1.4.0 einmal von Hand ([Deployment](../05-deployment/README.md#aktualisieren)).
 
 ## Gelernt
 

@@ -265,7 +265,7 @@ jsonld: ja
 <span class="p">$ </span><span data-zeile>composer setup</span></code></pre>
                 </div>
                 <p class="kleingedruckt"><code>composer setup</code> installs the dependencies, builds the interface, sets up the app database, checks the system and asks for your name and email address. At the end you get a setup link that signs you in and creates your passkey.</p>
-                <p class="kleingedruckt">Updating: <code>git pull</code> and <code>composer upgrade</code>.</p>
+                <p class="kleingedruckt">Updating: <code>git pull</code> and <code>composer upgrade</code>. Set up with the installer: one button under <em>Administration → Update</em>.</p>
             </div>
         </div>
         <div class="voraussetzungen" data-einblenden>
@@ -338,7 +338,7 @@ jsonld: ja
             </details>
             <details>
                 <summary>How do I update? {{ symbol:chevron-down }}</summary>
-                <div><p>With a console: <code>git pull</code> and then <code>composer upgrade</code> — that fetches the dependencies, builds the interface, runs the migrations and checks the system. New versions are listed under <a href="{{ repository }}/releases">Releases</a>.</p></div>
+                <div><p>Set up with the installer (from version 1.5.0): when a new version is out, phpdbadmin shows administrators a hint — one button under <em>Administration → Update</em> does the rest. phpdbadmin checks the signature, swaps the program during a few seconds of maintenance mode and updates the app database. Settings and data stay; if a step fails, the previous version keeps running.</p><p>With a console: <code>git pull</code> and then <code>composer upgrade</code> — that fetches the dependencies, builds the interface, runs the migrations and checks the system. New versions are listed under <a href="{{ repository }}/releases">Releases</a>.</p></div>
             </details>
             <details>
                 <summary>Is there a hosted version? {{ symbol:chevron-down }}</summary>
